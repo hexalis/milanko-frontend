@@ -64,7 +64,7 @@ jobs:
               develop|qa) app_env="$GITHUB_REF_NAME"; base_path="$BASE_PATH"; publish=true ;;
             esac
           fi
-          image="ghcr.io/${GITHUB_REPOSITORY}:${app_env}"
+          image="ghcr.io/${GITHUB_REPOSITORY}-app:${app_env}"
           {
             echo "app_env=$app_env"
             echo "base_path=$base_path"
@@ -169,7 +169,7 @@ jobs:
           USER_NAME: ${{ vars.DEPLOY_USER }}
           SSH_PORT: ${{ vars.DEPLOY_SSH_PORT || 22 }}
           CONTAINER: ${{ vars.DEPLOY_CONTAINER }}
-          IMAGE_TAG: ghcr.io/${{ github.repository }}:${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+          IMAGE_TAG: ghcr.io/${{ github.repository }}-app:${{ github.ref_name == 'main' && 'production' || github.ref_name }}
           PORTS: ${{ vars.DEPLOY_PORTS }}
           DOCKER_NETWORK: ${{ vars.DEPLOY_DOCKER_NETWORK || 'milanko' }}
           ENV_FILE: ${{ vars.DEPLOY_ENV_FILE }}
