@@ -24,7 +24,16 @@ const nextConfig = {
     return [
       {
         source: "/globe/:path*",
-        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          /*
+           * nginx sends `X-Frame-Options: DENY` on every response (milanko-backend
+           * ops/vps/nginx/milanko.conf), which also blocks /explore from framing its own globe.
+           * Browsers ignore X-Frame-Options when frame-ancestors is present, so the globe may be
+           * framed by this site and by no other.
+           */
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+        ],
       },
       // The globe asks the API first (public, read-only GET). In deploys nginx serves /api, so the
       // same header must be set there; without it the globe falls back to its data snapshot.
