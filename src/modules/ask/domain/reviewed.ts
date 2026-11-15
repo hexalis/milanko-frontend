@@ -2,7 +2,7 @@ import type { Reviewed } from "./rules";
 import { PLANET } from "./rules";
 
 /** POWER variable behind each anomaly-file reading. */
-export const EVENT_VARS = { tmax: "T2M_MAX", rain: "PRECTOTCORR", soil: "GWETROOT" } as const;
+const EVENT_VARS = { tmax: "T2M_MAX", rain: "PRECTOTCORR", soil: "GWETROOT" } as const;
 
 type ReviewedSources = {
   trends: readonly { id: string; variable: string }[];

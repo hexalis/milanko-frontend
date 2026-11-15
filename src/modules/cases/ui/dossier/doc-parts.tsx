@@ -30,17 +30,22 @@ export function PropsList({ rows }: { rows: PropRow[] }) {
   );
 }
 
-/** Explained chart header: what is measured, the unit and the period, then what the chart is for. */
-export function ChartHead({ subtitle, purpose }: { subtitle: string; purpose: string }) {
+/**
+ * Explained chart header: what is measured, the unit and the period, then (when given) what the
+ * chart is for.
+ */
+export function ChartHead({ subtitle, purpose }: { subtitle: string; purpose?: string }) {
   return (
     <div className="flex flex-col gap-1">
       <p className="text-body-m text-text-secondary">{subtitle}</p>
-      <p className="text-body-s text-text-secondary flex items-start gap-2">
-        <span className="text-text-brand mt-0.5">
-          <Icon name="info-on" />
-        </span>
-        <span>{purpose}</span>
-      </p>
+      {purpose ? (
+        <p className="text-body-s text-text-secondary flex items-start gap-2">
+          <span className="text-text-brand mt-0.5">
+            <Icon name="info-on" />
+          </span>
+          <span>{purpose}</span>
+        </p>
+      ) : null}
     </div>
   );
 }

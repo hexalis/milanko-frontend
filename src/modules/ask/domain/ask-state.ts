@@ -32,6 +32,19 @@ export function parseHunch(params: SearchParams): Hunch | undefined {
   return HUNCHES.find((hunch) => hunch === value);
 }
 
+/**
+ * The URL's depth wins; without one, the depth the reader chose before (cookie) fills it in, so
+ * every link the builder writes carries the remembered depth.
+ */
+export function withRememberedDepth(
+  params: SearchParams,
+  cookieValue: string | undefined,
+): SearchParams {
+  if (params.depth !== undefined) return params;
+  const remembered = DEPTHS.find((depth) => depth === cookieValue);
+  return remembered ? { ...params, depth: remembered } : params;
+}
+
 type GuidedState = { step: number; depth: Depth; hunch?: Hunch };
 
 /** Link to a step of the guided flow, carrying the depth and the reader's hunch. */

@@ -12,7 +12,7 @@ type AnalysisType = Exclude<QuestionType, "comparison">;
 
 export type Status = "ready" | "draft" | "candidate";
 
-export type Use = {
+type Use = {
   theme: string;
   type: AnalysisType;
   variable: string;

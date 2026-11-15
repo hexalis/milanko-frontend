@@ -1,5 +1,13 @@
 export type WorkspaceSection = {
-  href: "/briefing" | "/cases" | "/method" | "/regions" | "/rankings" | "/events" | "/coverage";
+  href:
+    | "/ask"
+    | "/briefing"
+    | "/cases"
+    | "/method"
+    | "/regions"
+    | "/rankings"
+    | "/events"
+    | "/coverage";
   /** Copy key (POC i18n) for the menu label. */
   labelKey: string;
   /** Spanish summary for the home cards (the persisted-data pages are Spanish only for now). */
@@ -7,6 +15,11 @@ export type WorkspaceSection = {
 };
 
 export const WORKSPACE_SECTIONS: readonly WorkspaceSection[] = [
+  {
+    href: "/ask",
+    labelKey: "nav.ask",
+    summary: "Arma una pregunta sobre la Tierra y sigue la investigación paso a paso.",
+  },
   {
     href: "/briefing",
     labelKey: "nav.briefing",

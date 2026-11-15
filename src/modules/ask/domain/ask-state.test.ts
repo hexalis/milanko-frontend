@@ -7,6 +7,7 @@ import {
   parseHunch,
   parseStep,
   resolveQuestion,
+  withRememberedDepth,
 } from "./ask-state";
 import { getRules } from "./engine";
 
@@ -56,5 +57,17 @@ describe("resolveQuestion", () => {
     expect(ids).toContain("rainfall");
     expect(ids).toContain("soil_water@chile-drying");
     expect(ids.every((id) => resolveQuestion(rules, id, findCase))).toBe(true);
+  });
+});
+
+describe("withRememberedDepth", () => {
+  it("fills the depth from the cookie only when the URL has none", () => {
+    expect(withRememberedDepth({ theme: "rain" }, "science")).toEqual({
+      theme: "rain",
+      depth: "science",
+    });
+    expect(withRememberedDepth({ depth: "guided" }, "science")).toEqual({ depth: "guided" });
+    expect(withRememberedDepth({}, "bogus")).toEqual({});
+    expect(withRememberedDepth({}, undefined)).toEqual({});
   });
 });
