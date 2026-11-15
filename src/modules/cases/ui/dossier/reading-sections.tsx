@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { withBasePath } from "@/shared/lib/base-path";
 import type { Translator } from "@/shared/lib/i18n";
 import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
@@ -47,7 +48,11 @@ export function DataSection({ reading, translator }: SectionProps) {
         </ScrollRegion>
       </details>
       <p className="mt-4">
-        <a href={chart.csvHref} download className={buttonLink({ intent: "secondary" })}>
+        <a
+          href={withBasePath(chart.csvHref)}
+          download
+          className={buttonLink({ intent: "secondary" })}
+        >
           <Icon name="csv" />
           {t("case.download")}
         </a>
@@ -104,7 +109,7 @@ export function WhySection({ reading }: SectionProps) {
       ) : null}
       {why.link ? (
         <p>
-          <a href={why.link.href} className={buttonLink({ intent: "secondary" })}>
+          <a href={withBasePath(why.link.href)} className={buttonLink({ intent: "secondary" })}>
             <Icon name="audit" />
             {why.link.label}
           </a>

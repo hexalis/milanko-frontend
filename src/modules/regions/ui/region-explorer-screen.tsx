@@ -1,6 +1,7 @@
 import Form from "next/form";
 import Link from "next/link";
 import type { VariableCoverage } from "@/modules/coverage";
+import { withBasePath } from "@/shared/lib/base-path";
 import { formatNumber, formatSigned, withUnit } from "@/shared/lib/format";
 import { toQueryString } from "@/shared/lib/search-params";
 import { AutoSubmitSelect } from "@/shared/ui/auto-submit-select";
@@ -98,7 +99,9 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
   const calendar = layoutCalendar(anomalyPoints);
   const viewHref = (overrides: Record<string, string | number>) =>
     `/regions${toQueryString({ region: region.code, variable: variable.variable, start: query.start, end: query.end, ...overrides })}`;
-  const csvHref = `/regions/${region.code}/observations${toQueryString({ variable: variable.variable, start: query.start, end: query.end })}`;
+  const csvHref = withBasePath(
+    `/regions/${region.code}/observations${toQueryString({ variable: variable.variable, start: query.start, end: query.end })}`,
+  );
 
   return (
     <>

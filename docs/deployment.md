@@ -1,7 +1,8 @@
 # Deployment
 
 The frontend is a **Next.js server** (not a static export). The pipeline builds a
-Docker image on the VPS and runs it behind nginx.
+Docker image on the VPS and runs it behind nginx. Deploys mount the app at
+`/app`; nginx serves the Astro landing page at `/` and `/en/`.
 
 ## Pipeline
 
@@ -34,8 +35,10 @@ Create `develop`, `qa` and `production` with the branch policies
 | `DEPLOY_PORTS`          | `127.0.0.1:8021:3000`                   | `127.0.0.1:8022:3000`              | `127.0.0.1:8023:3000`                      |
 | `DEPLOY_ENV_FILE`       | `/etc/milanko/frontend-develop.env`     | `/etc/milanko/frontend-qa.env`     | `/etc/milanko/frontend-production.env`     |
 | `DEPLOY_DOCKER_NETWORK` | `milanko`                               | `milanko`                          | `milanko`                                  |
-| `DEPLOY_HEALTH_URL`     | `http://127.0.0.1:8021/`                | `http://127.0.0.1:8022/`           | `http://127.0.0.1:8023/`                   |
+| `DEPLOY_HEALTH_URL`     | `http://127.0.0.1:8021/app`             | `http://127.0.0.1:8022/app`        | `http://127.0.0.1:8023/app`                |
 | `DEPLOY_USE_SUDO`       | `false`                                 | `false`                            | `false`                                    |
+| `NEXT_BASE_PATH`        | `/app`                                  | `/app`                             | `/app`                                     |
+| `NEXT_PUBLIC_BASE_PATH` | `/app`                                  | `/app`                             | `/app`                                     |
 | `PUBLIC_BASE_URL`       | `https://dev-milanko.hexalis.org`       | `https://qa-milanko.hexalis.org`   | `https://milanko.hexalis.org`              |
 
 ### Secrets
@@ -75,8 +78,11 @@ The internal `MILANKO_API_URL` removes the need to send `X-API-Key` from the
 Next server. If the public API URL is used instead, the server must send
 `X-API-Key: $MILANKO_API_KEY`.
 
-nginx root must proxy to the container; the current backend configuration uses
-a placeholder fallback when the container is down. See
+nginx serves the landing at `/` and proxies `/app/` to the container; the
+backend configuration uses a placeholder fallback when the container is down.
+`NEXT_BASE_PATH` and `NEXT_PUBLIC_BASE_PATH` are build arguments: Next bakes the
+prefix into pages, links and assets (`/app/_next/...`). Local development and
+e2e leave them empty, so the app still runs at `/`. See
 [`docs/server-processes.md`](https://github.com/hexalis/milanko-backend/blob/main/docs/server-processes.md)
 in the backend repository.
 

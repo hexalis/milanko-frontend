@@ -1,3 +1,4 @@
+import { withBasePath } from "@/shared/lib/base-path";
 import { parseGlobeEvent, type GlobeEvent } from "./globe-messages";
 
 /*
@@ -6,7 +7,8 @@ import { parseGlobeEvent, type GlobeEvent } from "./globe-messages";
  * source, id, magnitude, unit], …] }. The explorer reads it only to reopen an event from a link.
  */
 
-export const eventPointsUrl = (year: number): string => `/globe/data/events/${year}.json`;
+export const eventPointsUrl = (year: number): string =>
+  withBasePath(`/globe/data/events/${year}.json`);
 
 /** The event with that id in a year file, validated; null when it is not there. */
 export function findEventPoint(file: unknown, id: string): GlobeEvent | null {

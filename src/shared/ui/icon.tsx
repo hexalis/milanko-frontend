@@ -1,7 +1,8 @@
 import { tv, type VariantProps } from "tailwind-variants";
+import { withBasePath } from "@/shared/lib/base-path";
 
 /** Phosphor icons from the POC sprite (public/icons/sprite.svg); ids are written without the "i-" prefix. */
-const SPRITE = "/icons/sprite.svg";
+const SPRITE = withBasePath("/icons/sprite.svg");
 
 const icon = tv({
   base: "inline-block shrink-0 fill-current align-[-0.15em]",

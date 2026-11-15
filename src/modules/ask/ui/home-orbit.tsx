@@ -1,3 +1,4 @@
+import { withBasePath } from "@/shared/lib/base-path";
 import {
   ORBIT_BOX,
   PLANET_R,
@@ -16,7 +17,7 @@ import { HomeEarthCanvas } from "./home-earth-canvas";
 
 const C = ORBIT_BOX / 2;
 const R = PLANET_R;
-const SPRITE = "/icons/sprite.svg";
+const SPRITE = withBasePath("/icons/sprite.svg");
 
 const LAYER = "pointer-events-none absolute inset-0 size-full overflow-visible";
 const PATH =
