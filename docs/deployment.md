@@ -14,7 +14,7 @@ page at `/` and `/en/`.
   pull requests against the root build.
 - **Image**: on `push`/`workflow_dispatch` to `develop`, `qa` or `main`, the
   same job builds the `/app` standalone output, packages it and pushes
-  `ghcr.io/hexalis/milanko-frontend:<env>` plus a `<env>-<sha>` tag with the
+  `ghcr.io/hexalis/milanko-frontend-app:<env>` plus a `<env>-<sha>` tag with the
   automatic `GITHUB_TOKEN` (`packages: write`).
 - **Deploy**: only on `push`/`workflow_dispatch` to `develop`, `qa` or `main`.
   The jobs are gated on `package.json` `name === "milanko-frontend"`, so the
@@ -65,10 +65,10 @@ MILANKO_API_KEY=<public-web key>
 ```
 
 The workflow logs in with `GITHUB_TOKEN`, pulls
-`ghcr.io/hexalis/milanko-frontend:<env>` and recreates the container:
+`ghcr.io/hexalis/milanko-frontend-app:<env>` and recreates the container:
 
 ```bash
-docker pull ghcr.io/hexalis/milanko-frontend:<env>
+docker pull ghcr.io/hexalis/milanko-frontend-app:<env>
 docker run -d \
   --name milanko-web-<env> \
   --restart unless-stopped \
@@ -77,7 +77,7 @@ docker run -d \
   --env-file /etc/milanko/frontend-<env>.env \
   --log-opt max-size=50m \
   --log-opt max-file=3 \
-  ghcr.io/hexalis/milanko-frontend:<env>
+  ghcr.io/hexalis/milanko-frontend-app:<env>
 ```
 
 There is no source checkout or Docker build on the VPS.
@@ -109,7 +109,7 @@ For a local public API call, add the `X-API-Key` header from the
 
 ## Rollback
 
-Each deploy publishes `ghcr.io/hexalis/milanko-frontend:<env>` and
-`ghcr.io/hexalis/milanko-frontend:<env>-<sha>`. Pull the previous SHA tag and
+Each deploy publishes `ghcr.io/hexalis/milanko-frontend-app:<env>` and
+`ghcr.io/hexalis/milanko-frontend-app:<env>-<sha>`. Pull the previous SHA tag and
 run it with the same env file, network and port to roll back. The VPS keeps the
 previous image until the next prune.
