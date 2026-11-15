@@ -38,6 +38,9 @@ export function generateStaticParams() {
   return guidedQuestionIds(getRules(), (id) => findTrend(catalog, id)).map((qid) => ({ qid }));
 }
 
+/** Only the question ids generated above are valid; anything else is a real 404, not a 200 shell. */
+export const dynamicParams = false;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const qid = decodeQid((await params).qid);
   const catalog = getCaseCatalog();
