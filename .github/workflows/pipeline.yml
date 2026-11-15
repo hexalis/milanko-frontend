@@ -212,6 +212,13 @@ jobs:
             ENV_ARGS=(--env-file "$ENV_FILE")
           fi
 
+          # Serialize deploys: concurrent pulls of the same layers race in containerd.
+          exec 9>/tmp/milanko-web-deploy.lock
+          if ! flock -w 300 9; then
+            echo "timed out waiting for the deploy lock" >&2
+            exit 1
+          fi
+
           echo "==> pulling $IMAGE_TAG"
           $SUDO docker login ghcr.io -u "$GHCR_USER" --password-stdin < "$TOKEN_FILE" >/dev/null
           $SUDO docker pull "$IMAGE_TAG"
