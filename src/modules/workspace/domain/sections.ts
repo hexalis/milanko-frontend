@@ -1,5 +1,5 @@
 export type WorkspaceSection = {
-  href: "/cases" | "/regions" | "/rankings" | "/events" | "/coverage";
+  href: "/briefing" | "/cases" | "/method" | "/regions" | "/rankings" | "/events" | "/coverage";
   /** Copy key (POC i18n) for the menu label. */
   labelKey: string;
   /** Spanish summary for the home cards (the persisted-data pages are Spanish only for now). */
@@ -8,9 +8,20 @@ export type WorkspaceSection = {
 
 export const WORKSPACE_SECTIONS: readonly WorkspaceSection[] = [
   {
+    href: "/briefing",
+    labelKey: "nav.briefing",
+    summary:
+      "Lo que muestran los datos de NASA hoy: hallazgos, pares opuestos y el falso sospechoso.",
+  },
+  {
     href: "/cases",
     labelKey: "nav.cases",
     summary: "Expedientes de tendencias y anomalías con datos de NASA, en inglés o español.",
+  },
+  {
+    href: "/method",
+    labelKey: "nav.method",
+    summary: "Cómo sabemos si un cambio es real o ruido, con un laboratorio para probarlo.",
   },
   {
     href: "/regions",

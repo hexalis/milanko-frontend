@@ -14,7 +14,12 @@ test("home links to the persisted-data workspace", async ({ page, context }) => 
     .getByRole("link", { name: "Inventario de datos" })
     .click();
   await expect(page).toHaveURL(/\/coverage$/);
-  await expect(page.getByRole("heading", { name: "Inventario de datos", level: 1 })).toBeVisible();
+  // The page content depends on the live API; the menu marks the section either way.
+  await expect(
+    page
+      .getByRole("navigation", { name: "Menú principal" })
+      .getByRole("link", { name: "Inventario de datos" }),
+  ).toHaveAttribute("aria-current", "page");
 });
 
 test("coverage filters live in the URL", async ({ page }) => {
