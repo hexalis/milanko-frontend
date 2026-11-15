@@ -1,0 +1,101 @@
+{
+  "note": "The fact base of the rules engine (rules.js). A theme and a verb make a question; 'uses' says which NASA variables answer it and with which role. No figures live here: every number comes from cases.json, global.json, events.json and event-files.json. Which analyses are reviewed is NOT written here either: rules.js reads it from those data files. Texts are in i18n.js under ask.*",
+  "verbs": [
+    { "id": "changed", "type": "trend" },
+    { "id": "same_as", "type": "comparison" },
+    { "id": "unusual_before", "type": "anomaly" },
+    { "id": "record_of", "type": "catalog" }
+  ],
+  "themes": [
+    { "id": "temperature", "family": "temperature" },
+    { "id": "rain", "family": "water" },
+    { "id": "soil_water", "family": "water" },
+    { "id": "greenness", "family": "vegetation" },
+    { "id": "weather", "family": "water" },
+    { "id": "events", "family": "earth" },
+    { "id": "water_available", "family": "water" },
+    { "id": "dangerous_heat", "family": "temperature" },
+    { "id": "sea_ice", "family": "ice" },
+    { "id": "frost", "family": "temperature" },
+    { "id": "snow", "family": "ice" },
+    { "id": "sun_clouds", "family": "temperature" },
+    { "id": "days_nights", "family": "temperature" }
+  ],
+  "uses": [
+    { "theme": "temperature", "type": "trend", "variable": "T2M", "role": "main" },
+    { "theme": "temperature", "type": "anomaly", "variable": "T2M_MAX", "role": "main" },
+    { "theme": "rain", "type": "trend", "variable": "PRECTOTCORR", "role": "main" },
+    { "theme": "rain", "type": "anomaly", "variable": "PRECTOTCORR", "role": "main" },
+    { "theme": "soil_water", "type": "trend", "variable": "GWETROOT", "role": "main" },
+    { "theme": "soil_water", "type": "anomaly", "variable": "GWETROOT", "role": "main" },
+    { "theme": "greenness", "type": "trend", "variable": "NDVI", "role": "main" },
+    { "theme": "weather", "type": "anomaly", "variable": "T2M_MAX", "role": "main" },
+    { "theme": "weather", "type": "anomaly", "variable": "PRECTOTCORR", "role": "main" },
+    { "theme": "weather", "type": "anomaly", "variable": "GWETROOT", "role": "main" },
+    { "theme": "events", "type": "catalog", "variable": "EONET_COUNT", "role": "main" },
+    {
+      "theme": "water_available",
+      "type": "trend",
+      "variable": "PRECTOTCORR",
+      "role": "main",
+      "reading": { "up": "more_water", "down": "less_water" }
+    },
+    {
+      "theme": "water_available",
+      "type": "trend",
+      "variable": "GWETROOT",
+      "role": "main",
+      "reading": { "up": "more_water", "down": "less_water" }
+    },
+    { "theme": "dangerous_heat", "type": "trend", "variable": "HEAT_INDEX_DAYS", "role": "main" },
+    { "theme": "sea_ice", "type": "trend", "variable": "FRSEAICE", "role": "main" },
+    { "theme": "frost", "type": "trend", "variable": "FROST_DAYS", "role": "main" },
+    { "theme": "snow", "type": "trend", "variable": "SNODP", "role": "main" },
+    { "theme": "snow", "type": "trend", "variable": "PRECSNO", "role": "main" },
+    { "theme": "sun_clouds", "type": "trend", "variable": "ALLSKY_SFC_SW_DWN", "role": "main" },
+    { "theme": "sun_clouds", "type": "trend", "variable": "CLOUD_AMT", "role": "main" },
+    { "theme": "days_nights", "type": "trend", "variable": "T2M_MAX", "role": "main" },
+    { "theme": "days_nights", "type": "trend", "variable": "T2M_MIN", "role": "main" }
+  ],
+  "derived": [
+    {
+      "variable": "HEAT_INDEX_DAYS",
+      "from": ["T2M_MAX", "QV2M", "PS"],
+      "method": "Days a year when the NOAA heat index reaches the danger level, 39.4 °C (sources.js, heatDays)"
+    }
+  ],
+  "live": {
+    "trend": ["T2M", "PRECTOTCORR", "GWETROOT", "RH2M", "ALLSKY_SFC_SW_DWN", "HEAT_INDEX_DAYS"],
+    "anomaly": ["T2M_MAX", "PRECTOTCORR", "GWETROOT"]
+  },
+  "cautions": [
+    {
+      "id": "nicaragua-merra2",
+      "variables": ["PRECTOTCORR", "T2M_MAX", "T2M"],
+      "box": { "lat": [10.7, 15.1], "lon": [-87.8, -82.7] },
+      "evidence": "docs/04-Portal.md (Managua rain, likely reanalysis artifact, not used as a case), docs/06-Datos-prioritarios.md (T2M_MAX in Managua), docs/07-Fuentes-senal-o-ruido.md (cooling in Managua and neighboring cells). The box is the rough extent of Nicaragua: the team should confirm it."
+    }
+  ],
+  "examples": [
+    { "theme": "temperature", "type": "trend", "where": "svalbard-warming" },
+    { "theme": "rain", "type": "trend", "where": "murray-rain" },
+    { "theme": "soil_water", "type": "comparison", "where": "chile-drying~sahel-wetting" },
+    { "theme": "weather", "type": "anomaly", "where": "eonet-24723" }
+  ],
+  "published": [
+    {
+      "id": "warmer",
+      "theme": "temperature",
+      "type": "trend",
+      "place": "svalbard-warming",
+      "compare": "rainfall"
+    },
+    {
+      "id": "rainfall",
+      "theme": "rain",
+      "type": "trend",
+      "place": "murray-rain",
+      "compare": "warmer"
+    }
+  ]
+}
