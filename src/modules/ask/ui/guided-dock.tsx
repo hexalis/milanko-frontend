@@ -55,6 +55,7 @@ function LessonBar({ label, back, quiz, next }: LessonBarProps) {
   return (
     <nav
       aria-label={label}
+      data-tour="lesson-dock"
       className="border-border-subtle flex items-center gap-3 border-t pt-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))]"
     >
       <Link

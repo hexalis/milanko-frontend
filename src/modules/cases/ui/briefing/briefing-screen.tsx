@@ -27,7 +27,13 @@ import { OppositePairs } from "./opposite-pairs";
  * the latest folders → theme block (featured case) → desk CTA.
  */
 
-type BriefingScreenProps = { translator: Translator; catalog: CaseCatalog; audit: EventAudit };
+type BriefingScreenProps = {
+  translator: Translator;
+  catalog: CaseCatalog;
+  audit: EventAudit;
+  /** The page's tour button, beside the title. */
+  tour?: ReactNode;
+};
 
 const CARD_LINK = [
   "flex h-full rounded-card bg-bg-surface text-text-primary shadow-card no-underline",
@@ -44,7 +50,10 @@ type LedgerItem = { href: string; icon: string; label: string; count: LedgerCoun
 
 function Ledger({ items, of }: { items: LedgerItem[]; of: string }) {
   return (
-    <ul className="medium:grid-cols-3 divide-border-subtle medium:divide-x medium:divide-y-0 grid max-w-[880px] divide-y">
+    <ul
+      data-tour="brief-ledger"
+      className="medium:grid-cols-3 divide-border-subtle medium:divide-x medium:divide-y-0 grid max-w-[880px] divide-y"
+    >
       {items.map((item) => (
         <li key={item.href} className="min-w-0 py-2">
           <Link href={item.href} className={LEDGER_LINK}>
@@ -69,7 +78,7 @@ type Step = { href: string; icon: string; title: string; description: string };
 
 function Steps({ title, steps }: { title: string; steps: Step[] }) {
   return (
-    <section aria-labelledby="steps-title">
+    <section aria-labelledby="steps-title" data-tour="brief-steps">
       <h2 id="steps-title" className="sr-only">
         {title}
       </h2>
@@ -100,12 +109,14 @@ type ShelfProps = {
   files: CaseFile[];
   translator: Translator;
   catalog: CaseCatalog;
+  /** Anchor of this shelf in the page's tour (`data-tour`). */
+  tour?: string;
 };
 
 /* Deferred: the POC's "read" mark on folders already opened (localStorage etd-read). */
-function Shelf({ id, title, lead, more, files, translator, catalog }: ShelfProps) {
+function Shelf({ id, title, lead, more, files, translator, catalog, tour }: ShelfProps) {
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-5">
+    <section aria-labelledby={id} data-tour={tour} className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h2 id={id} className="text-heading-h2 font-display text-text-primary">
@@ -136,6 +147,7 @@ function ClosingCta({
   return (
     <section
       aria-labelledby="cta-title"
+      data-tour="brief-cta"
       className="rounded-shell bg-bg-surface shadow-card medium:flex-row medium:items-center medium:p-9 flex flex-col justify-between gap-6 p-6"
     >
       <div className="flex flex-col gap-1">
@@ -150,7 +162,7 @@ function ClosingCta({
   );
 }
 
-export function BriefingScreen({ translator, catalog, audit }: BriefingScreenProps) {
+export function BriefingScreen({ translator, catalog, audit, tour }: BriefingScreenProps) {
   const { t } = translator;
   const ledger = briefingLedger(catalog, audit);
   const pairs = oppositePairs(catalog.trends);
@@ -160,9 +172,12 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
   return (
     <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto flex w-full flex-col gap-12 px-4 pt-8 pb-16">
       <header className="flex max-w-[900px] flex-col gap-4">
-        <h1 className="text-display-s font-display text-text-primary text-balance">
-          {t("brief.title")}
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <h1 className="text-display-s font-display text-text-primary text-balance">
+            {t("brief.title")}
+          </h1>
+          {tour}
+        </div>
         <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">
           {t("brief.lead", { n: catalog.all.length, years: longestRecord(catalog.trends) })}
         </p>
@@ -233,6 +248,7 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
 
       <Shelf
         id="latest-title"
+        tour="brief-shelf"
         title={t("brief.cases.title")}
         lead={t("brief.cases.lead")}
         more={{

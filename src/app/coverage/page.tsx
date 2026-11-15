@@ -5,6 +5,8 @@ import { getCoverage } from "@/server/integrations/milanko-api/coverage";
 import { readString, type SearchParams } from "@/shared/lib/search-params";
 import { LoadingPanel } from "@/shared/ui/notice";
 import { PageShell } from "@/shared/ui/page-shell";
+import { getTranslator } from "@/modules/copy";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 
 export const metadata: Metadata = { title: "Inventario de datos" };
 
@@ -27,7 +29,12 @@ async function CoverageContent({ searchParams }: PageProps) {
 
 export default function CoveragePage({ searchParams }: PageProps) {
   return (
-    <PageShell lang="es" kicker="Earth Trend Detective · datos persistidos" title="Inventario de datos">
+    <PageShell
+      lang="es"
+      kicker="Earth Trend Detective · datos persistidos"
+      title="Inventario de datos"
+      aside={<PageTour id="data" translator={getTranslator("es")} />}
+    >
       <Suspense fallback={<LoadingPanel label="Cargando cobertura…" />}>
         <CoverageContent searchParams={searchParams} />
       </Suspense>

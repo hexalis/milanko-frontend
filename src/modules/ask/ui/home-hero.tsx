@@ -15,7 +15,8 @@ export function HomeHero({ translator }: { translator: Translator }) {
   return (
     <header className="bg-space medium:mx-0 medium:rounded-[20px] relative isolate -mx-4 grid grid-cols-1 items-center overflow-hidden px-5 pt-4 pb-10 text-white @2xl/home:px-8 @2xl/home:pt-8 @2xl/home:pb-12 @3xl/home:grid-cols-2 @3xl/home:gap-8 @3xl/home:py-14 @3xl/home:ps-14 @3xl/home:pe-12">
       <Stars />
-      <div>
+      {/* The tour points at the words, not the whole cover: on phones the cover fills the screen. */}
+      <div data-tour="home-hero">
         <h1 className="m-0 max-w-[13ch] text-[36px] leading-[1.02] font-bold tracking-[-0.03em] text-balance text-white @2xl/home:text-[clamp(38px,4.6vw,62px)]">
           {t("home2.title")}
         </h1>

@@ -46,8 +46,18 @@ export type GlobeTile = {
   period: TilePeriod;
 };
 
+/** The globe's own controls, which the page's guided tour points at. */
+export const GLOBE_CHROME = ["search", "regions", "zoom", "layers"] as const;
+type GlobeChromePart = (typeof GLOBE_CHROME)[number];
+
+/** Where a control sits in the frame, in CSS pixels. */
+type ChromeRect = { left: number; top: number; width: number; height: number };
+
+export type GlobeChrome = Partial<Record<GlobeChromePart, ChromeRect>>;
+
 export type GlobeMessage =
   | { type: "ready" }
+  | { type: "chrome"; rects: GlobeChrome }
   | { type: "escape" }
   | { type: "select"; sel: GlobeSelection }
   | ({ type: "tile" } & GlobeTile);
@@ -159,6 +169,23 @@ function parseTile(value: Unknown): GlobeTile | null {
   return { lat, lon, km, n, cats: counts, latest: last, period };
 }
 
+/** Frame pixels stay within a screen's reach; anything else is dropped. */
+const MAX_PX = 20_000;
+const isPx = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && Math.abs(value) <= MAX_PX;
+
+function parseChrome(value: unknown): GlobeChrome {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    GLOBE_CHROME.flatMap((part) => {
+      const box = value[part];
+      if (!Array.isArray(box) || box.length !== 4 || !box.every(isPx)) return [];
+      const [left, top, width, height] = box as [number, number, number, number];
+      return width > 0 && height > 0 ? [[part, { left, top, width, height }]] : [];
+    }),
+  );
+}
+
 /** A message from the globe, validated; null for anything else (other frames, extensions…). */
 export function parseGlobeMessage(data: unknown): GlobeMessage | null {
   if (!isRecord(data) || data.etd !== 1) return null;
@@ -167,6 +194,8 @@ export function parseGlobeMessage(data: unknown): GlobeMessage | null {
       return { type: "ready" };
     case "escape":
       return { type: "escape" };
+    case "chrome":
+      return { type: "chrome", rects: parseChrome(data.rects) };
     case "select": {
       const sel = parseSelection(data.sel);
       return sel ? { type: "select", sel } : null;

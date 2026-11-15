@@ -2175,7 +2175,7 @@ addEventListener('keydown', (e) => {
 });
 setLayer(['events', 'weather', 'data'].includes(Q0.get('layer')) ? Q0.get('layer') : 'cases');
 buildEvents(2025);
-queueMicrotask(() => tell({ type: 'ready' }));
+queueMicrotask(() => { tell({ type: 'ready' }); tellChrome(); });
 
 /* ---------- Fly, taps and the portal bridge ---------- */
 const flyTo = (lat, lon) => flyCam(lat, lon, CLOSE_ALT);
@@ -2192,6 +2192,34 @@ function tell(msg) {
   // Milanko: the frame is sandboxed (opaque origin), so it cannot name its parent's origin; the page
   // checks the message's source window instead.
   if (EMBED) window.parent.postMessage({ etd: 1, ...msg }, '*');
+}
+// Milanko: where the controls sit (frame pixels, [left, top, width, height]), so the portal's guided tour can
+// point at each one; the page cannot read this sandboxed DOM. Sent once laid out and whenever they move.
+const CHROME = { search: '.gx-search', regions: '#regions', zoom: '.gx-tools .zoom', layers: '.gx-dock' };
+let chromeQueued = false;
+function tellChrome() {
+  if (!EMBED || chromeQueued) return;
+  chromeQueued = true;
+  requestAnimationFrame(() => {
+    chromeQueued = false;
+    const rects = {};
+    for (const [part, sel] of Object.entries(CHROME)) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const r = el.getBoundingClientRect(), st = getComputedStyle(el);
+      if (r.width < 1 || r.height < 1 || st.visibility === 'hidden' || +st.opacity === 0) continue;
+      rects[part] = [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)];
+    }
+    tell({ type: 'chrome', rects });
+  });
+}
+if (EMBED) {
+  addEventListener('load', tellChrome);
+  addEventListener('resize', tellChrome);
+  // The controls slide (transform) when the portal's drawer covers a side, and the dock folds on phones.
+  document.addEventListener('transitionend', tellChrome, true);
+  const chromeObserver = new ResizeObserver(tellChrome);
+  Object.values(CHROME).forEach((sel) => { const el = document.querySelector(sel); if (el) chromeObserver.observe(el); });
 }
 if (EMBED) card.remove();
 let lastEv = null;   // the event last tapped here, so its tile can animate its kind

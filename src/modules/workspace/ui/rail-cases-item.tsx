@@ -44,7 +44,7 @@ export function RailCasesItem({
 
   return (
     <>
-      <div className="flex items-center gap-0.5">
+      <div data-tour="shell-cases" className="flex items-center gap-0.5">
         <ShellNavLink href={CASES.href} className={`${RAIL_ITEM} min-h-14 flex-1`}>
           <NavIcon icon={CASES.icon} hasActiveIcon={CASES.hasActiveIcon} />
           <span className="nav-collapsed:sr-only flex min-w-0 flex-1 flex-col gap-0.5">

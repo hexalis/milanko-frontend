@@ -65,7 +65,7 @@ const DOOR = [
 
 function AskDoor({ t }: Pick<Translator, "t">) {
   return (
-    <Link href="/ask" data-st="ask" className={ASK}>
+    <Link href="/ask" data-st="ask" data-tour="home-door-ask" className={ASK}>
       <div>
         <h3 className="m-0 text-[26px] leading-[1.1] font-bold tracking-[-0.02em] text-current @2xl/home:text-[32px]">
           {t("nav.ask")}
@@ -111,7 +111,10 @@ export function HomeDoors({ translator }: { translator: Translator }) {
         {t("home2.doors.d")}
       </p>
       <AskDoor t={t} />
-      <ul className="m-0 mt-5 grid list-none grid-cols-1 gap-5 p-0 @3xl/home:grid-cols-3">
+      <ul
+        data-tour="home-doors"
+        className="m-0 mt-5 grid list-none grid-cols-1 gap-5 p-0 @3xl/home:grid-cols-3"
+      >
         {DOORS.map((door) => {
           const Art = DOOR_ART[door.key];
           return (

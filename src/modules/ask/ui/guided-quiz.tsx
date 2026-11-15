@@ -50,7 +50,7 @@ export function GuidedQuiz({ action, name, legend, options, picked, keep }: Guid
       {Object.entries(keep).map(([key, value]) =>
         value ? <input key={key} type="hidden" name={key} value={value} /> : null,
       )}
-      <fieldset className="m-0 min-w-0 border-0 p-0">
+      <fieldset data-tour="lesson-quiz" className="m-0 min-w-0 border-0 p-0">
         <legend className="sr-only">{legend}</legend>
         <div className={GRID[options.length === 2 ? 2 : 3]}>
           {options.map((option, index) => (
@@ -103,7 +103,10 @@ export function GuidedChart({
     n: file.series.length,
   });
   return (
-    <div className="rounded-card bg-bg-surface shadow-raised medium:px-5 medium:pt-5 flex flex-col gap-3 px-3 pt-3 pb-4">
+    <div
+      data-tour="lesson-chart"
+      className="rounded-card bg-bg-surface shadow-raised medium:px-5 medium:pt-5 flex flex-col gap-3 px-3 pt-3 pb-4"
+    >
       <ChartHead subtitle={subtitle} />
       {withTrend ? (
         <SeriesChart

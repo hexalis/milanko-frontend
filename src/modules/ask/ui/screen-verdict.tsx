@@ -29,14 +29,20 @@ const ANSWER_ID = "ask-answer";
 function VerdictRow({
   icon,
   label,
+  tour,
   children,
 }: {
   icon: string;
   label: string;
+  /** Anchor of this row in the screen's tour (`data-tour`). */
+  tour?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="border-border-subtle medium:grid-cols-[minmax(150px,220px)_minmax(0,1fr)] grid gap-x-6 gap-y-1.5 border-b py-3.5 last:border-b-0">
+    <div
+      data-tour={tour}
+      className="border-border-subtle medium:grid-cols-[minmax(150px,220px)_minmax(0,1fr)] grid gap-x-6 gap-y-1.5 border-b py-3.5 last:border-b-0"
+    >
       <dt className="text-body-m-strong text-text-primary flex items-start gap-2">
         <span className="text-text-brand mt-0.5">
           <Icon name={icon} />
@@ -56,7 +62,10 @@ function AnswerCard({ view, translator, catalog }: StepProps) {
     catalog,
   });
   return (
-    <div className="rounded-card bg-bg-surface shadow-raised flex flex-col items-start gap-2.5 p-5">
+    <div
+      data-tour="verdict-answer"
+      className="rounded-card bg-bg-surface shadow-raised flex flex-col items-start gap-2.5 p-5"
+    >
       <p
         id={ANSWER_ID}
         className="font-display text-text-primary text-[clamp(22px,2.6vw,30px)] leading-tight font-semibold"
@@ -89,7 +98,7 @@ function VerdictRows({ view, translator, catalog }: StepProps) {
         {fileName(file, context)} · {trendText(file, "region", context)}{" "}
         <span className="text-text-tertiary">({t("ask.v.cell")})</span>
       </VerdictRow>
-      <VerdictRow icon="chart" label={t("ask.v.howmuch")}>
+      <VerdictRow icon="chart" label={t("ask.v.howmuch")} tour="verdict-howmuch">
         {t(stats.significant ? "ask.v.much" : "ask.v.much.flat", {
           rate: rateLabel(file, context),
           total: changeLabel(file, context),
@@ -105,7 +114,7 @@ function VerdictRows({ view, translator, catalog }: StepProps) {
           </span>
         ) : null}
       </VerdictRow>
-      <VerdictRow icon="warning" label={t("ask.v.cannot")}>
+      <VerdictRow icon="warning" label={t("ask.v.cannot")} tour="verdict-cannot">
         {trendText(file, "limits", context)} {t("ask.v.cause")}
       </VerdictRow>
     </dl>
@@ -120,7 +129,7 @@ export function ScreenVerdict(props: StepProps) {
   const feedback = hunchFeedback(hunch, file.t, direction);
   return (
     <>
-      <p className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+      <p data-tour="verdict-stamp" className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
         <VerdictStamp verdict={verdictOf(file)} label={verdictLabel(file, context)} />
         <EvidenceMeter strength={file.t.strength} word={strengthWord(file, context)} />
       </p>
@@ -132,16 +141,18 @@ export function ScreenVerdict(props: StepProps) {
           {t(`ask.hunch.${feedback}`)}
         </GuidedCallout>
       ) : null}
-      <EvidenceBlock tone={THEME_TONE[file.theme] ?? "stone"}>
-        <h2 className="text-heading-h2 font-display text-text-primary">{t("case.why")}</h2>
-        <p className="text-label-m text-text-secondary flex items-center gap-2">
-          <Icon name="info" />
-          {t("case.why.tag")}
-        </p>
-        <p className="text-body-l font-reading text-text-primary max-w-[60ch]">
-          {trendText(file, "why", context)}
-        </p>
-      </EvidenceBlock>
+      <div data-tour="verdict-why">
+        <EvidenceBlock tone={THEME_TONE[file.theme] ?? "stone"}>
+          <h2 className="text-heading-h2 font-display text-text-primary">{t("case.why")}</h2>
+          <p className="text-label-m text-text-secondary flex items-center gap-2">
+            <Icon name="info" />
+            {t("case.why.tag")}
+          </p>
+          <p className="text-body-l font-reading text-text-primary max-w-[60ch]">
+            {trendText(file, "why", context)}
+          </p>
+        </EvidenceBlock>
+      </div>
     </>
   );
 }

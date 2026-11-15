@@ -57,6 +57,7 @@ export function OppositePairs({ pairs, translator, catalog }: OppositePairsProps
   return (
     <section
       aria-labelledby="pairs-title"
+      data-tour="brief-pairs"
       // A night block in both themes: its light-theme tokens make bg-inverse the night sky.
       data-theme="light"
       className="rounded-shell bg-bg-inverse text-text-inverse medium:p-10 shadow-card flex flex-col gap-6 p-6"

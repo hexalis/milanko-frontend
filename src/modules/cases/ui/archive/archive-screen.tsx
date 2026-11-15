@@ -1,5 +1,6 @@
 import Form from "next/form";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { getTranslator } from "@/modules/copy";
 import type { Locale, Translator } from "@/shared/lib/i18n";
 import { AutoSubmitSelect } from "@/shared/ui/auto-submit-select";
@@ -49,6 +50,8 @@ type ArchiveScreenProps = {
   locale: Locale;
   /** The shell's search opened the archive (`?focus=1`): the search box takes the focus. */
   isSearchFocused?: boolean;
+  /** The page's tour button, beside the kicker. */
+  tour?: ReactNode;
 };
 
 export function ArchiveScreen({
@@ -57,6 +60,7 @@ export function ArchiveScreen({
   audit,
   locale,
   isSearchFocused,
+  tour,
 }: ArchiveScreenProps) {
   const translator = getTranslator(locale);
   const { t } = translator;
@@ -70,7 +74,7 @@ export function ArchiveScreen({
   }
   const search = resolveNearSearch(catalog, state);
   return (
-    <PageShell {...shell} lead={t("arch.lead3", { n: catalog.all.length })}>
+    <PageShell {...shell} lead={t("arch.lead3", { n: catalog.all.length })} aside={tour}>
       <Form action={ARCHIVE_PATH}>
         <HiddenState state={search.state} />
         <section aria-labelledby="archive-results-title" className="flex min-w-0 flex-col gap-4">
@@ -130,7 +134,7 @@ function ArchiveResults({ search, catalog, translator }: ArchiveResultsProps) {
       ) : search.place === "not-found" ? (
         <NearMessage kind="not-found" text={search.text} translator={translator} />
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div data-tour="arch-filters" className="flex flex-wrap items-center justify-between gap-3">
         <ActiveFilters
           state={state}
           shown={hits.length}
@@ -176,6 +180,7 @@ function AuditCard({ translator }: { translator: Translator }) {
   return (
     <Link
       href={AUDIT_ARCHIVE_HREF}
+      data-tour="arch-audit"
       className="rounded-card bg-bg-surface shadow-card text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring mt-4 flex flex-wrap items-center gap-x-3.5 gap-y-2 p-4 no-underline"
     >
       <span className="text-text-brand">
@@ -204,8 +209,8 @@ type NearShelfProps = Omit<ShelfProps, "state"> & { near: NearPlace };
 function NearShelf({ files, near, translator, catalog }: NearShelfProps) {
   return (
     <ul className={SHELF_GRID}>
-      {files.map((file) => (
-        <li key={file.id}>
+      {files.map((file, index) => (
+        <li key={file.id} data-tour={index === 0 ? "arch-card" : undefined}>
           <CaseFolder
             file={file}
             translator={translator}
@@ -245,8 +250,8 @@ function Shelf({ files, state, translator, catalog }: ShelfProps) {
             <p className="text-body-s text-text-secondary">{t(`arch.kind.${group.kind}.d`)}</p>
           </header>
           <ul className={SHELF_GRID}>
-            {group.files.map((file) => (
-              <li key={file.id}>
+            {group.files.map((file, index) => (
+              <li key={file.id} data-tour={index === 0 ? "arch-card" : undefined}>
                 <CaseFolder
                   file={file}
                   translator={translator}

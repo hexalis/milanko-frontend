@@ -38,7 +38,7 @@ type ArchiveTopicsProps = {
 export function ArchiveTopics({ state, counts, translator }: ArchiveTopicsProps) {
   const { t } = translator;
   return (
-    <nav aria-label={t("arch.topics")}>
+    <nav aria-label={t("arch.topics")} data-tour="arch-topics">
       <ul className="medium:grid-cols-3 expanded:grid-cols-5 grid grid-cols-2 gap-3">
         {ARCHIVE_TOPICS.map((topic) => (
           <li key={topic} className="flex">

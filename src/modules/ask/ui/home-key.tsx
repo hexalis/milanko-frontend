@@ -79,7 +79,11 @@ function Glyph({ word, label }: { word: KeyWord; label: string }) {
 export function HomeKey({ translator }: { translator: Translator }) {
   const { t } = translator;
   return (
-    <section aria-labelledby="home-key-title" className="py-12 @2xl/home:py-18">
+    <section
+      aria-labelledby="home-key-title"
+      data-tour="home-key"
+      className="py-12 @2xl/home:py-18"
+    >
       <h2
         id="home-key-title"
         className="m-0 text-[clamp(28px,3vw,36px)] leading-[1.1] font-bold text-balance"

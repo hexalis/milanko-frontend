@@ -106,6 +106,7 @@ export function WorkspaceRail({
        */}
       <nav
         aria-label={copy.menu}
+        data-tour="shell-nav"
         className="nav-collapsed:overflow-visible -mx-2 -mt-1.5 -mb-1 flex min-h-0 flex-1 [scrollbar-width:thin] flex-col gap-1 overflow-y-auto overscroll-contain px-2 pt-2 pb-1"
       >
         <ShellNavLink href={ASK.href} className={ASK_CTA}>
@@ -159,7 +160,10 @@ export function WorkspaceRail({
           inputId={search.inputId}
           focusHref={search.focusHref}
         />
-        <div className="nav-collapsed:flex-col flex items-center justify-between gap-2">
+        <div
+          data-tour="shell-prefs"
+          className="nav-collapsed:flex-col flex items-center justify-between gap-2"
+        >
           <div className="nav-collapsed:[&_fieldset]:flex-col">{languageSwitch}</div>
           <ThemeSwitch label={copy.themeGroup} optionLabels={copy.themes} placement="rail" />
         </div>

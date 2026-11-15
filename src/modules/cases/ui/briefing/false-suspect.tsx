@@ -27,6 +27,7 @@ export function FalseSuspect({ suspect, audit, realTrends, translator }: FalseSu
   return (
     <section
       aria-labelledby="suspect-title"
+      data-tour="brief-suspect"
       className="rounded-shell bg-surface-tone-5 text-text-primary expanded:grid-cols-2 medium:p-10 shadow-card grid items-center gap-8 p-6"
     >
       <div className="flex flex-col gap-3">

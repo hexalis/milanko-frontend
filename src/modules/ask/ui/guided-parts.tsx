@@ -43,12 +43,18 @@ export function GuidedCrumbs({ navLabel, links, current }: GuidedCrumbsProps) {
 const CALLOUT =
   "rounded-card bg-bg-surface shadow-card grid grid-cols-[1.5rem_minmax(0,1fr)] gap-3 px-[18px] py-4";
 
-type CalloutProps = { icon: string; title?: string; children: ReactNode };
+type CalloutProps = {
+  icon: string;
+  title?: string;
+  /** Anchor of this remark in the page's tour (`data-tour`). */
+  tour?: string;
+  children: ReactNode;
+};
 
 /** A boxed remark: an icon, an optional bold lead-in, and the sentence. */
-export function GuidedCallout({ icon, title, children }: CalloutProps) {
+export function GuidedCallout({ icon, title, tour, children }: CalloutProps) {
   return (
-    <div className={CALLOUT}>
+    <div data-tour={tour} className={CALLOUT}>
       <span className="text-text-brand mt-0.5 text-[22px]">
         <Icon name={icon} />
       </span>
@@ -158,9 +164,21 @@ export function LessonMore({ summary, children }: { summary: string; children: R
 type NavLink = { href: string; label: string };
 
 /** Back and forward along the investigation. */
-export function GuidedNav({ label, back, next }: { label: string; back: NavLink; next: NavLink }) {
+type GuidedNavProps = {
+  label: string;
+  back: NavLink;
+  next: NavLink;
+  /** Anchor of this nav in the page's tour (`data-tour`). */
+  tour?: string;
+};
+
+export function GuidedNav({ label, back, next, tour }: GuidedNavProps) {
   return (
-    <nav aria-label={label} className="flex max-w-[980px] flex-wrap justify-between gap-3">
+    <nav
+      aria-label={label}
+      data-tour={tour}
+      className="flex max-w-[980px] flex-wrap justify-between gap-3"
+    >
       <Link href={back.href} className={buttonLink({ intent: "secondary" })}>
         <Icon name="arrow-left" />
         {back.label}

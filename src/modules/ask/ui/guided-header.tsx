@@ -26,6 +26,7 @@ function ProgressSteps({ screen, translator }: { screen: Screen; translator: Tra
   return (
     <ol
       aria-label={t("ask.progress")}
+      data-tour="lesson-bar"
       className="bg-bg-surface flex h-3.5 overflow-hidden rounded-full shadow-[inset_0_0_0_1px_var(--color-border-subtle)]"
     >
       {ASK_FLOW.map((name, index) => (
@@ -50,7 +51,7 @@ function ProgressSteps({ screen, translator }: { screen: Screen; translator: Tra
 function DepthMenu({ id, screen, depth, hunch, reading, translator }: LessonTopProps) {
   const { t } = translator;
   return (
-    <details className="group/aa relative">
+    <details data-tour="lesson-depth" className="group/aa relative">
       <summary
         aria-label={t("ask.depth.aria")}
         title={t("ask.depth.label")}

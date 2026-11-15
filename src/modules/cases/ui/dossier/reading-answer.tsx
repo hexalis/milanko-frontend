@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { tv } from "tailwind-variants";
 import type { Translator } from "@/shared/lib/i18n";
 import { Icon } from "@/shared/ui/icon";
@@ -36,7 +37,7 @@ type HeadProps = { reading: CaseReading; translator: Translator };
 
 function Crumbs({ reading, translator }: HeadProps) {
   return (
-    <nav aria-label={translator.t("nav.breadcrumb")} className="text-label-m medium:pt-8 pt-6">
+    <nav aria-label={translator.t("nav.breadcrumb")} className="text-label-m">
       <ol className="text-text-secondary flex flex-wrap items-center gap-1.5">
         <li>
           <Link
@@ -60,11 +61,16 @@ function Crumbs({ reading, translator }: HeadProps) {
 function AnswerCard({ reading, translator }: HeadProps) {
   const { answer } = reading;
   return (
-    <section aria-labelledby="cf-answer" className={`mt-3 ${answerCard({ tone: answer.tone })}`}>
+    <section
+      aria-labelledby="cf-answer"
+      data-tour="cf-answer"
+      className={`mt-3 ${answerCard({ tone: answer.tone })}`}
+    >
       <h2 id="cf-answer" className="sr-only">
         {translator.t("cf.s.answer")}
       </h2>
       <p
+        data-tour="cf-verdict"
         className={`font-display flex items-center gap-2.5 text-[clamp(22px,2.6vw,28px)] font-semibold ${toneInk({ tone: answer.tone })}`}
       >
         <Icon name={answer.icon} size="lg" />
@@ -73,7 +79,7 @@ function AnswerCard({ reading, translator }: HeadProps) {
       <div className="mt-1.5">
         <Plain>{answer.plain}</Plain>
       </div>
-      <p className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+      <p data-tour="cf-figure" className="mt-4 flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
         <strong
           className={figure({ isSoft: answer.isSoft, direction: answer.figDirection ?? "none" })}
         >
@@ -87,10 +93,14 @@ function AnswerCard({ reading, translator }: HeadProps) {
   );
 }
 
-export function ReadingHead({ reading, translator }: HeadProps) {
+/** `tour` is the page's tour button, beside the breadcrumb. */
+export function ReadingHead({ reading, translator, tour }: HeadProps & { tour?: ReactNode }) {
   return (
     <>
-      <Crumbs reading={reading} translator={translator} />
+      <div className="medium:pt-8 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-6">
+        <Crumbs reading={reading} translator={translator} />
+        {tour}
+      </div>
       <h1 className="text-display-s font-display text-text-primary max-w-[28ch] font-semibold text-balance">
         {reading.question}
       </h1>

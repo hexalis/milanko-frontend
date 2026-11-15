@@ -49,7 +49,10 @@ function DoneCard({ view, translator, catalog }: StepProps) {
     },
   ];
   return (
-    <div className="rounded-card bg-bg-surface shadow-card medium:grid-cols-[3.5rem_minmax(0,1fr)] grid grid-cols-1 items-start gap-[18px] p-6">
+    <div
+      data-tour="done-card"
+      className="rounded-card bg-bg-surface shadow-card medium:grid-cols-[3.5rem_minmax(0,1fr)] grid grid-cols-1 items-start gap-[18px] p-6"
+    >
       <span className="bg-surface-tone-3 text-action-primary grid size-14 place-items-center rounded-full text-[30px]">
         <Icon name="confirmed" />
       </span>
@@ -106,7 +109,7 @@ function DeeperActions({ view, translator }: Omit<StepProps, "catalog">) {
   const { t } = translator;
   const { file } = view;
   return (
-    <div className="flex flex-wrap gap-3">
+    <div data-tour="done-deeper" className="flex flex-wrap gap-3">
       <a href={withBasePath(`/cases/${file.id}/data`)} download className={ACTION}>
         <Icon name="csv" />
         {t("case.download")}
@@ -155,9 +158,13 @@ export function ScreenDone(props: DoneProps) {
       <h2 className="font-display text-text-primary mt-2 text-[20px] font-semibold">
         {t("ask.done.next")}
       </h2>
-      <NextLinks {...props} />
+      <div data-tour="done-next" className="empty:hidden">
+        <NextLinks {...props} />
+      </div>
       <DeeperActions view={props.view} translator={props.translator} />
-      <CheckYourself {...props} />
+      <div data-tour="done-check">
+        <CheckYourself {...props} />
+      </div>
     </>
   );
 }

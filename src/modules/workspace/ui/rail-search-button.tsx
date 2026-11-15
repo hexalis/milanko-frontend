@@ -14,6 +14,7 @@ export function RailSearchButton({ label, inputId, focusHref }: RailSearchButton
     <button
       type="button"
       onClick={openSearch}
+      data-tour="shell-search"
       aria-keyshortcuts="/"
       className="group/item border-border-default bg-bg-surface-sunken text-label-s text-text-secondary hover:border-border-strong hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring nav-collapsed:justify-center nav-collapsed:border-transparent nav-collapsed:bg-transparent nav-collapsed:px-0 relative flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg border px-3"
     >

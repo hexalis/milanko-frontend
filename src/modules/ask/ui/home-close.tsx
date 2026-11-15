@@ -13,6 +13,7 @@ export function HomeClose({ translator }: { translator: Translator }) {
   return (
     <section
       aria-labelledby="home-close-title"
+      data-tour="home-close"
       className="bg-space medium:mx-0 medium:rounded-[20px] relative isolate -mx-4 overflow-hidden px-5 pt-10 text-white @2xl/home:px-8 @2xl/home:pt-12 @3xl/home:px-14 @3xl/home:pt-14"
     >
       <Stars />

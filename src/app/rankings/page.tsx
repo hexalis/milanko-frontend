@@ -15,6 +15,8 @@ import {
 } from "@/shared/lib/search-params";
 import { LoadingPanel, Notice } from "@/shared/ui/notice";
 import { PageShell } from "@/shared/ui/page-shell";
+import { getTranslator } from "@/modules/copy";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 
 export const metadata: Metadata = { title: "Planet Pulse" };
 
@@ -42,6 +44,7 @@ export default function RankingsPage({ searchParams }: PageProps) {
   return (
     <PageShell
       lang="es"
+      aside={<PageTour id="data" translator={getTranslator("es")} />}
       kicker="Earth Trend Detective · datos persistidos"
       title="Planet Pulse"
       lead="Las 162 regiones ordenadas por valor actual, anomalía mensual o tendencia de una variable."

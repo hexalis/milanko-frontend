@@ -29,7 +29,11 @@ export function ScreenCheck(props: StepProps) {
         ]}
       />
       {reading ? (
-        <section aria-label={t("ask.flow.check")} className="flex flex-col gap-3">
+        <section
+          aria-label={t("ask.flow.check")}
+          data-tour="check-readout"
+          className="flex flex-col gap-3"
+        >
           <TrendReadout file={file} translator={translator} />
           {depth === "science" ? <ScienceList rows={testRows(file, translator)} /> : null}
         </section>

@@ -10,12 +10,15 @@ import {
   parseHunch,
   parseReading,
   parseScreen,
+  type Screen,
 } from "@/modules/ask/domain/ask-state";
 import { getRules } from "@/modules/ask/domain/engine";
 import { defaultDepth, findTrend, openGuided, questionTitle } from "@/modules/ask/domain/guided";
 import { GuidedScreen } from "@/modules/ask/ui/guided-screen";
 import { getCaseCatalog, trendDirection } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
+import type { TourId } from "@/modules/tour/domain/tours";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import type { SearchParams } from "@/shared/lib/search-params";
@@ -31,6 +34,15 @@ function decodeQid(raw: string): string {
 }
 
 type PageProps = { params: Promise<{ qid: string }>; searchParams: Promise<SearchParams> };
+
+/** Each screen of the lesson has its own tour. */
+const LESSON_TOURS = {
+  look: "lesson-look",
+  guess: "lesson-guess",
+  check: "lesson-check",
+  verdict: "lesson-verdict",
+  done: "lesson-done",
+} as const satisfies Record<Screen, TourId>;
 
 /** Published questions and every composed POWER trend question are known at build time. */
 export function generateStaticParams() {
@@ -73,13 +85,15 @@ async function GuidedContent({
   };
   if (legacyScreen(query)) redirect(askHref(found.question.id, state));
   const view = { ...found, ...state, direction: trendDirection(found.file.t) };
+  const translator = getTranslator(locale);
   return (
     <div lang={locale}>
       <GuidedScreen
         view={view}
-        translator={getTranslator(locale)}
+        translator={translator}
         catalog={catalog}
         rules={rules}
+        tour={<PageTour id={LESSON_TOURS[state.screen]} translator={translator} />}
       />
     </div>
   );
