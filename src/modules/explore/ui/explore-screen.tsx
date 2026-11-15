@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   useEffect,
   useEffectEvent,
@@ -58,7 +58,6 @@ const subscribeNothing = () => () => {};
  */
 export function ExploreScreen(props: ExploreScreenProps) {
   const { files, messages, query, defaultYear, locale } = props;
-  const router = useRouter();
   const pathname = usePathname();
   const t = useMemo(() => exploreTranslator(messages), [messages]);
   const byId = useMemo(() => new Map(files.map((file) => [file.id, file])), [files]);
@@ -68,6 +67,8 @@ export function ExploreScreen(props: ExploreScreenProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const shouldFocusTitle = useRef(false);
+  // Once the reader picks or closes something, a late deep-link result must not replace it.
+  const hasReaderActed = useRef(false);
 
   const [selection, setSelection] = useState<ExploreSelection | null>(props.initial);
   const [tile, setTile] = useState<GlobeTile | null>(null);
@@ -101,7 +102,9 @@ export function ExploreScreen(props: ExploreScreenProps) {
       year: query.year,
       defaultYear,
     });
-    router.replace(`${pathname}${search}`, { scroll: false });
+    // replaceState, not router.replace: the server page would re-render and re-send every case
+    // summary for a URL the client already shows. Next keeps usePathname/useSearchParams in sync.
+    window.history.replaceState(null, "", `${pathname}${search}`);
   }
 
   function select(next: ExploreSelection, { isFocusMoved = true } = {}) {
@@ -109,6 +112,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
     if (active instanceof HTMLElement && active !== document.body) {
       if (!drawerRef.current?.contains(active)) openerRef.current = active;
     }
+    if (isFocusMoved) hasReaderActed.current = true;
     shouldFocusTitle.current = isFocusMoved;
     setSelection(next);
     setTile(null);
@@ -119,6 +123,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
   }
 
   function close() {
+    hasReaderActed.current = true;
     const hadFocus = drawerRef.current?.contains(document.activeElement) ?? false;
     setSelection(null);
     setTile(null);
@@ -169,6 +174,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
     fetch(eventPointsUrl(query.year), { signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((file: unknown) => {
+        if (hasReaderActed.current) return;
         const ev = findEventPoint(file, open.id);
         if (!ev) {
           setStatus(missing);
@@ -181,7 +187,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
       })
       .catch(() => {
         // Offline or a broken snapshot: say the event could not be found (an abort says nothing).
-        if (!signal.aborted) setStatus(missing);
+        if (!signal.aborted && !hasReaderActed.current) setStatus(missing);
       });
   });
 

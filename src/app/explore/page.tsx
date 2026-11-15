@@ -40,6 +40,9 @@ async function ExploreContent({ searchParams }: PageProps) {
   return (
     <div lang={locale}>
       <ExploreScreen
+        // A new request (a link to /explore?case=… while on /explore) remounts the screen, so its
+        // selection and deep-link effects follow the new URL; the screen's own replaceState does not.
+        key={JSON.stringify(query)}
         locale={locale}
         frameSrc={`/globe/world3d/index.html?embed=1&lang=${locale}`}
         frameTitle={t("exp.view.3d.title")}

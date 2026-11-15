@@ -2,9 +2,11 @@ import { isSectorId, type SectorId } from "./sectors";
 
 /*
  * The protocol between the explorer page and the embedded 3D globe (public/globe/world3d, the POC's
- * page as-is): window.postMessage({ etd: 1, type, ... }, location.origin) both ways, with source and
- * origin checked on both sides. Ported from the POC's app.js renderExplore (onFrame, tell3d) and
- * world3d/index.html (tell, the message listener). Everything that comes in is validated here.
+ * page, in a sandboxed frame with an opaque origin): window.postMessage({ etd: 1, type, ... }, "*")
+ * both ways. Neither side can name the other's origin, so each checks the message's source window
+ * (the page: the frame's contentWindow; the globe: window.parent). Ported from the POC's app.js
+ * renderExplore (onFrame, tell3d) and world3d/index.html (tell, the message listener). Everything
+ * that comes in is validated here.
  */
 
 /** An EONET event as the globe sends it (one point per event, from data/events/<year>.json). */

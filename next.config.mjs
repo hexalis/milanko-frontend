@@ -26,6 +26,12 @@ const nextConfig = {
         source: "/globe/:path*",
         headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
       },
+      // The globe asks the API first (public, read-only GET). In deploys nginx serves /api, so the
+      // same header must be set there; without it the globe falls back to its data snapshot.
+      {
+        source: "/api/v1/:path*",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
     ];
   },
 };

@@ -2163,7 +2163,9 @@ const EMBED = window.parent !== window && Q0.has('embed');
 let lastFocus = null;
 function tell(msg) {
   if (msg.type === 'select') { const a = document.activeElement; if (a && a !== document.body) lastFocus = a; }
-  if (EMBED) window.parent.postMessage({ etd: 1, ...msg }, location.origin);
+  // Milanko: the frame is sandboxed (opaque origin), so it cannot name its parent's origin; the page
+  // checks the message's source window instead.
+  if (EMBED) window.parent.postMessage({ etd: 1, ...msg }, '*');
 }
 if (EMBED) card.remove();
 let lastEv = null;   // the event last tapped here, so its tile can animate its kind
@@ -2193,7 +2195,8 @@ function setCover(side, px) {
   if (lift.cap) lift.capSide = undefined;
 }
 addEventListener('message', (e) => {
-  if (!EMBED || e.source !== window.parent || e.origin !== location.origin || !e.data || !e.data.etd) return;
+  // Milanko: in the sandbox location.origin is "null"; only the parent window may command the globe.
+  if (!EMBED || e.source !== window.parent || !e.data || !e.data.etd) return;
   const m = e.data;
   if (m.type === 'fly') {
     if (m.kind === 'sector') { flyCam(m.lat, m.lon, 2.25); markRegion(m.id); dropLift(); }
