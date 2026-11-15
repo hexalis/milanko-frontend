@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { parseArchiveState } from "@/modules/cases/domain/archive";
 import { getCaseCatalog } from "@/modules/cases/domain/catalog";
+import { getEventAudit } from "@/modules/cases/domain/event-audit";
 import { ArchiveScreen } from "@/modules/cases/ui/archive/archive-screen";
 import { getTranslator } from "@/modules/copy";
 import { getLocale } from "@/server/locale";
@@ -22,6 +23,7 @@ async function ArchiveContent({ searchParams }: PageProps) {
       <ArchiveScreen
         state={parseArchiveState(params, catalog)}
         catalog={catalog}
+        audit={getEventAudit()}
         locale={locale}
         isSearchFocused={readString(params, "focus") === "1"}
       />

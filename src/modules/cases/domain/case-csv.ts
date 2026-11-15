@@ -1,5 +1,6 @@
 import { caseText } from "@/modules/copy";
 import { isEvent, type CaseFile, type EventFile, type TrendCase } from "./case-file";
+import type { AuditCategory } from "./event-audit";
 import { formatCoordinates } from "./format";
 
 /*
@@ -54,4 +55,18 @@ export function caseCsv(file: CaseFile, windowDays: number): { filename: string;
   return isEvent(file)
     ? { filename: `${file.catalog}.csv`, body: eventCsv(file, windowDays) }
     : { filename: `${file.catalog}-${file.id}.csv`, body: trendCsv(file) };
+}
+
+/** Events per year of one audit category (POC cfAudit csv). */
+export function auditCsv(
+  category: Pick<AuditCategory, "id" | "years">,
+  generated: string,
+): { filename: string; body: string } {
+  return {
+    filename: `eonet-${category.id}.csv`,
+    body: csvLines(`# NASA EONET ${category.id} | events per year | data version ${generated}`, [
+      ["year", "events"],
+      ...category.years.map(([year, count]) => [year, count]),
+    ]),
+  };
 }

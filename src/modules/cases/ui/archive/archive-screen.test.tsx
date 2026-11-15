@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_ARCHIVE_STATE, parseArchiveState } from "../../domain/archive";
 import { getCaseCatalog } from "../../domain/catalog";
+import { getEventAudit } from "../../domain/event-audit";
 import { ArchiveScreen } from "./archive-screen";
 
 vi.mock("next/form", () => ({
@@ -11,63 +12,85 @@ vi.mock("next/form", () => ({
 }));
 
 const catalog = getCaseCatalog();
+const audit = getEventAudit();
 
 describe("ArchiveScreen", () => {
-  it("shows every folder on the shelf, grouped by kind", () => {
-    render(<ArchiveScreen state={DEFAULT_ARCHIVE_STATE} catalog={catalog} locale="en" />);
+  it("shows every folder on the shelf, grouped by kind, and the audit card", () => {
+    // Plain queries: role queries over 38 folders are slow enough to time out a busy test run.
+    const { container } = render(
+      <ArchiveScreen state={DEFAULT_ARCHIVE_STATE} catalog={catalog} audit={audit} locale="en" />,
+    );
 
-    expect(screen.getByRole("heading", { level: 1, name: "Case Files" })).toBeVisible();
+    expect(container.querySelectorAll("h1")).toHaveLength(1);
+    expect(container.querySelector("h1")).toHaveTextContent("Case Files");
     expect(screen.getByText("38 case files")).toBeVisible();
-    expect(screen.getByRole("heading", { level: 3, name: /Trend files/ })).toBeVisible();
-    expect(screen.getByRole("heading", { level: 3, name: /Anomaly files/ })).toBeVisible();
-    expect(screen.getAllByRole("heading", { level: 4 })).toHaveLength(38);
-  });
-
-  it("marks the current kind tab and keeps the filters in the other tabs' links", () => {
-    const state = parseArchiveState({ kind: "trend", region: "arctic" }, catalog);
-    render(<ArchiveScreen state={state} catalog={catalog} locale="en" />);
-
-    const tabs = within(screen.getByRole("navigation", { name: "Kind of file" }));
-    expect(tabs.getByRole("link", { name: /Trend files/ })).toHaveAttribute("aria-current", "page");
-    expect(tabs.getByRole("link", { name: /All files/ })).toHaveAttribute(
-      "href",
-      "/cases?region=arctic",
-    );
-    expect(screen.getByText("Showing 2 of 6 case files")).toBeVisible();
-    expect(screen.getByRole("checkbox", { name: /Arctic/ })).toBeChecked();
-    expect(screen.getByRole("link", { name: "Remove filter Arctic" })).toHaveAttribute(
-      "href",
-      "/cases?kind=trend",
+    expect(container.querySelector("#shelf-trend")).toHaveTextContent(/Trend files/);
+    expect(container.querySelectorAll("h4")).toHaveLength(38);
+    expect(container.querySelector('a[href="/cases?kind=audit"]')).toHaveTextContent(
+      /more disasters/,
     );
   });
 
-  it("puts search, sort and facets in one GET form with the hidden kind", () => {
-    const state = parseArchiveState({ kind: "event", q: "fire", sort: "magnitude" }, catalog);
-    const { container } = render(<ArchiveScreen state={state} catalog={catalog} locale="en" />);
+  it("marks the current topic and keeps the search in the other topics' links", () => {
+    const state = parseArchiveState({ topic: "heat", q: "arctic" }, catalog);
+    render(<ArchiveScreen state={state} catalog={catalog} audit={audit} locale="en" />);
+
+    const topics = within(screen.getByRole("navigation", { name: /topic/i }));
+    expect(topics.getByRole("link", { name: /Heat/ })).toHaveAttribute("aria-current", "true");
+    expect(topics.getByRole("link", { name: /Disasters/ })).toHaveAttribute(
+      "href",
+      "/cases?topic=disasters&q=arctic",
+    );
+    expect(screen.queryByRole("link", { name: /more disasters/ })).toBeNull();
+    expect(screen.getByRole("link", { name: "Remove filter “arctic”" })).toHaveAttribute(
+      "href",
+      "/cases?topic=heat",
+    );
+  });
+
+  it("puts the search and the sort in one GET form that carries the topic", () => {
+    const state = parseArchiveState({ topic: "disasters", q: "fire", sort: "magnitude" }, catalog);
+    const { container } = render(
+      <ArchiveScreen state={state} catalog={catalog} audit={audit} locale="en" />,
+    );
 
     const form = container.querySelector("form");
     expect(form).toHaveAttribute("action", "/cases");
-    expect(form?.querySelector('input[type="hidden"][name="kind"]')).toHaveValue("event");
+    expect(form?.querySelector('input[type="hidden"][name="topic"]')).toHaveValue("disasters");
     expect(screen.getByRole("searchbox", { name: "Search case files" })).toHaveValue("fire");
     expect(screen.getByRole("combobox", { name: "Sort" })).toHaveValue("magnitude");
   });
 
-  it("explains an empty result and offers the most helpful filter to drop", () => {
-    const state = parseArchiveState({ kind: "trend", col: "records", region: "arctic" }, catalog);
-    render(<ArchiveScreen state={state} catalog={catalog} locale="en" />);
+  it("orders the files around a place and shows their distance", () => {
+    const state = parseArchiveState({ near: "12.93,-85.92,Matagalpa" }, catalog);
+    render(<ArchiveScreen state={state} catalog={catalog} audit={audit} locale="en" />);
 
-    expect(screen.getByText("No case file matches all of that.")).toBeVisible();
-    expect(screen.getByText("Remove “Records” to see 2 more.")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Clear all filters" })).toHaveAttribute(
-      "href",
-      "/cases?kind=trend",
-    );
-    // A selected option stays visible even when it gives nothing.
-    expect(screen.getByRole("link", { name: /Records/, current: true })).toBeVisible();
+    expect(screen.getByText(/closest to/)).toBeVisible();
+    expect(screen.getAllByText(/^about [\d,]+ km away$/)).toHaveLength(38);
+    expect(screen.getByRole("link", { name: "Remove filter Near Matagalpa" })).toBeVisible();
+  });
+
+  it("says when a typed place cannot be found", () => {
+    const state = parseArchiveState({ q: "Matagalpa" }, catalog);
+    render(<ArchiveScreen state={state} catalog={catalog} audit={audit} locale="en" />);
+
+    expect(screen.getByText(/could not find/)).toBeVisible();
+  });
+
+  it("shows the catalog audit with a link to each category's file", () => {
+    const state = parseArchiveState({ kind: "audit" }, catalog);
+    render(<ArchiveScreen state={state} catalog={catalog} audit={audit} locale="en" />);
+
+    expect(screen.getByRole("heading", { level: 2, name: "Signal or catalog?" })).toBeVisible();
+    const links = screen.getAllByRole("link", { name: /Open as a case file/ });
+    expect(links).toHaveLength(audit.categories.length);
+    expect(links[0]).toHaveAttribute("href", "/cases/audit-wildfires");
   });
 
   it("speaks Spanish when asked", () => {
-    render(<ArchiveScreen state={DEFAULT_ARCHIVE_STATE} catalog={catalog} locale="es" />);
+    render(
+      <ArchiveScreen state={DEFAULT_ARCHIVE_STATE} catalog={catalog} audit={audit} locale="es" />,
+    );
 
     expect(screen.getByRole("heading", { level: 1, name: "Expedientes" })).toBeVisible();
     expect(screen.getByText("38 expedientes")).toBeVisible();

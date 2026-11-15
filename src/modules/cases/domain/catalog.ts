@@ -36,6 +36,8 @@ export type CaseCatalog = {
   };
   /** When the build scripts produced cases.json (shown as the data version). */
   generated: string;
+  /** When the build scripts produced event-files.json. */
+  eventsGenerated: string;
 };
 
 function buildCatalog(): CaseCatalog {
@@ -64,6 +66,7 @@ function buildCatalog(): CaseCatalog {
       to: globalData.to,
     },
     generated: casesData.generated,
+    eventsGenerated: eventFilesData.generated,
   };
 }
 

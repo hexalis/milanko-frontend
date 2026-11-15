@@ -129,10 +129,18 @@ type CaseFolderProps = {
   catalog: CaseCatalog;
   /** Heading level of the title within the page; defaults to h3. */
   headingLevel?: keyof typeof HEADINGS;
+  /** Rounded distance to the place the archive is searching near, in km. */
+  km?: number;
 };
 
 /** A case file as a folder linking to its dossier at /cases/{id}. */
-export function CaseFolder({ file, translator, catalog, headingLevel = "h3" }: CaseFolderProps) {
+export function CaseFolder({
+  file,
+  translator,
+  catalog,
+  headingLevel = "h3",
+  km,
+}: CaseFolderProps) {
   const context = { translator, catalog };
   const { t } = translator;
   const isAnomaly = isEvent(file);
@@ -163,6 +171,11 @@ export function CaseFolder({ file, translator, catalog, headingLevel = "h3" }: C
             {isEvent(file)
               ? `${t(`reg.${file.region}`)} · ${formatDate(file.date, translator.locale)}`
               : `${fileName(file, context)} · ${t(`reg.${file.region}`)}`}
+            {km === undefined ? null : (
+              <span className="text-text-primary ms-auto ps-2 font-semibold whitespace-nowrap">
+                {t("near.km", { km: km.toLocaleString(translator.locale) })}
+              </span>
+            )}
           </p>
           <dl className="border-border-subtle mt-auto grid grid-cols-2 gap-x-4 gap-y-2 border-t border-dashed pt-3">
             <div className="min-w-0">

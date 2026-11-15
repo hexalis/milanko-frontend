@@ -11,12 +11,14 @@ import { activeFilterLabel } from "./filter-label";
 const empty = emptyStateRecipe({ size: "s" });
 
 type ArchiveEmptyProps = {
+  /** The words searched, quoted when no single filter brings files back. */
+  query: string;
   suggestion: { filter: ActiveFilter; n: number } | null;
   resetHref: string;
   translator: Translator;
 };
 
-export function ArchiveEmpty({ suggestion, resetHref, translator }: ArchiveEmptyProps) {
+export function ArchiveEmpty({ query, suggestion, resetHref, translator }: ArchiveEmptyProps) {
   const { t } = translator;
   // The search hint quotes the bare words itself.
   const suggestionLabel = suggestion
@@ -29,7 +31,9 @@ export function ArchiveEmpty({ suggestion, resetHref, translator }: ArchiveEmpty
       <span className={empty.icon()}>
         <Icon name="inconclusive" size="lg" />
       </span>
-      <p className={empty.title()}>{t("arch.empty")}</p>
+      <p className={empty.title()}>
+        {query && !suggestion ? t("arch.empty.q", { q: query }) : t("arch.empty")}
+      </p>
       {suggestion && suggestionLabel ? (
         <p className={empty.description()}>
           {t("arch.empty.hint", { f: suggestionLabel, n: suggestion.n })}

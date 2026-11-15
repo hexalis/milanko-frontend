@@ -109,7 +109,7 @@ const EVENT_FAMILY: Record<string, EventFamily> = {
   manmade: "earth",
 };
 
-export function eventFamily(category: string): EventFamily {
+function eventFamily(category: string): EventFamily {
   return EVENT_FAMILY[category] ?? "earth";
 }
 
