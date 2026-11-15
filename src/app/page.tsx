@@ -1,28 +1,21 @@
-import { cookies } from "next/headers";
 import { Suspense } from "react";
-import { DEPTH_COOKIE, withRememberedDepth } from "@/modules/ask/domain/ask-state";
-import { getCaseCatalog } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
 import { HomeScreen } from "@/modules/ask/ui/home-screen";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
-import type { SearchParams } from "@/shared/lib/search-params";
 import { LoadingPanel } from "@/shared/ui/notice";
 
-type PageProps = { searchParams: Promise<SearchParams> };
-
-/** The language cookie and the question being built are request data, so they are read inside Suspense. */
-async function HomeContent({ searchParams }: PageProps) {
-  const [query, locale, jar] = await Promise.all([searchParams, getLocale(), cookies()]);
-  const params = withRememberedDepth(query, jar.get(DEPTH_COOKIE)?.value);
+/** The language cookie is request data, so it is read inside Suspense. */
+async function HomeContent() {
+  const locale = await getLocale();
   return (
     <div lang={locale}>
-      <HomeScreen params={params} translator={getTranslator(locale)} catalog={getCaseCatalog()} />
+      <HomeScreen translator={getTranslator(locale)} />
     </div>
   );
 }
 
-export default function Home({ searchParams }: PageProps) {
+export default function Home() {
   return (
     <Suspense
       fallback={
@@ -31,7 +24,7 @@ export default function Home({ searchParams }: PageProps) {
         </main>
       }
     >
-      <HomeContent searchParams={searchParams} />
+      <HomeContent />
     </Suspense>
   );
 }

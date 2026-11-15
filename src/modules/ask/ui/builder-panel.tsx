@@ -1,33 +1,31 @@
 import Form from "next/form";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { buttonLink } from "@/shared/ui/button";
-import { Field } from "@/shared/ui/field";
 import { Icon } from "@/shared/ui/icon";
 import type { BuilderExample, BuilderState } from "../domain/builder";
-import {
-  builderSentence,
-  exampleText,
-  placeName,
-  variableName,
-  whereLabel,
-  type BuilderTextContext,
-} from "../domain/builder-text";
-import { BuilderSegmentSelect } from "./builder-segment-select";
+import { spotChoices, themeChoices, verbChoices, whereChoices } from "../domain/builder-choices";
+import { exampleText, type BuilderTextContext } from "../domain/builder-text";
+import { builderSteps, type PreviewLine } from "../domain/builder-view";
+import { BuilderAside } from "./builder-aside";
+import { BuilderStep } from "./builder-step";
+import { BuilderChoices } from "./builder-tiles";
 
 /*
- * The question builder: theme · verb · place (POC ask.js askBuilder L491–580). One GET form,
- * rendered from the URL; each segment submits on change. The finished question is a link, and the
- * examples are links that fill the three pieces at once. The "my own place" forms are not ported:
- * free points are switched off in this deployment.
+ * The question builder: theme · verb · place (POC ask.js askBuilder, the "qb" layout of d2de23a).
+ * One GET form, rendered from the URL: each step is a fieldset of tiles (or a list when long) and
+ * every choice submits, so the question being built lives in the address. Beside the steps,
+ * "Your question" holds the live sentence and the button; examples below fill all three at once.
+ * The "my own place" forms are not ported: free points are switched off in this deployment.
  */
 
 type QuestionBuilderProps = {
   state: BuilderState;
   examples: BuilderExample[];
-  /** Where the form submits ("/" on the home, "/ask" on step 1). */
+  /** Where the form submits ("/ask"). */
   path: string;
   context: BuilderTextContext;
+  /** Theme families of the fact base, which colour the theme tiles. */
+  themes: readonly { id: string; family: string }[];
+  preview: PreviewLine[];
 };
 
 const CHIP = [
@@ -38,124 +36,88 @@ const CHIP = [
   "focus-visible:focus-ring focus-visible:outline-focus-ring",
 ].join(" ");
 
-const NOTE = "text-body-s text-text-secondary m-0";
-
-function Segment({ label, children }: { label: string; children: ReactNode }) {
+function PlaceStep({ state, context }: Pick<QuestionBuilderProps, "state" | "context">) {
+  const { t } = context.translator;
+  if (state.type !== "comparison") {
+    const label = t("ask.build.where");
+    const choices = whereChoices(state, context);
+    return <BuilderChoices segment="where" label={label} choices={choices} t={t} />;
+  }
+  const sides = [
+    { segment: "a", label: t("ask.build.placeA"), chosen: state.a },
+    { segment: "b", label: t("ask.build.placeB"), chosen: state.b },
+  ] as const;
   return (
-    <div className="min-w-0">
-      <Field label={label}>{children}</Field>
+    <div className="flex flex-col gap-4">
+      {sides.map(({ segment, label, chosen }) => (
+        <fieldset key={segment} className="m-0 min-w-0 border-0 p-0">
+          <legend className="text-label-l text-text-secondary m-0 mb-2 p-0 font-semibold">
+            {label}
+          </legend>
+          <BuilderChoices
+            segment={segment}
+            label={label}
+            choices={spotChoices(state, chosen, context)}
+            t={t}
+          />
+        </fieldset>
+      ))}
     </div>
   );
 }
 
-function Sentence({ state, context }: Pick<QuestionBuilderProps, "state" | "context">) {
-  const gap = context.translator.t("ask.build.gap");
-  return (
-    <p
-      aria-live="polite"
-      className="font-display text-text-primary m-0 min-h-[1.2em] flex-[1_1_320px] text-[clamp(22px,2.6vw,30px)] leading-tight font-semibold text-balance"
-    >
-      {builderSentence(state, context).map((piece, index) =>
-        piece.kind === "gap" ? (
-          <span key={index} className="text-text-secondary font-normal">
-            {gap}
-          </span>
-        ) : (
-          <span key={index}>{piece.text}</span>
-        ),
-      )}
-    </p>
-  );
-}
+type StepsProps = Pick<QuestionBuilderProps, "state" | "context" | "themes">;
 
-function Segments({ state, path, context }: Omit<QuestionBuilderProps, "examples">) {
+function Steps({ state, context, themes }: StepsProps) {
   const { t } = context.translator;
-  const choose = <option value="">{t("ask.build.choose")}</option>;
+  const status = builderSteps(state);
   const isComparison = state.type === "comparison";
-  const spotOptions = state.spots.map((spot) => (
-    <option key={spot} value={spot}>
-      {placeName(spot, context)}
-    </option>
-  ));
   return (
-    <Form action={path} scroll={false} className="grid gap-3">
-      <input type="hidden" name="depth" value={state.depth} />
-      <div className="medium:grid-cols-[repeat(auto-fit,minmax(190px,1fr))] grid grid-cols-1 gap-3">
-        <Segment label={`1 · ${t("ask.build.theme")}`}>
-          <BuilderSegmentSelect segment="theme" urlValue={state.theme ?? ""}>
-            {choose}
-            {state.themes.map((theme) => (
-              <option key={theme} value={theme}>
-                {t(`ask.theme.${theme}`)}
-              </option>
-            ))}
-          </BuilderSegmentSelect>
-        </Segment>
-        <Segment label={`2 · ${t("ask.build.verb")}`}>
-          <BuilderSegmentSelect segment="verb" urlValue={state.type ?? ""} disabled={!state.theme}>
-            {choose}
-            {state.types.map((type) => (
-              <option key={type} value={type}>
-                {t(`ask.verb.${type}`)}
-              </option>
-            ))}
-          </BuilderSegmentSelect>
-        </Segment>
-        {isComparison ? (
-          <>
-            <Segment key="a" label={`3 · ${t("ask.build.placeA")}`}>
-              <BuilderSegmentSelect segment="a" urlValue={state.a ?? ""}>
-                {choose}
-                {spotOptions}
-              </BuilderSegmentSelect>
-            </Segment>
-            <Segment key="b" label={`4 · ${t("ask.build.placeB")}`}>
-              <BuilderSegmentSelect segment="b" urlValue={state.b ?? ""}>
-                {choose}
-                {spotOptions}
-              </BuilderSegmentSelect>
-            </Segment>
-          </>
-        ) : (
-          <Segment key="where" label={`3 · ${t("ask.build.where")}`}>
-            <BuilderSegmentSelect
-              segment="where"
-              urlValue={state.where?.id ?? ""}
-              disabled={!state.type}
-            >
-              {choose}
-              {state.wheres.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {whereLabel(option, context)}
-                </option>
-              ))}
-            </BuilderSegmentSelect>
-          </Segment>
-        )}
-      </div>
-      <noscript>
-        <button
-          type="submit"
-          className="text-label-m border-border-input bg-bg-surface rounded-field h-10 border px-4"
-        >
-          {t("f.apply")}
-        </button>
-      </noscript>
-    </Form>
+    <div className="flex min-w-0 flex-col gap-6.5">
+      <BuilderStep n={1} label={t("ask.build.theme")} status={status.theme}>
+        <BuilderChoices
+          segment="theme"
+          label={t("ask.build.theme")}
+          choices={themeChoices(state, themes, context)}
+          t={t}
+        />
+      </BuilderStep>
+      <BuilderStep
+        n={2}
+        label={t("ask.build.verb")}
+        status={status.verb}
+        lockText={t("ask.build.lock.verb")}
+      >
+        <BuilderChoices
+          segment="verb"
+          label={t("ask.build.verb")}
+          choices={verbChoices(state, context)}
+          t={t}
+        />
+      </BuilderStep>
+      <BuilderStep
+        n={3}
+        label={t(isComparison ? "ask.build.places" : "ask.build.where")}
+        status={status.place}
+        lockText={t("ask.build.lock.where")}
+      >
+        <PlaceStep state={state} context={context} />
+      </BuilderStep>
+    </div>
   );
 }
 
 function Examples({ examples, context }: Pick<QuestionBuilderProps, "examples" | "context">) {
   const { t } = context.translator;
   return (
-    <div className="border-border-subtle flex flex-col gap-2.5 border-t pt-3.5">
-      <p className="text-label-m text-text-secondary m-0 flex items-center gap-2 font-semibold">
+    <div className="border-border-subtle flex flex-col items-center gap-2.5 border-t pt-4">
+      <p className="text-label-l text-text-secondary m-0 flex items-center gap-2 font-semibold">
         <span className="text-text-brand">
           <Icon name="sparkle" />
         </span>
         {t("ask.build.examples")}
       </p>
-      <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+      <ul className="m-0 flex w-full list-none flex-wrap gap-2 p-0">
         {examples.map((example) => (
           <li key={`${example.theme}|${example.type}|${example.where}`}>
             <Link
@@ -173,42 +135,28 @@ function Examples({ examples, context }: Pick<QuestionBuilderProps, "examples" |
   );
 }
 
-export function QuestionBuilder({ state, examples, path, context }: QuestionBuilderProps) {
+export function QuestionBuilder(props: QuestionBuilderProps) {
+  const { state, examples, path, context, themes, preview } = props;
   const { t } = context.translator;
-  const { go, variables } = state;
   return (
-    <section
-      aria-label={t("ask.build.title")}
-      className="rounded-card bg-bg-surface-sunken medium:p-5 flex flex-col gap-3 p-4"
-    >
-      <Segments state={state} path={path} context={context} />
-      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5">
-        <Sentence state={state} context={context} />
-        {go ? (
-          <Link href={go.href} className={`${buttonLink()} gap-2`}>
-            {t("ask.q.go")}
-            <Icon name="arrow-right" />
-          </Link>
-        ) : null}
-      </div>
-      {go ? <p className={NOTE}>{t(`ask.build.opens.${go.kind}`)}</p> : null}
-      {variables.length > 1 ? (
-        <p className="text-body-m text-text-secondary m-0 grid grid-cols-[22px_minmax(0,1fr)] items-start gap-2.5">
-          <Icon name="info" size="lg" />
-          <span>
-            {t("ask.build.vars", {
-              n: variables.length,
-              list: variables.map((variable) => variableName(variable, context)).join(" · "),
-            })}
-          </span>
-        </p>
-      ) : null}
-      {state.isSameTwice ? (
-        <p role="alert" className="text-body-s text-text-primary m-0">
-          {t("ask.build.cmp.same")}
-        </p>
-      ) : null}
-      {state.hasNoFreePoint ? <p className={NOTE}>{t("ask.build.nofree")}</p> : null}
+    <section aria-label={t("ask.build.title")} className="flex flex-col gap-6">
+      <Form
+        action={path}
+        scroll={false}
+        className="expanded:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] grid grid-cols-1 items-start gap-7"
+      >
+        <input type="hidden" name="depth" value={state.depth} />
+        <Steps state={state} context={context} themes={themes} />
+        <BuilderAside state={state} preview={preview} context={context} />
+        <noscript>
+          <button
+            type="submit"
+            className="text-label-m border-border-input bg-bg-surface rounded-field h-10 border px-4"
+          >
+            {t("f.apply")}
+          </button>
+        </noscript>
+      </Form>
       {examples.length ? <Examples examples={examples} context={context} /> : null}
     </section>
   );

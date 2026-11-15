@@ -1,38 +1,64 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { getCaseCatalog } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
 import { HomeScreen } from "./home-screen";
 
-const catalog = getCaseCatalog();
-
 describe("HomeScreen", () => {
-  it("opens two doors: the question builder and the ways to explore", () => {
-    render(<HomeScreen params={{}} translator={getTranslator("en")} catalog={catalog} />);
+  it("welcomes on the night cover with the two ways in", () => {
+    render(<HomeScreen translator={getTranslator("en")} />);
     expect(
-      screen.getByRole("heading", { level: 1, name: "What do you want to find out?" }),
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Hi. Here you investigate the Earth with NASA data.",
+      }),
     ).toBeVisible();
-    expect(screen.getByRole("region", { name: "I have a question" })).toContainElement(
-      screen.getByRole("region", { name: "Build your question" }),
+    expect(screen.getByRole("link", { name: "I have a question" })).toHaveAttribute("href", "/ask");
+    expect(screen.getByRole("link", { name: "Explore the map" })).toHaveAttribute(
+      "href",
+      "/explore",
     );
-    const explore = screen.getByRole("region", { name: "I want to explore" });
+    expect(screen.getByText(/NASA Blue Marble, via NASA GIBS/)).toBeVisible();
+  });
+
+  it("opens four doors, each tied to a station of the ring", () => {
+    const { container } = render(<HomeScreen translator={getTranslator("en")} />);
+    const doors = screen.getByRole("region", { name: "What do you want to do today?" });
+    const links = within(doors).getAllByRole("link");
+    expect(links.map((link) => [link.getAttribute("href"), link.dataset.st])).toEqual([
+      ["/ask", "ask"],
+      ["/explore", "map"],
+      ["/cases", "cases"],
+      ["/method", "method"],
+    ]);
+    const steps = within(doors).getByRole("list", { name: "The eight steps" });
+    expect(within(steps).getAllByRole("listitem")).toHaveLength(8);
+    // The cover art is decorative: the ring, the drawn planet and the Earth canvas.
     expect(
-      within(explore)
-        .getAllByRole("link")
-        .map((link) => link.getAttribute("href")),
-    ).toEqual(["/regions", "/cases", "/briefing"]);
+      container.querySelectorAll('svg[aria-hidden="true"][focusable="false"]').length,
+    ).toBeGreaterThan(4);
+    expect(container.querySelector("canvas")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("names the three kinds of clue and closes on the motto", () => {
+    render(<HomeScreen translator={getTranslator("en")} />);
+    const key = screen.getByRole("region", { name: "Three words to read everything" });
     expect(
-      within(explore).getByText(new RegExp(`${catalog.all.length} investigations`)),
-    ).toBeVisible();
-    expect(screen.getByText("Not every change is a trend.")).toBeVisible();
-    // Examples stay on the home.
-    expect(screen.getAllByRole("link", { name: /\?$/ })[0]?.getAttribute("href")).toMatch(/^\/\?/);
+      within(key)
+        .getAllByRole("term")
+        .map((term) => term.textContent),
+    ).toEqual(["Trend", "Anomaly", "Event"]);
+    const close = screen.getByRole("region", { name: "Not every change is a trend." });
+    expect(within(close).getByRole("link", { name: "See the method" })).toHaveAttribute(
+      "href",
+      "/method",
+    );
+    expect(screen.getByRole("link", { name: "Meet the team" })).toHaveAttribute("href", "/team");
   });
 
   it("speaks Spanish when the reader chose it", () => {
-    render(<HomeScreen params={{}} translator={getTranslator("es")} catalog={catalog} />);
-    expect(
-      screen.getByRole("heading", { level: 1, name: "¿Qué quieres averiguar?" }),
-    ).toBeVisible();
+    render(<HomeScreen translator={getTranslator("es")} />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      getTranslator("es").t("home2.title"),
+    );
   });
 });
