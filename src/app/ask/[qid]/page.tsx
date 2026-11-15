@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const qid = decodeQid((await params).qid);
   const catalog = getCaseCatalog();
   const found = openGuided(getRules(), catalog, qid);
-  if (!found) return {};
+  if (!found) notFound();
   // Metadata uses the default language; the page itself follows the reader's choice.
   return {
     title: questionTitle(found.question, { translator: getTranslator(DEFAULT_LOCALE), catalog }),
