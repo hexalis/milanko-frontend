@@ -22,30 +22,30 @@ Create `develop`, `qa` and `production` with the branch policies
 
 ### Variables
 
-| Variable | develop | qa | production |
-|---|---|---|---|
-| `MILANKO_API_URL` | `http://milanko-api-develop:8000` | `http://milanko-api-qa:8000` | `http://milanko-api-production:8000` |
-| `APP_ENV` | `develop` | `qa` | `production` |
-| `DEPLOY_USER` | `deploy` | `deploy` | `deploy` |
-| `DEPLOY_SSH_PORT` | `22` | `22` | `22` |
-| `DEPLOY_REMOTE_PATH` | `/home/deploy/milanko-frontend-develop` | `/home/deploy/milanko-frontend-qa` | `/home/deploy/milanko-frontend-production` |
-| `DEPLOY_CONTAINER` | `milanko-web-develop` | `milanko-web-qa` | `milanko-web-production` |
-| `DEPLOY_IMAGE_TAG` | `milanko-web:develop` | `milanko-web:qa` | `milanko-web:production` |
-| `DEPLOY_PORTS` | `127.0.0.1:8021:3000` | `127.0.0.1:8022:3000` | `127.0.0.1:8023:3000` |
-| `DEPLOY_ENV_FILE` | `/etc/milanko/frontend-develop.env` | `/etc/milanko/frontend-qa.env` | `/etc/milanko/frontend-production.env` |
-| `DEPLOY_DOCKER_NETWORK` | `milanko` | `milanko` | `milanko` |
-| `DEPLOY_HEALTH_URL` | `http://127.0.0.1:8021/` | `http://127.0.0.1:8022/` | `http://127.0.0.1:8023/` |
-| `DEPLOY_USE_SUDO` | `false` | `false` | `false` |
-| `PUBLIC_BASE_URL` | `https://dev-milanko.hexalis.org` | `https://qa-milanko.hexalis.org` | `https://milanko.hexalis.org` |
+| Variable                | develop                                 | qa                                 | production                                 |
+| ----------------------- | --------------------------------------- | ---------------------------------- | ------------------------------------------ |
+| `MILANKO_API_URL`       | `http://milanko-api-develop:8000`       | `http://milanko-api-qa:8000`       | `http://milanko-api-production:8000`       |
+| `APP_ENV`               | `develop`                               | `qa`                               | `production`                               |
+| `DEPLOY_USER`           | `deploy`                                | `deploy`                           | `deploy`                                   |
+| `DEPLOY_SSH_PORT`       | `22`                                    | `22`                               | `22`                                       |
+| `DEPLOY_REMOTE_PATH`    | `/home/deploy/milanko-frontend-develop` | `/home/deploy/milanko-frontend-qa` | `/home/deploy/milanko-frontend-production` |
+| `DEPLOY_CONTAINER`      | `milanko-web-develop`                   | `milanko-web-qa`                   | `milanko-web-production`                   |
+| `DEPLOY_IMAGE_TAG`      | `milanko-web:develop`                   | `milanko-web:qa`                   | `milanko-web:production`                   |
+| `DEPLOY_PORTS`          | `127.0.0.1:8021:3000`                   | `127.0.0.1:8022:3000`              | `127.0.0.1:8023:3000`                      |
+| `DEPLOY_ENV_FILE`       | `/etc/milanko/frontend-develop.env`     | `/etc/milanko/frontend-qa.env`     | `/etc/milanko/frontend-production.env`     |
+| `DEPLOY_DOCKER_NETWORK` | `milanko`                               | `milanko`                          | `milanko`                                  |
+| `DEPLOY_HEALTH_URL`     | `http://127.0.0.1:8021/`                | `http://127.0.0.1:8022/`           | `http://127.0.0.1:8023/`                   |
+| `DEPLOY_USE_SUDO`       | `false`                                 | `false`                            | `false`                                    |
+| `PUBLIC_BASE_URL`       | `https://dev-milanko.hexalis.org`       | `https://qa-milanko.hexalis.org`   | `https://milanko.hexalis.org`              |
 
 ### Secrets
 
-| Secret | Description |
-|---|---|
-| `DEPLOY_HOST` | VPS IP / host; stored as a secret |
-| `DEPLOY_SSH_KEY` | Private key for the `deploy` user |
-| `DEPLOY_KNOWN_HOSTS` | Pinned `known_hosts` line |
-| `MILANKO_API_KEY` | `public-web` API key (server-side only) |
+| Secret               | Description                             |
+| -------------------- | --------------------------------------- |
+| `DEPLOY_HOST`        | VPS IP / host; stored as a secret       |
+| `DEPLOY_SSH_KEY`     | Private key for the `deploy` user       |
+| `DEPLOY_KNOWN_HOSTS` | Pinned `known_hosts` line               |
+| `MILANKO_API_KEY`    | `public-web` API key (server-side only) |
 
 ## Server
 
