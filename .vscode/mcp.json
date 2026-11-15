@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "blueprint": {
+      "args": ["mcp", "--tools", "agent"],
+      "command": "blueprint",
+      "env": {
+        "BLUEPRINT_PROJECT": "milanko-frontend"
+      }
+    }
+  }
+}

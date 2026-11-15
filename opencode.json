@@ -1,0 +1,12 @@
+{
+  "mcp": {
+    "blueprint": {
+      "command": ["blueprint", "mcp", "--tools", "agent"],
+      "enabled": true,
+      "environment": {
+        "BLUEPRINT_PROJECT": "milanko-frontend"
+      },
+      "type": "local"
+    }
+  }
+}
