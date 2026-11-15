@@ -3,7 +3,7 @@ import type { CaseCatalog } from "@/modules/cases";
 import type { Translator } from "@/shared/lib/i18n";
 import type { SearchParams } from "@/shared/lib/search-params";
 import { Icon } from "@/shared/ui/icon";
-import { LAST_STEP } from "../domain/ask-state";
+import { ASK_STEPS } from "../domain/ask-state";
 import { BuilderDoor } from "./builder-door";
 
 /*
@@ -38,7 +38,7 @@ export function AskPickScreen({ params, translator, catalog }: AskPickScreenProp
       <article className="flex max-w-[1180px] flex-col gap-4">
         <header className="flex flex-col gap-1">
           <p className="text-label-m text-text-secondary m-0 font-semibold">
-            {t("ask.stepOf", { n: 1, total: LAST_STEP })} · {t("ask.step.1")}
+            {t("ask.stepOf", { n: 1, total: ASK_STEPS })} · {t("ask.step.1")}
           </p>
           <h1 className="text-display-s font-display text-text-primary m-0 text-balance">
             {t("ask.pick.title")}

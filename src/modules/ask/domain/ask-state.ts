@@ -1,4 +1,9 @@
-import { readOption, toQueryString, type SearchParams } from "@/shared/lib/search-params";
+import {
+  readOption,
+  readString,
+  toQueryString,
+  type SearchParams,
+} from "@/shared/lib/search-params";
 import type { Question, Rules } from "./rules";
 
 /*
@@ -13,23 +18,68 @@ export const DEPTH_COOKIE = "etd-depth";
 export const HUNCHES = ["up", "down", "unsure"] as const;
 export type Hunch = (typeof HUNCHES)[number];
 
-/** Step 1 (the question) lives at /ask; the guided flow is steps 2–8. */
-export const FIRST_GUIDED_STEP = 2;
-export const LAST_STEP = 8;
+/*
+ * The investigation runs as a short lesson: four screens and a close, after the question (step 1,
+ * at /ask). Old links numbered eight steps; each lands on the screen that now holds what it showed.
+ */
+export const ASK_FLOW = ["look", "guess", "check", "verdict", "done"] as const;
+export type Screen = (typeof ASK_FLOW)[number];
+const ASK_LEGACY: Readonly<Record<string, Screen>> = {
+  "2": "look",
+  "3": "look",
+  "4": "guess",
+  "5": "guess",
+  "6": "check",
+  "7": "verdict",
+  "8": "done",
+};
+/** The question pick counts as the first step. */
+export const ASK_STEPS = ASK_FLOW.length + 1;
+
+/** The reader's answer on the check screen: a real change, or the usual up and down. */
+const READINGS = ["real", "chance"] as const;
+export type Reading = (typeof READINGS)[number];
 
 export function parseDepth(params: SearchParams, fallback: Depth = "simple"): Depth {
   return readOption(params, "depth", DEPTHS, fallback);
 }
 
-export function parseStep(params: SearchParams): number {
-  const raw = Number(params.step);
-  if (!Number.isInteger(raw)) return FIRST_GUIDED_STEP;
-  return Math.min(LAST_STEP, Math.max(FIRST_GUIDED_STEP, raw));
+const isScreen = (value: string | undefined): value is Screen =>
+  ASK_FLOW.some((screen) => screen === value);
+
+/** The screen an old `?step=N` link meant, when the URL has no valid `s`. */
+export function legacyScreen(params: SearchParams): Screen | undefined {
+  if (isScreen(readString(params, "s"))) return undefined;
+  const step = readString(params, "step");
+  // Own keys only: "?step=constructor" must not reach Object.prototype.
+  return step !== undefined && Object.hasOwn(ASK_LEGACY, step) ? ASK_LEGACY[step] : undefined;
+}
+
+/** The screen in the URL (`s`), else the one an old step number maps to, else the first. */
+export function parseScreen(params: SearchParams): Screen {
+  const screen = readString(params, "s");
+  if (isScreen(screen)) return screen;
+  return legacyScreen(params) ?? "look";
 }
 
 export function parseHunch(params: SearchParams): Hunch | undefined {
-  const value = typeof params.h === "string" ? params.h : undefined;
+  const value = readString(params, "h");
   return HUNCHES.find((hunch) => hunch === value);
+}
+
+export function parseReading(params: SearchParams): Reading | undefined {
+  const value = readString(params, "r");
+  return READINGS.find((reading) => reading === value);
+}
+
+/** The screens on either side of this one; the first screen goes back to the question. */
+export function screenNeighbours(screen: Screen): {
+  index: number;
+  prev?: Screen;
+  next?: Screen;
+} {
+  const index = ASK_FLOW.indexOf(screen);
+  return { index, prev: ASK_FLOW[index - 1], next: ASK_FLOW[index + 1] };
 }
 
 /**
@@ -45,11 +95,16 @@ export function withRememberedDepth(
   return remembered ? { ...params, depth: remembered } : params;
 }
 
-type GuidedState = { step: number; depth: Depth; hunch?: Hunch };
+export type GuidedState = { screen: Screen; depth: Depth; hunch?: Hunch; reading?: Reading };
 
-/** Link to a step of the guided flow, carrying the depth and the reader's hunch. */
-export function askHref(id: string, { step, depth, hunch }: GuidedState): string {
-  return `/ask/${encodeURIComponent(id)}${toQueryString({ step, depth, h: hunch })}`;
+/** The question's own page, without any state (the quizzes' GET forms submit here). */
+export function askPath(id: string): string {
+  return `/ask/${encodeURIComponent(id)}`;
+}
+
+/** Link to a screen of the guided flow, carrying the depth and the reader's answers. */
+export function askHref(id: string, { screen, depth, hunch, reading }: GuidedState): string {
+  return `${askPath(id)}${toQueryString({ s: screen, depth, h: hunch, r: reading })}`;
 }
 
 /** A guided investigation needs a NASA POWER trend (MODIS cases open their case file instead). */

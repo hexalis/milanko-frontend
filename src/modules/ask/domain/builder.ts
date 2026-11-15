@@ -1,5 +1,5 @@
 import { readString, toQueryString, type SearchParams } from "@/shared/lib/search-params";
-import { askHref, FIRST_GUIDED_STEP, parseDepth, type Depth } from "./ask-state";
+import { askHref, parseDepth, type Depth } from "./ask-state";
 import { compareHref } from "./compare";
 import { PLANET, QUESTION_TYPES, type Facts, type QuestionType, type Rules } from "./rules";
 
@@ -97,7 +97,7 @@ export function whereOptions(
             return [{ id: place, kind: "case", href: `/cases/${place}`, subject }];
           }
           const { id } = rules.question(theme, "trend", place);
-          const href = askHref(id, { step: FIRST_GUIDED_STEP, depth });
+          const href = askHref(id, { screen: "look", depth });
           return [{ id: place, kind: "guided", href, subject }];
         });
     case "comparison":

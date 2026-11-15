@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { buttonLink } from "@/shared/ui/button";
-import type { CaseCatalog } from "@/modules/cases";
+import { SourcesList, type CaseCatalog } from "@/modules/cases";
 import type { Translator } from "@/shared/lib/i18n";
 import { Icon } from "@/shared/ui/icon";
 import type { GuidedView } from "../domain/guided";
@@ -98,7 +98,7 @@ export function RateFigure({
 }) {
   return (
     <p
-      className={`text-figure-l flex items-baseline gap-2.5 font-mono ${DIRECTION_INK[direction]}`}
+      className={`text-figure-l font-display flex items-baseline gap-2.5 font-semibold tabular-nums ${DIRECTION_INK[direction]}`}
     >
       <span className="self-center">
         <Icon name={direction} size="lg" />
@@ -106,6 +106,51 @@ export function RateFigure({
       {rate}
       <span className="text-body-m text-text-secondary font-sans">{perDecade}</span>
     </p>
+  );
+}
+
+const POWER_URL = "https://power.larc.nasa.gov/";
+
+/** The two sources every guided answer cites (POC sources()). */
+export function GuidedSources({
+  variable,
+  translator,
+}: {
+  variable: string;
+  translator: Translator;
+}) {
+  return (
+    <SourcesList
+      newTabHint={translator.t("link.newTab")}
+      items={[
+        {
+          icon: "chart",
+          name: `NASA POWER · ${variable}`,
+          url: POWER_URL,
+          description: translator.t("src.d.power"),
+        },
+        {
+          icon: "csv",
+          name: "portal/scripts/build_cases.py",
+          description: translator.t("src.d.script"),
+        },
+      ]}
+    />
+  );
+}
+
+/** A quiet fold under a result (POC .lesson-more): the detail is there for whoever wants it. */
+export function LessonMore({ summary, children }: { summary: string; children: ReactNode }) {
+  return (
+    <details className="group/more rounded-card bg-bg-surface shadow-card border border-[color-mix(in_srgb,var(--color-text-primary)_8%,transparent)] px-4 py-1 open:pb-4">
+      <summary className="text-body-m text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring flex min-h-12 cursor-pointer list-none items-center justify-between gap-2.5 font-semibold [&::-webkit-details-marker]:hidden">
+        {summary}
+        <span className="transition-transform group-open/more:rotate-180 motion-reduce:transition-none">
+          <Icon name="caret-down" />
+        </span>
+      </summary>
+      <div className="flex flex-col gap-4">{children}</div>
+    </details>
   );
 }
 

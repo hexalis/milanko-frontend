@@ -104,6 +104,6 @@ export function sideHref(
   if (side.kind === "planet") return "/method";
   const question = rules.question(theme, "trend", side.id);
   return openGuided(rules, catalog, question.id)
-    ? askHref(question.id, { step: 2, depth })
+    ? askHref(question.id, { screen: "look", depth })
     : `/cases/${side.id}`;
 }

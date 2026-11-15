@@ -5,7 +5,7 @@ import type { ScienceRow } from "./guided-parts";
 
 /* Rows of the scientific depth (POC ask.js .ask-sci lists): the test's own numbers, monospaced. */
 
-export function testRow(file: TrendCase, translator: Translator): ScienceRow {
+function testRow(file: TrendCase, translator: Translator): ScienceRow {
   const { t } = file;
   return {
     key: "test",
@@ -17,7 +17,7 @@ export function testRow(file: TrendCase, translator: Translator): ScienceRow {
 }
 
 /** The Sen slope per year and its 95 % range per decade. */
-export function slopeRows(file: TrendCase, translator: Translator): ScienceRow[] {
+function slopeRows(file: TrendCase, translator: Translator): ScienceRow[] {
   const { t } = file;
   const unit = unitText(file.unit, translator.locale);
   const digits = file.digits + 1;
@@ -42,9 +42,18 @@ export function slopeRows(file: TrendCase, translator: Translator): ScienceRow[]
   ];
 }
 
-export function snrAndCountRows(file: TrendCase, translator: Translator): ScienceRow[] {
+function snrAndCountRows(file: TrendCase, translator: Translator): ScienceRow[] {
   return [
     { key: "snr", term: translator.t("case.appendix.snr"), value: `${file.t.snr.toFixed(1)}×` },
     { key: "n", term: translator.t("case.detail.n"), value: `n = ${file.t.n}` },
+  ];
+}
+
+/** The test's numbers as the scientific depth lists them (POC testRows). */
+export function testRows(file: TrendCase, translator: Translator): ScienceRow[] {
+  return [
+    testRow(file, translator),
+    ...slopeRows(file, translator),
+    ...snrAndCountRows(file, translator),
   ];
 }

@@ -8,11 +8,13 @@ import {
   defaultDepth,
   firstLastMeans,
   guideHint,
+  guideQuestion,
   hunchFeedback,
-  isRangeClear,
+  hunchSheet,
   openGuided,
   placePhrase,
   questionTitle,
+  readingSheet,
 } from "./guided";
 
 const catalog = getCaseCatalog();
@@ -69,20 +71,56 @@ describe("guided hints", () => {
     expect(firstLastMeans(series.slice(0, 6)).k).toBe(3);
   });
 
-  it("calls the slope range clear only when it stays off zero", () => {
-    expect(isRangeClear({ slopeLow: 0.1, slopeHigh: 0.3 })).toBe(true);
-    expect(isRangeClear({ slopeLow: -0.3, slopeHigh: -0.1 })).toBe(true);
-    expect(isRangeClear({ slopeLow: -0.1, slopeHigh: 0.3 })).toBe(false);
+  it("has an answer on the hypothesis only", () => {
+    const { file } = opened("warmer");
+    expect(guideHint("guess", file, en.translator)).toMatch(/^The first 10 years average .+ °C\./);
+    for (const screen of ["look", "check", "verdict", "done"] as const)
+      expect(guideHint(screen, file, en.translator)).toBeUndefined();
   });
 
-  it("has an answer on steps 4 and 6 only", () => {
-    const { file } = opened("warmer");
-    expect(guideHint(4, file, en.translator)).toMatch(/^The first 10 years average .+ °C\./);
-    expect(guideHint(6, file, en.translator)).toBe(
-      en.translator.t(isRangeClear(file.t) ? "ask.guide.6.clear" : "ask.guide.6.cross"),
-    );
-    for (const step of [2, 3, 5, 7, 8])
-      expect(guideHint(step, file, en.translator)).toBeUndefined();
+  it("asks each screen the question of the old step it replaces", () => {
+    expect(guideQuestion("look", en.translator)).toBe(en.translator.t("ask.guide.3"));
+    expect(guideQuestion("check", en.translator)).toBe(en.translator.t("ask.guide.6"));
+    expect(guideQuestion("done", en.translator)).toBe(en.translator.t("ask.guide.8"));
+  });
+});
+
+describe("quiz sheets", () => {
+  const { file } = opened("warmer");
+  const flat: TrendCase = { ...file, t: { ...file.t, significant: false, slope: -0.1 } };
+
+  it("adds the figure when the hunch matches a confirmed trend", () => {
+    const sheet = hunchSheet("up", file, "up", en);
+    expect(sheet).toMatchObject({ kind: "match", title: "The test sees it too" });
+    expect(sheet.text).toMatch(/per decade; .+ since 1981\.$/);
+  });
+
+  it("explains a hidden, a leaning or another reading", () => {
+    expect(hunchSheet("unsure", file, "up", en)).toMatchObject({
+      kind: "match",
+      text: en.translator.t("ask.hunch.hidden"),
+    });
+    expect(hunchSheet("down", flat, "flat", en)).toMatchObject({
+      kind: "match",
+      title: en.translator.t("ask.sheet.lean"),
+    });
+    expect(hunchSheet("down", file, "up", en)).toMatchObject({
+      kind: "other",
+      text: en.translator.t("ask.hunch.other"),
+    });
+  });
+
+  it("agrees on the check only when the reading matches the test", () => {
+    expect(readingSheet("real", file, en.translator)).toMatchObject({
+      kind: "match",
+      title: "The test finds a clear direction",
+    });
+    expect(readingSheet("real", file, en.translator).text).toMatch(/^You thought the same\. /);
+    expect(readingSheet("real", flat, en.translator).kind).toBe("other");
+    expect(readingSheet("chance", flat, en.translator)).toMatchObject({
+      kind: "match",
+      title: en.translator.t("ask.chk.flat"),
+    });
   });
 });
 

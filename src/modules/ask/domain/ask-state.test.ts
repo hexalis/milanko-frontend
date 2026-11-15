@@ -4,9 +4,12 @@ import {
   askHref,
   guidedQuestionIds,
   parseDepth,
+  legacyScreen,
   parseHunch,
-  parseStep,
+  parseReading,
+  parseScreen,
   resolveQuestion,
+  screenNeighbours,
   withRememberedDepth,
 } from "./ask-state";
 import { getRules } from "./engine";
@@ -16,12 +19,41 @@ const findCase = (id: string) => catalog.trends.find((file) => file.id === id);
 const rules = getRules();
 
 describe("URL parsing", () => {
-  it("clamps the step to the guided range", () => {
-    expect(parseStep({})).toBe(2);
-    expect(parseStep({ step: "5" })).toBe(5);
-    expect(parseStep({ step: "1" })).toBe(2);
-    expect(parseStep({ step: "99" })).toBe(8);
-    expect(parseStep({ step: "x" })).toBe(2);
+  it("reads the screen, falling back to the first one", () => {
+    expect(parseScreen({})).toBe("look");
+    expect(parseScreen({ s: "check" })).toBe("check");
+    expect(parseScreen({ s: "nowhere" })).toBe("look");
+  });
+
+  it("lands an old step number on the screen that now holds it", () => {
+    const expected = { 2: "look", 3: "look", 4: "guess", 5: "guess", 6: "check", 7: "verdict" };
+    for (const [step, screen] of Object.entries(expected)) {
+      expect(parseScreen({ step })).toBe(screen);
+      expect(legacyScreen({ step })).toBe(screen);
+    }
+    expect(parseScreen({ step: "8" })).toBe("done");
+    expect(parseScreen({ step: "99" })).toBe("look");
+    expect(legacyScreen({ step: "99" })).toBeUndefined();
+    expect(legacyScreen({})).toBeUndefined();
+  });
+
+  it("ignores step values that name Object.prototype members", () => {
+    for (const step of ["constructor", "toString", "__proto__", "hasOwnProperty"]) {
+      expect(legacyScreen({ step })).toBeUndefined();
+      expect(parseScreen({ step })).toBe("look");
+    }
+  });
+
+  it("lets a valid screen win over an old step number", () => {
+    expect(parseScreen({ s: "verdict", step: "4" })).toBe("verdict");
+    expect(legacyScreen({ s: "verdict", step: "4" })).toBeUndefined();
+    expect(legacyScreen({ s: "bogus", step: "6" })).toBe("check");
+  });
+
+  it("knows the screens on either side", () => {
+    expect(screenNeighbours("look")).toEqual({ index: 0, prev: undefined, next: "guess" });
+    expect(screenNeighbours("check")).toEqual({ index: 2, prev: "guess", next: "verdict" });
+    expect(screenNeighbours("done")).toEqual({ index: 4, prev: "verdict", next: undefined });
   });
 
   it("accepts only known depths and hunches", () => {
@@ -29,11 +61,21 @@ describe("URL parsing", () => {
     expect(parseDepth({ depth: "deep" }, "guided")).toBe("guided");
     expect(parseHunch({ h: "down" })).toBe("down");
     expect(parseHunch({ h: "sideways" })).toBeUndefined();
+    expect(parseReading({ r: "chance" })).toBe("chance");
+    expect(parseReading({ r: "maybe" })).toBeUndefined();
   });
 
-  it("builds step links that keep depth and hunch", () => {
-    expect(askHref("soil_water@chile-drying", { step: 4, depth: "guided", hunch: "up" })).toBe(
-      "/ask/soil_water%40chile-drying?step=4&depth=guided&h=up",
+  it("builds screen links that keep depth and both answers", () => {
+    expect(
+      askHref("soil_water@chile-drying", {
+        screen: "verdict",
+        depth: "guided",
+        hunch: "up",
+        reading: "real",
+      }),
+    ).toBe("/ask/soil_water%40chile-drying?s=verdict&depth=guided&h=up&r=real");
+    expect(askHref("warmer", { screen: "look", depth: "simple" })).toBe(
+      "/ask/warmer?s=look&depth=simple",
     );
   });
 });
