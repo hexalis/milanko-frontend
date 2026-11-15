@@ -238,7 +238,7 @@ jobs:
           fi
           curl -fsS "$PUBLIC_BASE_URL/api/v1/health" >/dev/null
           html="$(curl -fsSL "$PUBLIC_BASE_URL/")"
-          if ! printf '%s' "$html" | grep -q '/_next/'; then
+          if [[ "$html" != *"/_next/"* ]]; then
             echo "frontend assets not served at $PUBLIC_BASE_URL (nginx still on placeholder?)" >&2
             exit 1
           fi
