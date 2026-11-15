@@ -1,0 +1,4 @@
+[mcp_servers.blueprint]
+command = "blueprint"
+args = ["mcp", "--tools", "agent"]
+env = { BLUEPRINT_PROJECT = "milanko-frontend" }
