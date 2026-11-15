@@ -7,6 +7,7 @@ type AppEnvironment = (typeof APP_ENVIRONMENTS)[number];
 type ServerEnv = {
   apiUrl: string;
   appEnvironment: AppEnvironment;
+  apiKey: string | undefined;
 };
 
 function readApiUrl(value: string | undefined): string {
@@ -40,5 +41,6 @@ export function getServerEnv(): ServerEnv {
   return {
     apiUrl: readApiUrl(process.env.MILANKO_API_URL),
     appEnvironment: readAppEnvironment(process.env.APP_ENV),
+    apiKey: process.env.MILANKO_API_KEY?.trim() || undefined,
   };
 }
