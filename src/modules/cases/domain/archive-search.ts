@@ -15,10 +15,7 @@ const SYNONYMS: Readonly<Record<string, string>> = {
 
 /** Lower case without accents, so "Japon" finds "Japón" (POC norm). */
 export function normalizeSearch(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
+  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 export function searchTerms(q: string): string[] {

@@ -64,12 +64,7 @@ export const shortPlaceName = (place: NearPlace): string => place.name.split(","
 
 /* ---------- Offline place lookup ---------- */
 
-const normalize = (text: string) =>
-  text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim();
+const normalize = (text: string) => text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 /** "Flood in Japan" → "Japan"; "Telica Volcano, Nicaragua" → "Nicaragua" and "Telica Volcano". */
 function eventPlaceNames(title: string): string[] {
