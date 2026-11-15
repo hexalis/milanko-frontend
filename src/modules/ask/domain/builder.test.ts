@@ -50,7 +50,7 @@ describe("builderState: theme → verb → place, invalid pieces dropped", () =>
     const state = builderState({ theme: "rain", verb: "trend" }, rules, catalog);
     expect(state.types).toEqual(["trend", "anomaly"]);
     expect(state.where?.id).toBe("murray-rain");
-    expect(state.go).toEqual({ href: "/ask/rainfall?step=2&depth=simple", kind: "guided" });
+    expect(state.go).toEqual({ href: "/ask/rainfall?s=look&depth=simple", kind: "guided" });
   });
 
   it("offers comparison when the theme is comparable and drops a verb the theme lacks", () => {
@@ -76,7 +76,7 @@ describe("builderState: theme → verb → place, invalid pieces dropped", () =>
   it("keeps the depth from the URL and falls back to simple", () => {
     expect(
       builderState({ theme: "rain", verb: "trend", depth: "science" }, rules, catalog).go?.href,
-    ).toBe("/ask/rainfall?step=2&depth=science");
+    ).toBe("/ask/rainfall?s=look&depth=science");
     expect(builderState({ depth: "deep" }, rules, catalog).depth).toBe("simple");
   });
 
@@ -155,7 +155,7 @@ describe("whereOptions", () => {
       depth: "guided",
     });
     expect(trend.map((option) => option.id)).toEqual(["svalbard-warming"]);
-    expect(trend[0]?.href).toBe("/ask/warmer?step=2&depth=guided");
+    expect(trend[0]?.href).toBe("/ask/warmer?s=look&depth=guided");
     const pairs = whereOptions(rules, catalog, {
       theme: "temperature",
       type: "comparison",

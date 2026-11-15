@@ -2,6 +2,8 @@ import {
   changeLabel,
   fileName,
   formatFigure,
+  formatOdds,
+  rateLabel,
   unitLabel,
   type CaseCatalog,
   type Direction,
@@ -17,6 +19,8 @@ import {
   type Depth,
   type GuidedCase,
   type Hunch,
+  type Reading,
+  type Screen,
 } from "./ask-state";
 import { PLANET, type Question, type Rules } from "./rules";
 
@@ -27,14 +31,15 @@ import { PLANET, type Question, type Rules } from "./rules";
 
 type TextContext = { translator: Translator; catalog: CaseCatalog };
 
-/** Everything a guided step reads: the question, its case, and where the reader stands. */
+/** Everything a guided screen reads: the question, its case, and where the reader stands. */
 export type GuidedView = {
   question: Question;
   file: TrendCase;
   direction: Direction;
-  step: number;
+  screen: Screen;
   depth: Depth;
   hunch?: Hunch;
+  reading?: Reading;
 };
 
 /** The source line every guided chart and answer quotes. */
@@ -98,7 +103,20 @@ export function compareTitle(theme: string, a: string, b: string, context: TextC
   });
 }
 
-/* ---------- Guided-depth hints (steps 4 and 6) ---------- */
+/* ---------- Guided depth: one observation question per screen ---------- */
+
+/** Each screen asks the observation question of the old step that showed the same thing. */
+const GUIDE_KEY: Record<Screen, string> = {
+  look: "ask.guide.3",
+  guess: "ask.guide.4",
+  check: "ask.guide.6",
+  verdict: "ask.guide.7",
+  done: "ask.guide.8",
+};
+
+export function guideQuestion(screen: Screen, translator: Translator): string {
+  return translator.t(GUIDE_KEY[screen]);
+}
 
 const MAX_HINT_YEARS = 10;
 
@@ -114,29 +132,64 @@ export function firstLastMeans(series: readonly Point[]): {
   return { k, first: mean(series.slice(0, k)), last: mean(series.slice(-k)) };
 }
 
-/** True when the 95 % range of the slope stays on one side of zero. */
-export function isRangeClear(t: { slopeLow: number; slopeHigh: number }): boolean {
-  return t.slopeLow > 0 || t.slopeHigh < 0;
-}
-
-/** The answer behind the hint of the guided depth: only steps 4 and 6 have one the data can give. */
+/** The answer behind the hint of the guided depth: only the hypothesis has one the data gives. */
 export function guideHint(
-  step: number,
+  screen: Screen,
   file: TrendCase,
   translator: Translator,
 ): string | undefined {
-  if (step === 4) {
-    const { k, first, last } = firstLastMeans(file.series);
-    const unit = unitLabel(file.unit, translator.locale);
-    const value = (x: number) => `${formatFigure(x, file.digits + 1)} ${unit}`.trim();
-    return translator.t("ask.guide.4.a", { k, first: value(first), last: value(last) });
-  }
-  if (step === 6)
-    return translator.t(isRangeClear(file.t) ? "ask.guide.6.clear" : "ask.guide.6.cross");
-  return undefined;
+  if (screen !== "guess") return undefined;
+  const { k, first, last } = firstLastMeans(file.series);
+  const unit = unitLabel(file.unit, translator.locale);
+  const value = (x: number) => `${formatFigure(x, file.digits + 1)} ${unit}`.trim();
+  return translator.t("ask.guide.4.a", { k, first: value(first), last: value(last) });
 }
 
-/* ---------- Step 7: the verdict ---------- */
+/* ---------- The two quizzes: what the reader said against what the test found ---------- */
+
+type SheetKind = "match" | "other";
+export type Sheet = { kind: SheetKind; title: string; text: string };
+
+/**
+ * The answer that slides up once the hunch is checked (POC lessonQuiz on "guess"). When the reader
+ * saw it right, the second line adds the figure instead of repeating the title.
+ */
+export function hunchSheet(
+  hunch: Hunch,
+  file: TrendCase,
+  direction: Direction,
+  context: TextContext,
+): Sheet {
+  const { t } = context.translator;
+  const feedback = hunchFeedback(hunch, file.t, direction) ?? "other";
+  const text =
+    feedback === "match"
+      ? t(file.t.significant ? "ask.v.much" : "ask.v.much.flat", {
+          rate: rateLabel(file, context),
+          total: changeLabel(file, context),
+          from: file.series[0]?.[0] ?? "",
+        })
+      : t(`ask.hunch.${feedback}`);
+  return {
+    kind: feedback === "other" ? "other" : "match",
+    title: t(`ask.sheet.${feedback}`),
+    text,
+  };
+}
+
+/** The answer on the check screen: does the reader agree with the test, and how rare is chance. */
+export function readingSheet(reading: Reading, file: TrendCase, translator: Translator): Sheet {
+  const { t } = translator;
+  const significant = file.t.significant;
+  const agrees = (significant && reading === "real") || (!significant && reading === "chance");
+  return {
+    kind: agrees ? "match" : "other",
+    title: t(significant ? "ask.chk.sig" : "ask.chk.flat"),
+    text: `${t(agrees ? "ask.chk.agree" : "ask.chk.differ")} ${t("case.chance", { odds: formatOdds(file.t.p, translator) })}`,
+  };
+}
+
+/* ---------- The verdict ---------- */
 
 export type HunchFeedback = "match" | "hidden" | "other" | "lean";
 

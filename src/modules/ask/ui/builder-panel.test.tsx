@@ -66,7 +66,7 @@ describe("QuestionBuilder", () => {
   it("links the finished question, says what it shows and marks its example", () => {
     renderBuilder({ theme: "temperature", verb: "trend", depth: "guided" });
     const go = screen.getByRole("link", { name: /Investigate/ });
-    expect(go).toHaveAttribute("href", "/ask/warmer?step=2&depth=guided");
+    expect(go).toHaveAttribute("href", "/ask/warmer?s=look&depth=guided");
     expect(screen.getByText("Opens the guided investigation, step by step.")).toBeInTheDocument();
     const preview = screen.getByRole("list", { name: "What you will see" });
     expect(within(preview).getByText("45 years of data, 1981–2025")).toBeVisible();

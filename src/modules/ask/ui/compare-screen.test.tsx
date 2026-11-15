@@ -35,7 +35,7 @@ describe("CompareScreen", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Open this investigation/ })[0]).toHaveAttribute(
       "href",
-      "/ask/soil_water%40chile-drying?step=2&depth=guided",
+      "/ask/soil_water%40chile-drying?s=look&depth=guided",
     );
   });
 

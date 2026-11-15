@@ -76,7 +76,7 @@ describe("links", () => {
     const planet = compareSide("planet", catalog);
     if (!side || !planet) throw new Error("missing side");
     expect(sideHref(rules, catalog, "soil_water", side, "simple")).toBe(
-      "/ask/soil_water%40chile-drying?step=2&depth=simple",
+      "/ask/soil_water%40chile-drying?s=look&depth=simple",
     );
     expect(sideHref(rules, catalog, "temperature", planet, "simple")).toBe("/method");
   });

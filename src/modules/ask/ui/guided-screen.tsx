@@ -1,21 +1,30 @@
 import type { ReactNode } from "react";
 import type { CaseCatalog } from "@/modules/cases";
-import { changeLabel, fileName } from "@/modules/cases";
 import type { Translator } from "@/shared/lib/i18n";
-import { askHref, LAST_STEP } from "../domain/ask-state";
-import { guideHint, questionTitle, type GuidedView } from "../domain/guided";
+import { askHref, screenNeighbours } from "../domain/ask-state";
+import {
+  guideHint,
+  guideQuestion,
+  hunchSheet,
+  questionTitle,
+  readingSheet,
+  type GuidedView,
+  type Sheet,
+} from "../domain/guided";
 import type { Rules } from "../domain/rules";
-import { GuideAside, GuidedHeader } from "./guided-header";
-import { GuidedCrumbs, GuidedNav, type StepProps } from "./guided-parts";
-import { StepCheck } from "./step-check";
-import { StepClues } from "./step-clues";
-import { StepDeeper } from "./step-deeper";
-import { StepHypothesis } from "./step-hypothesis";
-import { StepPlace } from "./step-place";
-import { StepReconstruction } from "./step-reconstruction";
-import { StepVerdict } from "./step-verdict";
+import { GuideAside, LessonTop } from "./guided-header";
+import { LessonDock } from "./guided-dock";
+import type { StepProps } from "./guided-parts";
+import { ScreenCheck } from "./screen-check";
+import { ScreenDone } from "./screen-done";
+import { ScreenGuess } from "./screen-guess";
+import { ScreenLook } from "./screen-look";
+import { ScreenVerdict } from "./screen-verdict";
 
-/* The guided investigation, steps 2–8 (POC ask.js renderAsk, L108–381). */
+/*
+ * The guided investigation as a short lesson (POC ask.js renderAsk): exit and progress on top, one
+ * task in the middle, one button below. Four screens and a close, after the question at /ask.
+ */
 
 type GuidedScreenProps = {
   view: GuidedView;
@@ -24,99 +33,110 @@ type GuidedScreenProps = {
   rules: Rules;
 };
 
-function stepTitle({ view, translator, catalog }: StepProps): string {
+function screenTitle({ view, translator, catalog }: StepProps): string {
   const { t } = translator;
-  const { file, question, step } = view;
-  const context = { translator, catalog };
-  switch (step) {
-    case 2:
-      return t("ask.place.title", { place: fileName(file, context) });
-    case 3:
-      return t("ask.clues.title");
-    case 4:
+  switch (view.screen) {
+    case "look":
+      return t("ask.look.title");
+    case "guess":
       return t("ask.hyp.title");
-    case 5:
-      return t(file.t.significant ? "case.claim" : "case.claim.flat", {
-        v: t(`var.${file.variable}`),
-        place: fileName(file, context),
-        total: changeLabel(file, context),
-        from: file.series[0]?.[0],
-      });
-    case 6:
-      return t("ask.check.title");
-    case 7:
-      return questionTitle(question, context);
+    case "check":
+      return t("ask.chk.q");
+    case "verdict":
+      return questionTitle(view.question, { translator, catalog });
     default:
-      return t("ask.deep.title");
+      return t("ask.done.title");
   }
 }
 
-function StepBody({ rules, ...props }: GuidedScreenProps): ReactNode {
-  switch (props.view.step) {
-    case 2:
-      return <StepPlace {...props} />;
-    case 3:
-      return <StepClues {...props} />;
-    case 4:
-      return <StepHypothesis {...props} />;
-    case 5:
-      return <StepReconstruction {...props} />;
-    case 6:
-      return <StepCheck {...props} />;
-    case 7:
-      return <StepVerdict {...props} rules={rules} />;
+function ScreenBody({ rules, ...props }: GuidedScreenProps): ReactNode {
+  switch (props.view.screen) {
+    case "look":
+      return <ScreenLook {...props} />;
+    case "guess":
+      return <ScreenGuess {...props} />;
+    case "check":
+      return <ScreenCheck {...props} />;
+    case "verdict":
+      return <ScreenVerdict {...props} />;
     default:
-      return <StepDeeper {...props} />;
+      return <ScreenDone {...props} rules={rules} />;
   }
+}
+
+/** The answer sheet of a quiz screen once its answer is in the URL. */
+function quizSheet({ view, translator, catalog }: StepProps): Sheet | undefined {
+  const { screen, hunch, reading, file, direction } = view;
+  if (screen === "guess" && hunch) {
+    return hunchSheet(hunch, file, direction, { translator, catalog });
+  }
+  if (screen === "check" && reading) return readingSheet(reading, file, translator);
+  return undefined;
+}
+
+function Dock(props: GuidedScreenProps) {
+  const { view, translator } = props;
+  const { t } = translator;
+  const { question, screen, depth, hunch, reading } = view;
+  const state = { depth, hunch, reading };
+  const { prev, next } = screenNeighbours(screen);
+  const isQuiz = screen === "guess" ? !hunch : screen === "check" ? !reading : false;
+  const nextHref = next ? askHref(question.id, { ...state, screen: next }) : "/ask";
+  return (
+    <LessonDock
+      label={t("ask.steps.aria")}
+      sheet={quizSheet(props)}
+      back={{
+        href: prev ? askHref(question.id, { ...state, screen: prev }) : "/ask",
+        label: t("ask.back"),
+      }}
+      quiz={
+        isQuiz
+          ? { check: t("ask.check"), skip: { href: nextHref, label: t("ask.skip") } }
+          : undefined
+      }
+      next={{ href: nextHref, label: t(next ? "ask.continue" : "ask.deep.again") }}
+    />
+  );
 }
 
 export function GuidedScreen(props: GuidedScreenProps) {
-  const { view, translator, catalog } = props;
+  const { view, translator } = props;
   const { t } = translator;
-  const { question, file, step, depth, hunch } = view;
-  const title = questionTitle(question, { translator, catalog });
-  const location = { id: question.id, step, depth, hunch };
-  const back = step === 2 ? "/ask" : askHref(question.id, { ...location, step: step - 1 });
-  const next =
-    step < LAST_STEP
-      ? {
-          href: askHref(question.id, { ...location, step: step + 1 }),
-          label: `${t("ask.next")}: ${t(`ask.step.${step + 1}`)}`,
-        }
-      : { href: "/ask", label: t("ask.deep.again") };
-
+  const { question, file, screen, depth, hunch, reading } = view;
   return (
-    <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto w-full px-4 pb-16">
-      <GuidedCrumbs
-        navLabel={t("nav.breadcrumb")}
-        links={[{ href: "/", label: t("nav.ask") }]}
-        current={title}
+    <main className="group/lesson medium:px-6 expanded:px-12 mx-auto flex min-h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] w-full max-w-[980px] flex-col gap-7 overflow-x-clip px-4">
+      <LessonTop
+        id={question.id}
+        screen={screen}
+        depth={depth}
+        hunch={hunch}
+        reading={reading}
+        translator={translator}
       />
-      <GuidedHeader {...location} translator={translator} />
-      <article aria-labelledby="ask-title" className="flex max-w-[980px] flex-col gap-5 pb-8">
-        <p className="text-label-m text-text-tertiary -mb-2.5 font-semibold">
-          {t("ask.stepOf", { n: step, total: LAST_STEP })} · {t(`ask.step.${step}`)}
-        </p>
+      <article
+        // A new screen mounts a new article, so it slides in instead of swapping in place.
+        key={screen}
+        aria-labelledby="ask-title"
+        className="flex flex-1 flex-col gap-[18px] motion-safe:transition-[opacity,translate] motion-safe:duration-300 motion-safe:starting:translate-x-4 motion-safe:starting:opacity-0"
+      >
+        <p className="text-text-brand text-[14px] font-semibold">{t(`ask.flow.${screen}`)}</p>
         <h1
           id="ask-title"
-          className="font-display text-text-primary text-[clamp(30px,4vw,54px)] leading-[1.02] text-balance"
+          className="font-display text-text-primary text-[clamp(28px,3.4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance"
         >
-          {stepTitle(props)}
+          {screenTitle(props)}
         </h1>
         {depth === "guided" ? (
           <GuideAside
-            question={t(`ask.guide.${step}`)}
-            hint={guideHint(step, file, translator)}
+            question={guideQuestion(screen, translator)}
+            hint={guideHint(screen, file, translator)}
             translator={translator}
           />
         ) : null}
-        <StepBody {...props} />
+        <ScreenBody {...props} />
       </article>
-      <GuidedNav
-        label={t("ask.steps.aria")}
-        back={{ href: back, label: t("ask.back") }}
-        next={next}
-      />
+      <Dock {...props} />
     </main>
   );
 }

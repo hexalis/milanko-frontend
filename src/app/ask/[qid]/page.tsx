@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import {
+  askHref,
   DEPTH_COOKIE,
   guidedQuestionIds,
+  legacyScreen,
   parseHunch,
-  parseStep,
+  parseReading,
+  parseScreen,
 } from "@/modules/ask/domain/ask-state";
 import { getRules } from "@/modules/ask/domain/engine";
 import { defaultDepth, findTrend, openGuided, questionTitle } from "@/modules/ask/domain/guided";
@@ -46,7 +49,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-/** Language and depth cookies and the step in the URL are request data, so they render in Suspense. */
+/**
+ * Language and depth cookies and the screen in the URL are request data, so they render in
+ * Suspense. An old `?step=N` link is sent on to the screen that now holds what that step showed.
+ */
 async function GuidedContent({
   qid,
   searchParams,
@@ -59,13 +65,14 @@ async function GuidedContent({
   const found = openGuided(rules, catalog, qid);
   if (!found) notFound();
   const [query, locale, jar] = await Promise.all([searchParams, getLocale(), cookies()]);
-  const view = {
-    ...found,
-    direction: trendDirection(found.file.t),
-    step: parseStep(query),
+  const state = {
+    screen: parseScreen(query),
     depth: defaultDepth(query, jar.get(DEPTH_COOKIE)?.value),
     hunch: parseHunch(query),
+    reading: parseReading(query),
   };
+  if (legacyScreen(query)) redirect(askHref(found.question.id, state));
+  const view = { ...found, ...state, direction: trendDirection(found.file.t) };
   return (
     <div lang={locale}>
       <GuidedScreen

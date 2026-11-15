@@ -41,12 +41,9 @@ export {
   ChartCaption,
   ChartHead,
   EvidenceBlock,
-  EvidenceTabs,
-  PropsList,
   SourcesList,
   THEME_TONE,
 } from "./ui/dossier/doc-parts";
-export { Mono } from "./ui/dossier/exact-numbers";
 export { GlossaryTerm } from "./ui/dossier/glossary-term";
 export { TrendReadout } from "./ui/dossier/trend-readout";
 export { EvidenceMeter } from "./ui/evidence-meter";

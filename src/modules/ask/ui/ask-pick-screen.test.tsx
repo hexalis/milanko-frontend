@@ -7,12 +7,12 @@ import { AskPickScreen } from "./ask-pick-screen";
 const catalog = getCaseCatalog();
 
 describe("AskPickScreen", () => {
-  it("is step 1 of 8, with a breadcrumb back home and examples on /ask", () => {
+  it("is step 1 of 6, with a breadcrumb back home and examples on /ask", () => {
     render(<AskPickScreen params={{}} translator={getTranslator("en")} catalog={catalog} />);
     const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
     expect(within(crumbs).getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(within(crumbs).getByText("I have a question")).toHaveAttribute("aria-current", "page");
-    expect(screen.getByText("Step 1 of 8 · Question")).toBeVisible();
+    expect(screen.getByText("Step 1 of 6 · Question")).toBeVisible();
     expect(
       screen.getByRole("heading", { level: 1, name: "What do you want to find out?" }),
     ).toBeVisible();

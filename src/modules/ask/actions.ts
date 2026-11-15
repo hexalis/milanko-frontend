@@ -3,7 +3,14 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCaseCatalog } from "@/modules/cases";
-import { askHref, DEPTH_COOKIE, DEPTHS, parseHunch, parseStep } from "./domain/ask-state";
+import {
+  askHref,
+  DEPTH_COOKIE,
+  DEPTHS,
+  parseHunch,
+  parseReading,
+  parseScreen,
+} from "./domain/ask-state";
 import { getRules } from "./domain/engine";
 import { openGuided } from "./domain/guided";
 
@@ -16,7 +23,7 @@ const field = (form: FormData, key: string): string | undefined => {
 
 /**
  * Depth switch of the guided investigation: remembers the choice for the next visit (the POC's
- * localStorage "etd-depth") and reopens the same step with the depth in the link. The target is
+ * localStorage "etd-depth") and reopens the same screen with the depth in the link. The target is
  * rebuilt from validated parts, never taken from the form as a URL.
  */
 export async function chooseDepth(form: FormData): Promise<void> {
@@ -28,6 +35,13 @@ export async function chooseDepth(form: FormData): Promise<void> {
     maxAge: ONE_YEAR_SECONDS,
     sameSite: "lax",
   });
-  const query = { step: field(form, "step"), h: field(form, "h") };
-  redirect(askHref(id, { step: parseStep(query), depth, hunch: parseHunch(query) }));
+  const query = { s: field(form, "s"), h: field(form, "h"), r: field(form, "r") };
+  redirect(
+    askHref(id, {
+      screen: parseScreen(query),
+      depth,
+      hunch: parseHunch(query),
+      reading: parseReading(query),
+    }),
+  );
 }
