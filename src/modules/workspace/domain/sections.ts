@@ -3,6 +3,7 @@ export type WorkspaceSection = {
     | "/ask"
     | "/briefing"
     | "/cases"
+    | "/explore"
     | "/method"
     | "/regions"
     | "/rankings"
@@ -30,6 +31,11 @@ export const WORKSPACE_SECTIONS: readonly WorkspaceSection[] = [
     href: "/cases",
     labelKey: "nav.cases",
     summary: "Expedientes de tendencias y anomalías con datos de NASA, en inglés o español.",
+  },
+  {
+    href: "/explore",
+    labelKey: "nav.explore",
+    summary: "Globo 3D con los expedientes y los eventos de NASA EONET de cada región.",
   },
   {
     href: "/method",

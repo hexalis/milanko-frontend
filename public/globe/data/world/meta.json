@@ -1,0 +1,135 @@
+{
+ "generated": "2026-10-14",
+ "source": "NASA GIBS WMS (gibs.earthdata.nasa.gov), EPSG:4326",
+ "layers": {
+  "igbp": {
+   "layer": "MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual",
+   "time": "2024-01-01",
+   "w": 8192,
+   "h": 4096
+  },
+  "dem": {
+   "layer": "ASTER_GDEM_Color_Index",
+   "w": 8192,
+   "h": 4096
+  },
+  "bm": {
+   "layer": "BlueMarble_NextGeneration",
+   "w": 4096,
+   "h": 2048
+  },
+  "bath": {
+   "layer": "BlueMarble_ShadedRelief_Bathymetry",
+   "w": 2048,
+   "h": 1024
+  }
+ },
+ "record": 13,
+ "biomes": [
+  "deep",
+  "sea",
+  "shelf",
+  "lake",
+  "desert",
+  "shrub",
+  "grass",
+  "crop",
+  "savanna",
+  "rainforest",
+  "forest",
+  "conifer",
+  "wetland",
+  "tundra",
+  "ice",
+  "mountain",
+  "urban"
+ ],
+ "regions": 162,
+ "regionFrequency": 4,
+ "seaShade": {
+  "qSea": 22.52,
+  "qShelf": 55.79
+ },
+ "lakeMaxKm2": 430000,
+ "grids": {
+  "base-80": {
+   "f": 80,
+   "level": 0,
+   "cells": 64002,
+   "file": "base-80.bin",
+   "bytes": 832694,
+   "biomes": {
+    "shelf": 6368,
+    "grass": 3244,
+    "sea": 18647,
+    "deep": 20466,
+    "savanna": 3603,
+    "crop": 1639,
+    "shrub": 1137,
+    "desert": 2427,
+    "wetland": 63,
+    "lake": 110,
+    "conifer": 305,
+    "forest": 979,
+    "urban": 22,
+    "rainforest": 1759,
+    "tundra": 1001,
+    "ice": 1769,
+    "mountain": 463
+   }
+  },
+  "base-56": {
+   "f": 56,
+   "level": 0,
+   "cells": 31362,
+   "file": "base-56.bin",
+   "bytes": 408374,
+   "biomes": {
+    "shelf": 3115,
+    "grass": 1621,
+    "sea": 9172,
+    "deep": 10028,
+    "savanna": 1759,
+    "crop": 817,
+    "shrub": 545,
+    "desert": 1178,
+    "wetland": 29,
+    "conifer": 136,
+    "forest": 478,
+    "urban": 15,
+    "rainforest": 856,
+    "tundra": 483,
+    "ice": 870,
+    "lake": 44,
+    "mountain": 216
+   }
+  },
+  "fine-288": {
+   "f": 288,
+   "level": 1,
+   "cells": 829442,
+   "dir": "fine-288",
+   "bytes": 10785338,
+   "largestRegionBytes": 69449,
+   "biomes": {
+    "shelf": 81609,
+    "grass": 41573,
+    "shrub": 14578,
+    "sea": 241419,
+    "deep": 265302,
+    "savanna": 46089,
+    "conifer": 4098,
+    "crop": 21800,
+    "desert": 31625,
+    "wetland": 1439,
+    "urban": 626,
+    "lake": 2127,
+    "forest": 12920,
+    "rainforest": 22456,
+    "tundra": 12758,
+    "ice": 22962,
+    "mountain": 6061
+   }
+  }
+ }
+}

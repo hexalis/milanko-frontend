@@ -201,9 +201,8 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
             title: t("brief.step1.t"),
             description: t("brief.step1.d"),
           },
-          // The POC opened the globe explorer (#/explore), not ported yet; Regions is the closest place view.
           {
-            href: "/regions",
+            href: "/explore",
             icon: "explore-on",
             title: t("brief.step2.t"),
             description: t("brief.step2.d"),

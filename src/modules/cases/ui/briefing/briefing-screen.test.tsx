@@ -39,7 +39,7 @@ describe("BriefingScreen", () => {
     const steps = within(screen.getByRole("region", { name: "How to use this portal" }));
     expect(steps.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
       "/cases",
-      "/regions",
+      "/explore",
       "/method",
     ]);
   });
