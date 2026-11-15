@@ -49,7 +49,7 @@ function VerdictRow({
         </span>
         {label}
       </dt>
-      <dd className="text-body-l text-text-secondary tabular-nums">{children}</dd>
+      <dd className="text-body-l font-reading text-text-secondary tabular-nums">{children}</dd>
     </div>
   );
 }
@@ -74,7 +74,7 @@ export function StepVerdict({ view, translator, catalog, rules }: StepProps & { 
       <div className="rounded-card bg-bg-surface shadow-raised flex flex-col items-start gap-2.5 p-5">
         <p
           id={ANSWER_ID}
-          className="font-display text-text-primary text-[clamp(22px,2.6vw,30px)] leading-tight font-extrabold"
+          className="font-display text-text-primary text-[clamp(22px,2.6vw,30px)] leading-tight font-semibold"
         >
           {answer.text}
         </p>
@@ -125,7 +125,7 @@ export function StepVerdict({ view, translator, catalog, rules }: StepProps & { 
           <Icon name="info" />
           {t("case.why.tag")}
         </p>
-        <p className="text-body-l text-text-primary max-w-[68ch]">
+        <p className="text-body-l font-reading text-text-primary max-w-[68ch]">
           {trendText(file, "why", context)}
         </p>
       </EvidenceBlock>

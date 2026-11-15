@@ -4,15 +4,42 @@
 @source "../../node_modules/@hexalis/components/dist";
 
 /*
- * The app uses the Arcilla palette and style (data-palette / data-style on <html>), which is the
- * POC's "Arcilla amable" identity. Fonts are loaded with next/font and plugged into the DS hooks.
- * Use the DS semantic names (bg-bg-surface, text-text-secondary, shadow-card, text-heading-h2…);
- * do not define colour tokens here.
+ * Milanko brand (manual v1.2, the look the POC ships since 7cbf568). It is the DS default palette
+ * and neutral style (no data-palette / data-style on <html>), with the brand's own canvas, ink and
+ * dark theme laid over the DS brand roles. Use the DS semantic names in components
+ * (bg-bg-surface, text-text-secondary, shadow-card, text-heading-h2…); do not add colours here
+ * unless the brand has a role the DS lacks.
  */
 :root {
-  --hexalis-font-sans-app: var(--font-nunito);
-  --hexalis-font-display-app: var(--font-baloo);
+  --hexalis-font-sans-app: var(--font-plex);
+  --hexalis-font-display-app: var(--font-plex);
   --hexalis-font-mono-app: var(--font-jetbrains);
+
+  --hexalis-brand-50: #f0f5fe;
+  --hexalis-brand-700: #3550a3;
+  --hexalis-brand-canvas-light: #f5f7fa;
+  --hexalis-brand-surface-sunken-light: #eceff3;
+  --hexalis-brand-text-primary-light: #1a1e25;
+  --hexalis-brand-text-secondary-light: #4f5867;
+  --hexalis-brand-text-tertiary-light: #5f6879;
+
+  --hexalis-brand-canvas-dark: #0a0c0f;
+  --hexalis-brand-surface-dark: #111419;
+  --hexalis-brand-surface-raised-dark: #1a1e25;
+  --hexalis-brand-surface-sunken-dark: #0a0c0f;
+  --hexalis-brand-text-primary-dark: #f5f7fa;
+
+  /* Roles the DS has no token for. */
+  --milanko-node: #c2410c;
+}
+
+:root[data-theme="dark"] {
+  --milanko-node: #ff8a4c;
+}
+
+@theme inline {
+  /* Reading text (leads, prose, verdicts) is set in Source Serif 4; UI and headings in Plex. */
+  --font-reading: var(--font-source-serif), ui-serif, Georgia, serif;
 }
 
 @layer base {
@@ -20,6 +47,11 @@
   h2,
   h3 {
     font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  h1 {
+    letter-spacing: -0.025em;
   }
 
   @media (prefers-reduced-motion: reduce) {

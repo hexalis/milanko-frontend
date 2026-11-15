@@ -9,9 +9,9 @@ import { askHref, DEPTHS, LAST_STEP, type Depth, type Hunch } from "../domain/as
 
 const stepPill = tv({
   slots: {
-    root: "text-label-m inline-flex min-h-10 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 font-bold no-underline",
+    root: "text-label-m inline-flex min-h-10 items-center gap-2 rounded-full py-1 pr-3.5 pl-1 font-semibold no-underline",
     number:
-      "font-display grid size-[30px] place-items-center rounded-full text-[15px] font-extrabold",
+      "font-display grid size-[30px] place-items-center rounded-full text-[15px] font-semibold",
   },
   variants: {
     state: {
@@ -103,7 +103,7 @@ function DepthSwitch({
             name="depth"
             value={option}
             aria-pressed={option === depth}
-            className="text-label-s text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-text-inverse min-h-8 rounded-xs px-3 font-bold"
+            className="text-label-s text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-text-inverse min-h-8 rounded-xs px-3 font-semibold"
           >
             {t(`ask.depth.${option}`)}
           </button>
@@ -141,16 +141,16 @@ export function GuideAside({
   return (
     <aside
       aria-label={t("ask.guide.aria")}
-      className="bg-surface-tone-5 rounded-card grid max-w-[760px] grid-cols-[1.625rem_minmax(0,1fr)] gap-3 px-[18px] py-4 shadow-[0_5px_0_var(--color-surface-tone-5-edge)]"
+      className="bg-surface-tone-5 rounded-card shadow-card grid max-w-[760px] grid-cols-[1.625rem_minmax(0,1fr)] gap-3 px-[18px] py-4"
     >
       <span className="text-text-primary mt-0.5 text-[24px]">
         <Icon name="sparkle" />
       </span>
       <div className="flex flex-col gap-2">
-        <p className="text-body-l text-text-primary font-bold">{question}</p>
+        <p className="text-body-l font-reading text-text-primary font-semibold">{question}</p>
         {hint ? (
           <details className="group">
-            <summary className="text-label-m text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring inline-flex cursor-pointer list-none items-center gap-1.5 font-bold [&::-webkit-details-marker]:hidden">
+            <summary className="text-label-m text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring inline-flex cursor-pointer list-none items-center gap-1.5 font-semibold [&::-webkit-details-marker]:hidden">
               {t("ask.guide.reveal")}
               <span className="transition-transform group-open:rotate-180">
                 <Icon name="caret-down" />

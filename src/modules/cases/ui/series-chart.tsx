@@ -182,7 +182,7 @@ export function SeriesChart({
             x={toX(record) > WIDTH * 0.7 ? toX(record) - 10 : toX(record) + 10}
             y={direction === "down" ? toY(record) + 16 : toY(record) - 10}
             textAnchor={toX(record) > WIDTH * 0.7 ? "end" : "start"}
-            className="fill-text-primary text-[12px] font-bold"
+            className="fill-text-primary text-[12px] font-semibold"
           >
             {`${recordLabel} ${record[0]} · ${value(record[1])} ${unit}`.trim()}
           </text>
@@ -202,14 +202,14 @@ export function SeriesChart({
             x={toX(marked) > WIDTH * 0.6 ? toX(marked) - 12 : toX(marked) + 12}
             y={toY(marked) - 10}
             textAnchor={toX(marked) > WIDTH * 0.6 ? "end" : "start"}
-            className="fill-text-primary text-[12px] font-bold"
+            className="fill-text-primary text-[12px] font-semibold"
           >
             {mark.text}
           </text>
         </g>
       ) : null}
       {inline && last ? (
-        <g className="text-[12px] font-bold">
+        <g className="text-[12px] font-semibold">
           <text x={WIDTH - margin.right + 6} y={seriesLabelY} dy="0.35em" className="fill-chart-1">
             {inline.series}
           </text>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="40" height="40">
+  <!-- Milanko isotype, negative on Deep Space (brand manual v1.2). -->
+  <rect width="512" height="512" rx="112" fill="#0a0e1c"/>
+  <g transform="translate(256 256) scale(1.02) translate(-256 -256)"><g fill="none" stroke="#f5f7fa" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"><path d="M88.3 384 L199.7 128 L219.6 242.6"/><path d="M282.5 263.3 L423.7 128 L312.3 384"/></g><circle cx="231.7" cy="312" r="30.4" fill="#ff8a4c"/></g>
+</svg>

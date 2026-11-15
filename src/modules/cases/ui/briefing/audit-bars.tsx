@@ -100,7 +100,7 @@ export function AuditBars({
           <text
             x={spanStart + 4}
             y={MARGIN.top - 4}
-            className="fill-text-secondary text-[11px] font-bold"
+            className="fill-text-secondary text-[11px] font-semibold"
           >
             {spanLabel}
           </text>

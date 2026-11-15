@@ -25,7 +25,7 @@ export function RankingBars({ rows, metric, variable, unit }: RankingBarsProps) 
         >
           <Link
             href={`/regions${toQueryString({ region: row.code, variable })}`}
-            className="text-text-primary hover:text-text-brand truncate font-bold no-underline"
+            className="text-text-primary hover:text-text-brand truncate font-semibold no-underline"
           >
             {regionLabel(row)}
           </Link>

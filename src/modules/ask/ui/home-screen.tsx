@@ -16,7 +16,7 @@ export function HomeScreen({ params, translator, catalog }: HomeScreenProps) {
   return (
     <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto flex w-full flex-col gap-6 px-4 pb-12">
       <header className="medium:pt-8 flex flex-col gap-1.5 pt-6">
-        <p className="text-body-l text-text-secondary m-0">{t("home.kicker")}</p>
+        <p className="text-body-l font-reading text-text-secondary m-0">{t("home.kicker")}</p>
         <h1 className="font-display text-text-primary m-0 text-[clamp(30px,3.6vw,46px)] leading-[1.05] text-balance">
           {t("home.title")}
         </h1>
@@ -31,7 +31,7 @@ export function HomeScreen({ params, translator, catalog }: HomeScreenProps) {
         />
         <ExploreDoor translator={translator} fileCount={catalog.all.length} />
       </div>
-      <p className="font-display text-text-primary m-0 text-[clamp(22px,2.6vw,30px)] leading-tight font-extrabold">
+      <p className="font-display text-text-primary m-0 text-[clamp(22px,2.6vw,30px)] leading-tight font-semibold">
         {t("home.slogan")}
       </p>
       <p className="text-body-s text-text-secondary m-0 max-w-[72ch]">{t("home.note")}</p>

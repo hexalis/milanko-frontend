@@ -7,7 +7,10 @@ export function WorkspaceFooter() {
       <p>Datos de NASA POWER, MODIS (GIBS) y EONET, persistidos por la API de Milanko.</p>
       <p>
         API:{" "}
-        <a className="text-text-link font-bold underline underline-offset-2" href={API_DOCS_PATH}>
+        <a
+          className="text-text-link font-semibold underline underline-offset-2"
+          href={API_DOCS_PATH}
+        >
           {API_DOCS_PATH}
         </a>
       </p>

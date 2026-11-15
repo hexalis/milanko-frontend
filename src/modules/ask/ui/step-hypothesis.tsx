@@ -73,7 +73,10 @@ export function StepHypothesis({ view, translator, catalog }: StepProps) {
             </li>
           ))}
         </ul>
-        <p className="text-body-l text-text-primary min-h-[3em] max-w-[68ch]" aria-live="polite">
+        <p
+          className="text-body-l font-reading text-text-primary min-h-[3em] max-w-[68ch]"
+          aria-live="polite"
+        >
           {hunch ? (
             t(`ask.hyp.fb.${hunch}`)
           ) : (

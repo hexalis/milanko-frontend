@@ -331,19 +331,19 @@ function ContextDoc({ file, translator }: Pick<EventDossierProps, "file" | "tran
         <dl className="medium:grid-cols-3 grid gap-4">
           <div className="flex flex-col gap-1">
             <dt className="text-label-m text-text-secondary">{t("event.date")}</dt>
-            <dd className="text-body-l text-text-primary tabular-nums">
+            <dd className="text-body-l font-reading text-text-primary tabular-nums">
               {formatDate(file.date, locale)}
             </dd>
           </div>
           <div className="flex flex-col gap-1">
             <dt className="text-label-m text-text-secondary">{t("ev.closed")}</dt>
-            <dd className="text-body-l text-text-primary tabular-nums">
+            <dd className="text-body-l font-reading text-text-primary tabular-nums">
               {file.closed ? formatDate(file.closed.slice(0, 10), locale) : t("ev.open")}
             </dd>
           </div>
           <div className="flex flex-col gap-1">
             <dt className="text-label-m text-text-secondary">EONET</dt>
-            <dd className="text-body-l text-text-primary">
+            <dd className="text-body-l font-reading text-text-primary">
               <ExternalLink href={eonetLink(file)} newTabHint={t("link.newTab")}>
                 <Mono>{file.eonet}</Mono>
               </ExternalLink>

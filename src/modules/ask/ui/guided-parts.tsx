@@ -51,7 +51,7 @@ export function GuidedCallout({ icon, title, children }: CalloutProps) {
       <span className="text-text-brand mt-0.5 text-[22px]">
         <Icon name={icon} />
       </span>
-      <p className="text-body-l text-text-primary max-w-[72ch]">
+      <p className="text-body-l font-reading text-text-primary max-w-[72ch]">
         {title ? <strong className="block">{title}</strong> : null}
         {children}
       </p>
@@ -61,7 +61,7 @@ export function GuidedCallout({ icon, title, children }: CalloutProps) {
 
 /** Lead paragraph of a step. */
 export function StepLead({ children }: { children: ReactNode }) {
-  return <p className="text-body-l text-text-secondary max-w-[68ch]">{children}</p>;
+  return <p className="text-body-l font-reading text-text-secondary max-w-[68ch]">{children}</p>;
 }
 
 export type ScienceRow = { key: string; term: ReactNode; value: ReactNode };

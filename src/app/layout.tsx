@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Baloo_2, JetBrains_Mono, Nunito_Sans } from "next/font/google";
+import { IBM_Plex_Sans, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import { Suspense, type ReactNode } from "react";
 import { EnvironmentBadge } from "@/modules/workspace/ui/environment-badge";
 import { WorkspaceFooter } from "@/modules/workspace/ui/workspace-footer";
@@ -8,9 +8,13 @@ import { getServerEnv } from "@/server/env";
 import { getLocale } from "@/server/locale";
 import "./globals.css";
 
-const baloo = Baloo_2({ variable: "--font-baloo", subsets: ["latin"], weight: ["700", "800"] });
+const plex = IBM_Plex_Sans({
+  variable: "--font-plex",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
 
-const nunito = Nunito_Sans({ variable: "--font-nunito", subsets: ["latin"] });
+const sourceSerif = Source_Serif_4({ variable: "--font-source-serif", subsets: ["latin"] });
 
 const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"] });
 
@@ -43,9 +47,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="en"
       data-theme="light"
-      data-palette="arcilla"
-      data-style="arcilla"
-      className={`${baloo.variable} ${nunito.variable} ${jetbrains.variable}`}
+      className={`${plex.variable} ${sourceSerif.variable} ${jetbrains.variable}`}
     >
       <body className="flex min-h-dvh flex-col">
         <Suspense fallback={<WorkspaceHeaderFallback />}>

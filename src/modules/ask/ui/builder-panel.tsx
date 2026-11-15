@@ -32,7 +32,7 @@ type QuestionBuilderProps = {
 
 const CHIP = [
   "inline-flex min-h-touch-min items-center rounded-full border border-border-subtle bg-bg-surface px-4 py-2",
-  "text-label-m font-bold text-text-primary no-underline transition-transform duration-fast",
+  "text-label-m font-semibold text-text-primary no-underline transition-transform duration-fast",
   "hover:-translate-y-px hover:border-border-strong motion-reduce:hover:translate-y-0",
   "aria-[current=true]:border-bg-inverse aria-[current=true]:bg-bg-inverse aria-[current=true]:text-text-inverse",
   "focus-visible:focus-ring focus-visible:outline-focus-ring",
@@ -53,7 +53,7 @@ function Sentence({ state, context }: Pick<QuestionBuilderProps, "state" | "cont
   return (
     <p
       aria-live="polite"
-      className="font-display text-text-primary m-0 min-h-[1.2em] flex-[1_1_320px] text-[clamp(22px,2.6vw,30px)] leading-tight font-extrabold text-balance"
+      className="font-display text-text-primary m-0 min-h-[1.2em] flex-[1_1_320px] text-[clamp(22px,2.6vw,30px)] leading-tight font-semibold text-balance"
     >
       {builderSentence(state, context).map((piece, index) =>
         piece.kind === "gap" ? (
@@ -149,7 +149,7 @@ function Examples({ examples, context }: Pick<QuestionBuilderProps, "examples" |
   const { t } = context.translator;
   return (
     <div className="border-border-subtle flex flex-col gap-2.5 border-t pt-3.5">
-      <p className="text-label-m text-text-secondary m-0 flex items-center gap-2 font-bold">
+      <p className="text-label-m text-text-secondary m-0 flex items-center gap-2 font-semibold">
         <span className="text-text-brand">
           <Icon name="sparkle" />
         </span>

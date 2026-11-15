@@ -3,6 +3,7 @@ import { Suspense, type ReactNode } from "react";
 import { getTranslator } from "@/modules/copy";
 import type { Locale } from "@/shared/lib/i18n";
 import { LanguageSwitch } from "@/shared/ui/language-switch";
+import { MilankoMark, MilankoWordmark } from "@/shared/ui/milanko-logo";
 import { setLocale } from "../actions";
 import { WORKSPACE_SECTIONS, type SectionLabels } from "../domain/sections";
 import { WorkspaceNav } from "./workspace-nav";
@@ -26,7 +27,11 @@ export function WorkspaceHeader({ locale, environment }: WorkspaceHeaderProps) {
     <header className="max-w-content-max medium:px-6 expanded:px-12 mx-auto w-full px-4 pt-3">
       <div className="rounded-shell border-border-subtle bg-bg-surface shadow-raised flex flex-wrap items-center gap-x-6 gap-y-3 border px-4 py-3">
         <Link href="/" className="flex items-baseline gap-2 no-underline">
-          <span className="font-display text-heading-h3 text-text-primary">Milanko</span>
+          <span className="text-text-primary flex items-center gap-2 text-[1.35rem]">
+            <MilankoMark size={28} />
+            <MilankoWordmark />
+            <span className="sr-only">Milanko</span>
+          </span>
           <span className="text-label-s text-text-tertiary medium:inline hidden">
             Earth Trend Detective
           </span>
@@ -48,7 +53,11 @@ export function WorkspaceHeaderFallback() {
   return (
     <header className="max-w-content-max medium:px-6 expanded:px-12 mx-auto w-full px-4 pt-3">
       <div className="rounded-shell border-border-subtle bg-bg-surface shadow-raised flex min-h-16 items-center border px-4 py-3">
-        <span className="font-display text-heading-h3 text-text-primary">Milanko</span>
+        <span className="text-text-primary flex items-center gap-2 text-[1.35rem]">
+          <MilankoMark size={28} />
+          <MilankoWordmark />
+          <span className="sr-only">Milanko</span>
+        </span>
       </div>
     </header>
   );

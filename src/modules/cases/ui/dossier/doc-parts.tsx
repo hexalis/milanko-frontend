@@ -132,11 +132,11 @@ const evidenceBlock = tv({
   variants: {
     // Evidence slabs in the theme's block tone with its hard lip (DESIGN.md · Elevation, slab lip).
     tone: {
-      rose: "bg-surface-tone-1 shadow-[0_7px_0_var(--color-surface-tone-1-edge)]",
-      tide: "bg-surface-tone-2 shadow-[0_7px_0_var(--color-surface-tone-2-edge)]",
-      sage: "bg-surface-tone-3 shadow-[0_7px_0_var(--color-surface-tone-3-edge)]",
-      ice: "bg-surface-tone-4 shadow-[0_7px_0_var(--color-surface-tone-4-edge)]",
-      stone: "bg-surface-tone-5 shadow-[0_7px_0_var(--color-surface-tone-5-edge)]",
+      rose: "bg-surface-tone-1 shadow-card",
+      tide: "bg-surface-tone-2 shadow-card",
+      sage: "bg-surface-tone-3 shadow-card",
+      ice: "bg-surface-tone-4 shadow-card",
+      stone: "bg-surface-tone-5 shadow-card",
     },
   },
 });
@@ -164,5 +164,5 @@ export function EvidenceBlock({ tone, children }: { tone: BlockTone; children: R
 
 /** Plain paragraph of a document, at the lead size. */
 export function Lead({ children }: { children: ReactNode }) {
-  return <p className="text-body-l text-text-secondary max-w-[68ch]">{children}</p>;
+  return <p className="text-body-l font-reading text-text-secondary max-w-[68ch]">{children}</p>;
 }

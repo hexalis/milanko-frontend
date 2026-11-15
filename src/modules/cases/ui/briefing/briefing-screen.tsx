@@ -163,7 +163,7 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
         <h1 className="text-display-s font-display text-text-primary text-balance">
           {t("brief.title")}
         </h1>
-        <p className="text-body-l text-text-secondary max-w-[68ch]">
+        <p className="text-body-l font-reading text-text-secondary max-w-[68ch]">
           {t("brief.lead", { n: catalog.all.length, years: longestRecord(catalog.trends) })}
         </p>
         <Ledger
