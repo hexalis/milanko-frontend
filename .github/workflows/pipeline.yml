@@ -184,7 +184,6 @@ jobs:
 
           echo "==> building $IMAGE_TAG from $SHA"
           $SUDO docker build \
-            "${NETWORK_ARGS[@]}" \
             --build-arg MILANKO_API_URL="$MILANKO_API_URL" \
             --build-arg APP_ENV="$APP_ENV" \
             -t "$IMAGE_TAG" \

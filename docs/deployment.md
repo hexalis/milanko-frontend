@@ -13,12 +13,12 @@ Docker image on the VPS and runs it behind nginx.
 - **Deploy**: only on `push`/`workflow_dispatch` to `develop`, `qa` or `main`.
   The job is also gated on `package.json` `name === "milanko-frontend"`, so the
   template app on `main` is never deployed.
-- **Production**: requires approval of the `production` GitHub Environment.
+- **Production**: deploys automatically on `main`; the `production` Environment only has the `main` branch policy.
 
 ## GitHub Environments
 
 Create `develop`, `qa` and `production` with the branch policies
-`develop`, `qa` and `main`. Production should require reviewers.
+`develop`, `qa` and `main`. Production no longer requires reviewers.
 
 ### Variables
 
