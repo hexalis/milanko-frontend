@@ -46,6 +46,12 @@ export const RAIL_LEARN: readonly NavSection[] = [
   section("/team", "nav.team", "team"),
 ];
 
+/**
+ * The "Open data" group is hidden from the rail for now. The pages and their routes stay and
+ * open by URL; set this to true to list them in the rail again.
+ */
+export const SHOW_DATA_IN_RAIL = false;
+
 /** The persisted-data pages (live API), grouped under "Open data". */
 export const RAIL_DATA: readonly NavSection[] = [
   section("/regions", "nav.regions", "place", false),

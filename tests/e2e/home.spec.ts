@@ -41,7 +41,7 @@ test("home welcomes and the builder opens a question from tiles", async ({ page,
   );
 });
 
-test("home menu links to the persisted-data workspace", async ({ page, context }) => {
+test("open-data pages stay out of the menu but open by URL", async ({ page, context }) => {
   // The rail menu follows the language cookie; the persisted-data pages are Spanish.
   await context.addCookies([{ name: "etd-lang", value: "es", url: "http://localhost:3000" }]);
   await page.goto("/");
@@ -52,18 +52,16 @@ test("home menu links to the persisted-data workspace", async ({ page, context }
       name: "Hola. Aquí investigas la Tierra con datos de la NASA.",
     }),
   ).toBeVisible();
+  const menu = page.getByRole("navigation", { name: "Menú principal" });
+  await expect(menu.getByRole("link", { name: "Inicio" })).toBeVisible();
+  for (const name of ["Datos por región", "Pulso del planeta", "Eventos", "Inventario de datos"]) {
+    await expect(menu.getByRole("link", { name, exact: true })).toHaveCount(0);
+  }
 
-  await page
-    .getByRole("navigation", { name: "Menú principal" })
-    .getByRole("link", { name: "Inventario de datos" })
-    .click();
+  // The page itself is kept: its content depends on the live API, its heading does not.
+  await page.goto("/coverage");
   await expect(page).toHaveURL(/\/coverage$/);
-  // The page content depends on the live API; the menu marks the section either way.
-  await expect(
-    page
-      .getByRole("navigation", { name: "Menú principal" })
-      .getByRole("link", { name: "Inventario de datos" }),
-  ).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
 
 test("coverage filters live in the URL", async ({ page }) => {
