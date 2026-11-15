@@ -1,40 +1,34 @@
-import type { CaseCatalog } from "@/modules/cases";
+import Link from "next/link";
 import type { Translator } from "@/shared/lib/i18n";
-import type { SearchParams } from "@/shared/lib/search-params";
-import { BuilderDoor } from "./builder-door";
-import { ExploreDoor } from "./explore-door";
+import { HomeClose } from "./home-close";
+import { HomeDoors } from "./home-doors";
+import { HomeHero } from "./home-hero";
+import { HomeKey } from "./home-key";
 
 /*
- * The two-door home (POC ask.js renderHome L66–85): a question to investigate, or a place to
- * wander. The builder submits to "/" so the question being built stays on the home.
+ * The home as a welcome, not a dashboard (POC ask.js renderHome, d2de23a): the real Earth on the
+ * cover, four doors, the three kinds of clue and the motto. It shows no data: every figure lives
+ * in its module. The root is the `home` container and group: its sections adapt to the width the
+ * shell leaves them, and pointing at a door lights its station on the cover's ring.
  */
 
-type HomeScreenProps = { params: SearchParams; translator: Translator; catalog: CaseCatalog };
-
-export function HomeScreen({ params, translator, catalog }: HomeScreenProps) {
+export function HomeScreen({ translator }: { translator: Translator }) {
   const { t } = translator;
   return (
-    <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto flex w-full flex-col gap-6 px-4 pb-12">
-      <header className="medium:pt-8 flex flex-col gap-1.5 pt-6">
-        <p className="text-body-l font-reading text-text-secondary m-0">{t("home.kicker")}</p>
-        <h1 className="font-display text-text-primary m-0 text-[clamp(30px,3.6vw,46px)] leading-[1.05] text-balance">
-          {t("home.title")}
-        </h1>
-      </header>
-      <div className="grid max-w-[1040px] grid-cols-1 gap-6">
-        <BuilderDoor
-          params={params}
-          path="/"
-          translator={translator}
-          catalog={catalog}
-          srTitle={t("home.ask.t")}
-        />
-        <ExploreDoor translator={translator} fileCount={catalog.all.length} />
-      </div>
-      <p className="font-display text-text-primary m-0 text-[clamp(22px,2.6vw,30px)] leading-tight font-semibold">
-        {t("home.slogan")}
+    <main className="group/home max-w-content-max medium:px-6 medium:pt-6 expanded:px-12 @container/home mx-auto flex w-full flex-col px-4 pb-12">
+      <HomeHero translator={translator} />
+      <HomeDoors translator={translator} />
+      <HomeKey translator={translator} />
+      <HomeClose translator={translator} />
+      <p className="text-body-s text-text-secondary m-0 mt-6 max-w-[72ch]">
+        {t("home.note")}{" "}
+        <Link
+          href="/team"
+          className="text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring underline underline-offset-2"
+        >
+          {t("home.team")}
+        </Link>
       </p>
-      <p className="text-body-s text-text-secondary m-0 max-w-[72ch]">{t("home.note")}</p>
     </main>
   );
 }
