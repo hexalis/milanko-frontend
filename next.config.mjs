@@ -15,6 +15,25 @@ const nextConfig = {
   async rewrites() {
     return [{ source: "/api/v1/:path*", destination: `${apiUrl}/:path*` }];
   },
+  /*
+   * /explore embeds the POC globe (public/globe) in a sandboxed iframe with an opaque origin, so
+   * its module script and data fetches are cross-origin requests to this server. The files are
+   * public static data; no credentials are involved.
+   */
+  async headers() {
+    return [
+      {
+        source: "/globe/:path*",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
+      // The globe asks the API first (public, read-only GET). In deploys nginx serves /api, so the
+      // same header must be set there; without it the globe falls back to its data snapshot.
+      {
+        source: "/api/v1/:path*",
+        headers: [{ key: "Access-Control-Allow-Origin", value: "*" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
