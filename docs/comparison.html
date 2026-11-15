@@ -1,0 +1,241 @@
+---
+title: Antes y después del flujo shift-left
+description: Comparativa de la plantilla ABC antes y después de incorporar calidad shift-left.
+landing: true
+---
+
+<section class="hero" aria-labelledby="titulo">
+  <div class="wrap">
+    <p class="eyebrow reveal">Comparativa · ABC Next.js template</p>
+    <h1 id="titulo" class="reveal reveal-2">Antes y después del flujo shift-left</h1>
+    <p class="lead reveal reveal-3">
+      Antes, los estándares estaban escritos pero nada los hacía cumplir. Ahora cada developer
+      ejecuta en su máquina la misma barrera que CI, y CI sólo confirma.
+    </p>
+
+    <div class="kpis reveal reveal-4" role="list" aria-label="Indicadores antes y después">
+      <div class="kpi" role="listitem">
+        <p class="kpi-label">Controles automáticos antes de CI</p>
+        <div class="kpi-value">
+          <span class="kpi-from">0</span><span class="kpi-arrow" aria-hidden="true">→</span
+          ><span class="kpi-to">11</span>
+        </div>
+      </div>
+      <div class="kpi" role="listitem">
+        <p class="kpi-label">Jobs de CI activos</p>
+        <div class="kpi-value">
+          <span class="kpi-from">0</span><span class="kpi-arrow" aria-hidden="true">→</span
+          ><span class="kpi-to">3 <small>+ Pages</small></span>
+        </div>
+      </div>
+      <div class="kpi" role="listitem">
+        <p class="kpi-label">Límites de arquitectura verificados</p>
+        <div class="kpi-value">
+          <span class="kpi-from">0</span><span class="kpi-arrow" aria-hidden="true">→</span
+          ><span class="kpi-to">3</span>
+        </div>
+      </div>
+      <div class="kpi" role="listitem">
+        <p class="kpi-label">Comandos para validar un cambio</p>
+        <div class="kpi-value">
+          <span class="kpi-from">7</span><span class="kpi-arrow" aria-hidden="true">→</span
+          ><span class="kpi-to">1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="recorrido">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Recorrido de un cambio</p>
+      <h2 id="recorrido">De controles opcionales a una barrera que se instala sola</h2>
+    </div>
+
+    <div class="tracks">
+      <article class="track is-before">
+        <h3 class="track-label">Antes <small>nada se hacía cumplir</small></h3>
+        <ol class="steps">
+          <li><span class="chip">Editor</span></li>
+          <li><span class="chip off">Hook pre-commit (ejemplo sin instalar)</span></li>
+          <li><span class="chip off">Convención de commits</span></li>
+          <li><span class="chip off">Checks antes de push</span></li>
+          <li><span class="chip">Pull request</span></li>
+          <li><span class="chip off">CI (comentado)</span></li>
+          <li><span class="chip">main</span></li>
+        </ol>
+      </article>
+      <article class="track is-after">
+        <h3 class="track-label">Ahora <small>CI sólo confirma</small></h3>
+        <ol class="steps">
+          <li><span class="chip on">pnpm install: Node 24.20.0 + hooks</span></li>
+          <li><span class="chip">Editor</span></li>
+          <li><span class="chip on">pre-commit: formato, lint, secretos</span></li>
+          <li><span class="chip on">commit-msg: Conventional Commits</span></li>
+          <li><span class="chip on">pre-push: pnpm check</span></li>
+          <li><span class="chip on">PR con Definition of Done</span></li>
+          <li><span class="chip on">CI: check, build + E2E, seguridad</span></li>
+          <li><span class="chip">main → Pages</span></li>
+        </ol>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="areas">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="kicker">Comparativa por área</p>
+      <h2 id="areas">Dónde se detecta ahora cada problema</h2>
+      <p>Cuanto más a la izquierda del recorrido, más barato es corregirlo.</p>
+    </div>
+
+    <div class="legend" aria-hidden="true">
+      <span>Instalación</span><span class="scale"></span><span>CI</span>
+    </div>
+
+    <div class="compare">
+      <table>
+        <caption>
+          La columna «Se detecta en» usa el mismo espectro de color que el recorrido de la portada.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Área</th>
+            <th scope="col" class="col-before">Antes</th>
+            <th scope="col" class="col-after">Ahora</th>
+            <th scope="col">Se detecta en</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Runtime de Node</th>
+            <td class="before">
+              <code>.nvmrc</code> y <code>engines</code> sin verificar; Node 24.16 pasaba sin aviso.
+            </td>
+            <td class="after">
+              <code>devEngines.runtime</code> descarga Node 24.20.0 y lo fija en el lockfile.
+            </td>
+            <td><span class="where s0">Instalación</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Cadena de suministro</th>
+            <td class="before">Se instalaba cualquier versión al publicarse; sin auditoría.</td>
+            <td class="after">
+              <code>minimumReleaseAge</code> de 24 h, <code>engineStrict</code>,
+              <code>pnpm audit</code>, dependency review y Dependabot.
+            </td>
+            <td><span class="where s0">Instalación y CI</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Saltos de línea</th>
+            <td class="before">Sin <code>.gitattributes</code>; avisos CRLF en Windows.</td>
+            <td class="after"><code>* text=auto eol=lf</code>.</td>
+            <td><span class="where s0">Checkout</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Arquitectura</th>
+            <td class="before">Límites sólo descritos en la skill y en <code>AGENTS.md</code>.</td>
+            <td class="after">
+              <code>no-restricted-imports</code> bloquea <code>shared → modules/app/server</code>,
+              <code>modules → app</code> e imports internos entre módulos.
+            </td>
+            <td><span class="where s1">Editor y commit</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Hooks de Git</th>
+            <td class="before">
+              <code>.husky/pre-commit.example</code> comentado y Husky sin instalar.
+            </td>
+            <td class="after">
+              Lefthook se instala con <code>pnpm install</code>: <code>pre-commit</code>,
+              <code>commit-msg</code>, <code>pre-push</code>.
+            </td>
+            <td><span class="where s2">Commit y push</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Formato y lint</th>
+            <td class="before">Manual; Oxlint sólo con la categoría por defecto.</td>
+            <td class="after">
+              Sobre archivos staged al hacer commit; <code>correctness</code> +
+              <code>suspicious</code> como errores.
+            </td>
+            <td><span class="where s2">Commit</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Secretos</th>
+            <td class="before">Sin escaneo.</td>
+            <td class="after">
+              gitleaks en <code>pre-commit</code> (opcional) y en CI sobre todo el historial
+              (obligatorio).
+            </td>
+            <td><span class="where s2">Commit y CI</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Commits</th>
+            <td class="before">Convención implícita en el historial.</td>
+            <td class="after">Conventional Commits verificados en <code>commit-msg</code>.</td>
+            <td><span class="where s3">Commit</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Tipos</th>
+            <td class="before">
+              <code>tsc</code> dependía de un <code>next-env.d.ts</code> versionado e ignorado a la
+              vez.
+            </td>
+            <td class="after">
+              <code>next typegen &amp;&amp; tsc --noEmit</code>; archivo generado fuera de Git.
+            </td>
+            <td><span class="where s4">Push</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Fuente de verdad</th>
+            <td class="before">Siete comandos repetidos en README, guía, hook y CI.</td>
+            <td class="after">
+              Un script, <code>pnpm check</code>, usado por <code>pre-push</code> y por CI.
+            </td>
+            <td><span class="where s4">Push</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Pull requests</th>
+            <td class="before">Sin plantilla.</td>
+            <td class="after">Checklist de Definition of Done.</td>
+            <td><span class="where s5">PR</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Cabeceras HTTP</th>
+            <td class="before"><code>X-Powered-By: Next.js</code> expuesta.</td>
+            <td class="after"><code>poweredByHeader: false</code>.</td>
+            <td><span class="where s5">Build</span></td>
+          </tr>
+          <tr>
+            <th scope="row">E2E</th>
+            <td class="before">Contra <code>next dev</code>, también en CI.</td>
+            <td class="after">
+              En CI contra el build de producción, con <code>forbidOnly</code>, reintento y reporte.
+            </td>
+            <td><span class="where s6">CI</span></td>
+          </tr>
+          <tr>
+            <th scope="row">CI</th>
+            <td class="before">Workflow comentado.</td>
+            <td class="after">
+              Tres jobs paralelos, permisos mínimos, cancelación de ejecuciones obsoletas, Node
+              desde <code>.nvmrc</code>.
+            </td>
+            <td><span class="where s6">CI</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Documentación</th>
+            <td class="before">Markdown dentro del repositorio.</td>
+            <td class="after">
+              Sitio en GitHub Pages con auditoría, guía shift-left y esta comparativa.
+            </td>
+            <td><span class="where s-none">—</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
