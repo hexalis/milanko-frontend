@@ -1,0 +1,129 @@
+{
+  "members": [
+    {
+      "name": "Jorge Ramos",
+      "lead": true,
+      "roles": [
+        {
+          "en": "Product Designer",
+          "es": "Diseñador de producto"
+        },
+        {
+          "en": "AI-Assisted Design Engineer",
+          "es": "Design Engineer asistido por IA"
+        }
+      ],
+      "bio": {
+        "en": "Designed and built the portal with Claude, from the data scripts to the interface.",
+        "es": "Diseñó y construyó el portal con Claude, desde los scripts de datos hasta la interfaz."
+      },
+      "photo": "",
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://www.linkedin.com/"
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Teammate 2",
+        "es": "Integrante 2"
+      },
+      "placeholder": true,
+      "roles": [
+        {
+          "en": "Role to confirm",
+          "es": "Rol por confirmar"
+        }
+      ],
+      "photo": "",
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://www.linkedin.com/"
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Teammate 3",
+        "es": "Integrante 3"
+      },
+      "placeholder": true,
+      "roles": [
+        {
+          "en": "Role to confirm",
+          "es": "Rol por confirmar"
+        }
+      ],
+      "photo": "",
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://www.linkedin.com/"
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Teammate 4",
+        "es": "Integrante 4"
+      },
+      "placeholder": true,
+      "roles": [
+        {
+          "en": "Role to confirm",
+          "es": "Rol por confirmar"
+        }
+      ],
+      "photo": "",
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://www.linkedin.com/"
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Teammate 5",
+        "es": "Integrante 5"
+      },
+      "placeholder": true,
+      "roles": [
+        {
+          "en": "Role to confirm",
+          "es": "Rol por confirmar"
+        }
+      ],
+      "photo": "",
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://www.linkedin.com/"
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Teammate 6",
+        "es": "Integrante 6"
+      },
+      "placeholder": true,
+      "roles": [
+        {
+          "en": "Role to confirm",
+          "es": "Rol por confirmar"
+        }
+      ],
+      "photo": "",
+      "links": [
+        {
+          "type": "linkedin",
+          "url": "https://www.linkedin.com/"
+        }
+      ]
+    }
+  ]
+}
