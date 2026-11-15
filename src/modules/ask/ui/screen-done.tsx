@@ -7,6 +7,7 @@ import {
   verdictOf,
   VerdictStamp,
 } from "@/modules/cases";
+import { withBasePath } from "@/shared/lib/base-path";
 import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { askHref } from "../domain/ask-state";
@@ -106,7 +107,7 @@ function DeeperActions({ view, translator }: Omit<StepProps, "catalog">) {
   const { file } = view;
   return (
     <div className="flex flex-wrap gap-3">
-      <a href={`/cases/${file.id}/data`} download className={ACTION}>
+      <a href={withBasePath(`/cases/${file.id}/data`)} download className={ACTION}>
         <Icon name="csv" />
         {t("case.download")}
       </a>

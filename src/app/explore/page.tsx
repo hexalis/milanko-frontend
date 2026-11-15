@@ -7,6 +7,7 @@ import { initialSelection, parseExploreQuery } from "@/modules/explore/domain/ex
 import { isSectorId } from "@/modules/explore/domain/sectors";
 import { ExploreScreen } from "@/modules/explore/ui/explore-screen";
 import { getLocale } from "@/server/locale";
+import { withBasePath } from "@/shared/lib/base-path";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import type { SearchParams } from "@/shared/lib/search-params";
 import { LoadingPanel } from "@/shared/ui/notice";
@@ -44,7 +45,7 @@ async function ExploreContent({ searchParams }: PageProps) {
         // selection and deep-link effects follow the new URL; the screen's own replaceState does not.
         key={JSON.stringify(query)}
         locale={locale}
-        frameSrc={`/globe/world3d/index.html?embed=1&lang=${locale}`}
+        frameSrc={withBasePath(`/globe/world3d/index.html?embed=1&lang=${locale}`)}
         frameTitle={t("exp.view.3d.title")}
         heading={t("exp.title")}
         viewerLabel={t("exp.viewer")}

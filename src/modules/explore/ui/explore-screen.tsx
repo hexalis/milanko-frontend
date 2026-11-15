@@ -11,6 +11,7 @@ import {
   type RefObject,
 } from "react";
 import type { CaseSummary } from "@/modules/cases";
+import { withBasePath } from "@/shared/lib/base-path";
 import type { Locale } from "@/shared/lib/i18n";
 import { eventPointsUrl, findEventPoint } from "../domain/event-points";
 import { exploreTranslator, type ExploreMessages } from "../domain/explore-copy";
@@ -104,7 +105,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
     });
     // replaceState, not router.replace: the server page would re-render and re-send every case
     // summary for a URL the client already shows. Next keeps usePathname/useSearchParams in sync.
-    window.history.replaceState(null, "", `${pathname}${search}`);
+    window.history.replaceState(null, "", `${withBasePath(pathname)}${search}`);
   }
 
   function select(next: ExploreSelection, { isFocusMoved = true } = {}) {

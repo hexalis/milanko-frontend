@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { tv, type VariantProps } from "tailwind-variants";
+import { withBasePath } from "@/shared/lib/base-path";
 import type { Translator } from "@/shared/lib/i18n";
 import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
@@ -121,7 +122,7 @@ export function MemberCard({ member, translator, layout = "grid" }: MemberCardPr
         {/* The name sits right beside the picture, so the picture stays hidden from assistive tech. */}
         {isGrid && member.photo ? (
           <Image
-            src={member.photo}
+            src={withBasePath(member.photo)}
             alt=""
             fill
             sizes="(min-width: 840px) 320px, 100vw"
@@ -129,7 +130,7 @@ export function MemberCard({ member, translator, layout = "grid" }: MemberCardPr
           />
         ) : (
           <AvatarRoot size={isGrid ? "xl" : "m"} tone="brand">
-            {member.photo ? <AvatarImage src={member.photo} alt="" /> : null}
+            {member.photo ? <AvatarImage src={withBasePath(member.photo)} alt="" /> : null}
             {/* Without initials (a seat to confirm) the fallback shows a person icon. */}
             <AvatarFallback>{member.isPlaceholder ? undefined : member.initials}</AvatarFallback>
           </AvatarRoot>

@@ -359,6 +359,8 @@ const R = 1;
 const BASE_F = MOBILE ? 56 : 80, FINE_F = 288;
 const API = await window.ETD_API.detect();
 const WORLD = API.base ? `${API.base}/world/` : '../data/world/';
+// The app may live under a sub-path (e.g. /app); this page is always served at <app>/globe/world3d/.
+const APP_BASE = location.pathname.replace(/\/globe\/world3d\/.*$/, '');
 const DV = new URLSearchParams(location.search).get('v'), wv = (u) => (DV ? `${u}?v=${DV}` : u);   // the portal's data version
 // Relief: land stands on a thin plate just above the sea so coasts read, then rises 50 times its real height
 // (a straight scale: 1,000 m of ASTER elevation is 50 km on the globe). The sea has three gentle steps from
@@ -1895,7 +1897,7 @@ function renderDataTop(snapshot) {
   const rows = (snapshot.regions || []).filter((row) => row[key] !== null && row[key] !== undefined);
   rows.sort((a, b) => Number(b[key]) - Number(a[key]));
   $('dataTop').innerHTML = rows.slice(0, 6).map((row) =>
-    `<a href="/regions?region=${row.code}&variable=${encodeURIComponent(snapshot.variable)}" target="_top">${String(row.code).padStart(3, '0')} · ${fmtData(row[key])}</a>`
+    `<a href="${APP_BASE}/regions?region=${row.code}&variable=${encodeURIComponent(snapshot.variable)}" target="_top">${String(row.code).padStart(3, '0')} · ${fmtData(row[key])}</a>`
   ).join('');
 }
 async function loadData() {
