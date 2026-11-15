@@ -69,4 +69,20 @@ describe("teamMembers", () => {
     expect(members[0]?.isLead).toBe(true);
     expect(members.filter((member) => member.isLead)).toHaveLength(1);
   });
+
+  it("keeps only photos the app serves itself", () => {
+    const photoOf = (photo: string) => teamMembers("en", [{ name: "A B", photo }])[0]?.photo;
+    expect(photoOf("/team/a-b.jpg")).toBe("/team/a-b.jpg");
+    expect(photoOf("https://example.com/a.jpg")).toBeUndefined();
+    expect(photoOf("//example.com/a.jpg")).toBeUndefined();
+    expect(photoOf("javascript:alert(1)")).toBeUndefined();
+    expect(photoOf("")).toBeUndefined();
+  });
+
+  it("every member in team.json has a photo and no bio", () => {
+    for (const member of teamMembers("es")) {
+      expect(member.photo).toMatch(/^\/team\/.+\.jpg$/);
+      expect(member.bio).toBe("");
+    }
+  });
 });
