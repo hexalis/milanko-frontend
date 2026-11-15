@@ -25,7 +25,7 @@ test("home builds a question and opens it", async ({ page, context }) => {
 });
 
 test("home menu links to the persisted-data workspace", async ({ page, context }) => {
-  // The menu follows the language cookie; the persisted-data pages are Spanish.
+  // The rail menu follows the language cookie; the persisted-data pages are Spanish.
   await context.addCookies([{ name: "etd-lang", value: "es", url: "http://localhost:3000" }]);
   await page.goto("/");
 

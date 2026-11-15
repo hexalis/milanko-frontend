@@ -216,7 +216,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
   return (
     <section
       aria-label={props.viewerLabel}
-      className="bg-bg-inverse relative h-[calc(100dvh-6.5rem)] min-h-[30rem] w-full overflow-hidden"
+      className="bg-space relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] w-full overflow-hidden"
     >
       <h1 className="sr-only">{props.heading}</h1>
       <iframe

@@ -2,7 +2,7 @@ import type { Translator } from "@/shared/lib/i18n";
 import { AutoSubmitSelect } from "@/shared/ui/auto-submit-select";
 import { ArchiveSearchInput } from "./archive-search-input";
 import { Icon } from "@/shared/ui/icon";
-import { ARCHIVE_SORTS, type ArchiveState } from "../../domain/archive";
+import { ARCHIVE_SEARCH_ID, ARCHIVE_SORTS, type ArchiveState } from "../../domain/archive";
 
 /*
  * Search and sort (POC renderArchive toolbar). Both belong to the archive's GET form: Enter or the
@@ -16,9 +16,14 @@ const SEARCH_INPUT =
 const ICON_BUTTON =
   "h-touch-min medium:h-10 inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-field border border-border-input bg-bg-surface px-3 text-label-m text-text-primary shadow-control hover:bg-bg-hover active:bg-bg-pressed focus-visible:focus-ring focus-visible:outline-focus-ring";
 
-type ArchiveToolbarProps = { state: ArchiveState; translator: Translator };
+type ArchiveToolbarProps = {
+  state: ArchiveState;
+  translator: Translator;
+  /** Focus the search box on arrival (`?focus=1`, from the shell's search). */
+  isSearchFocused?: boolean;
+};
 
-export function ArchiveToolbar({ state, translator }: ArchiveToolbarProps) {
+export function ArchiveToolbar({ state, translator, isSearchFocused }: ArchiveToolbarProps) {
   const { t } = translator;
   return (
     <div className="medium:flex-row medium:items-center flex flex-col gap-3">
@@ -29,6 +34,8 @@ export function ArchiveToolbar({ state, translator }: ArchiveToolbarProps) {
             <Icon name="search" />
           </span>
           <ArchiveSearchInput
+            id={ARCHIVE_SEARCH_ID}
+            shouldFocus={isSearchFocused}
             name="q"
             urlValue={state.q}
             placeholder={t("arch.search")}

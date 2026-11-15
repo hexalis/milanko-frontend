@@ -7,6 +7,7 @@ import { isEvent } from "@/modules/cases/domain/case-file";
 import { fileTitle } from "@/modules/cases/domain/file-text";
 import { EventDossier } from "@/modules/cases/ui/dossier/event-dossier";
 import { TrendDossier } from "@/modules/cases/ui/dossier/trend-dossier";
+import { CaseVisitRecorder } from "@/modules/workspace/ui/case-visit-recorder";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import { LoadingPanel } from "@/shared/ui/notice";
@@ -54,14 +55,17 @@ export default async function CaseFilePage({ params }: PageProps) {
   const { id } = await params;
   if (!findCaseFile(id)) notFound();
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-content-max mx-auto w-full px-4 py-8">
-          <LoadingPanel label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
-        </div>
-      }
-    >
-      <CaseFileContent id={id} />
-    </Suspense>
+    <>
+      <CaseVisitRecorder id={id} />
+      <Suspense
+        fallback={
+          <div className="max-w-content-max mx-auto w-full px-4 py-8">
+            <LoadingPanel label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
+          </div>
+        }
+      >
+        <CaseFileContent id={id} />
+      </Suspense>
+    </>
   );
 }

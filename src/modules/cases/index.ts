@@ -1,7 +1,7 @@
 /*
  * Public API of the case files for other modules (the method page and its labs, the guided
- * investigation of "I have a question", the globe explorer). Export only what a consumer needs;
- * the archive and the dossiers stay internal.
+ * investigation of "I have a question", the globe explorer, the app shell's rail). Export only
+ * what a consumer needs; the archive and the dossiers stay internal.
  *
  * Client components (the method labs) import this barrel too. The data loaders below must stay
  * side-effect free so tree-shaking keeps the case JSON (~220 KB) out of client bundles; check
@@ -15,6 +15,7 @@ export {
   type Point,
   type TrendCase,
 } from "./domain/case-file";
+export { ARCHIVE_FOCUS_HREF, ARCHIVE_SEARCH_ID } from "./domain/archive";
 export { getCaseSummaries, type CaseSummary } from "./domain/case-summary";
 export { getCaseCatalog, type CaseCatalog } from "./domain/catalog";
 export { getEventAudit } from "./domain/event-audit";

@@ -18,6 +18,8 @@ export function NextCase({ label, relatedLabel, next, links }: NextCaseProps) {
     <nav aria-label={relatedLabel} className="flex flex-col gap-5">
       <Link
         href={next.href}
+        // A night card in both themes: its light-theme tokens make bg-inverse the night sky.
+        data-theme="light"
         className="group rounded-shell bg-bg-inverse text-text-inverse shadow-raised duration-fast focus-visible:focus-ring focus-visible:outline-focus-ring medium:p-8 relative flex flex-col gap-1.5 p-6 no-underline transition-transform hover:-translate-y-0.5 active:translate-y-0.5"
       >
         <span className="text-overline opacity-80">{label}</span>

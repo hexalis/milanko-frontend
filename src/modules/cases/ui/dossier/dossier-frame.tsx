@@ -46,7 +46,7 @@ export function DossierFrame({ crumbs, spine, children }: DossierFrameProps) {
       <div className="expanded:grid expanded:grid-cols-[150px_minmax(0,1fr)] expanded:items-start expanded:gap-12">
         <nav
           aria-label={spine.label}
-          className="bg-bg-canvas expanded:top-8 expanded:mx-0 expanded:px-0 sticky top-0 z-10 -mx-4 mb-6 px-4 py-2"
+          className="bg-bg-canvas expanded:top-8 expanded:mx-0 expanded:px-0 sticky top-(--shell-top) z-10 -mx-4 mb-6 px-4 py-2"
         >
           <ol className="expanded:flex-col expanded:overflow-visible flex gap-0.5 overflow-x-auto">
             {spine.docs.map((doc, index) => (
@@ -68,7 +68,7 @@ export function DossierFrame({ crumbs, spine, children }: DossierFrameProps) {
 }
 
 const docSection = tv({
-  base: "flex scroll-mt-20 flex-col gap-4 expanded:scroll-mt-8",
+  base: "flex scroll-mt-20 flex-col gap-4 expanded:scroll-mt-8", // plus the shell padding on <html>
   variants: {
     width: { text: "max-w-[72ch]", full: "max-w-none" },
   },
