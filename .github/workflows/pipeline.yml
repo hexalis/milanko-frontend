@@ -55,13 +55,22 @@ jobs:
         run: pnpm check
         env:
           MILANKO_API_URL: https://dev-milanko.hexalis.org/api/v1
+          MILANKO_API_KEY: ${{ vars.MILANKO_API_KEY }}
           APP_ENV: develop
 
       - name: Build
         run: pnpm build
         env:
           MILANKO_API_URL: https://dev-milanko.hexalis.org/api/v1
+          MILANKO_API_KEY: ${{ vars.MILANKO_API_KEY }}
           APP_ENV: develop
+
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg MILANKO_API_URL=https://dev-milanko.hexalis.org/api/v1 \
+            --build-arg APP_ENV=develop \
+            -t milanko-web:ci .
 
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
@@ -71,14 +80,8 @@ jobs:
         env:
           CI: "true"
           MILANKO_API_URL: https://dev-milanko.hexalis.org/api/v1
+          MILANKO_API_KEY: ${{ vars.MILANKO_API_KEY }}
           APP_ENV: develop
-
-      - name: Build image
-        run: |
-          docker build \
-            --build-arg MILANKO_API_URL=https://dev-milanko.hexalis.org/api/v1 \
-            --build-arg APP_ENV=develop \
-            -t milanko-web:ci .
 
   deploy:
     name: Deploy ${{ github.ref_name == 'main' && 'production' || github.ref_name }}

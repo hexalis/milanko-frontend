@@ -15,9 +15,13 @@ export class MilankoApiError extends Error {
 }
 
 export function createMilankoClient() {
+  const env = getServerEnv();
   return createClient<paths>({
-    baseUrl: getServerEnv().apiUrl,
-    headers: { Accept: "application/json" },
+    baseUrl: env.apiUrl,
+    headers: {
+      Accept: "application/json",
+      ...(env.apiKey ? { "X-API-Key": env.apiKey } : {}),
+    },
     fetch: (request) => fetch(request, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }),
   });
 }
