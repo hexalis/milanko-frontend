@@ -33,7 +33,7 @@ export function CoverageScreen({ rows, filters }: CoverageScreenProps) {
       <Form action="/coverage">
         <FilterBar>
           <Field label="Fuente">
-            <AutoSubmitSelect name="source" defaultValue={filters.source ?? ""}>
+            <AutoSubmitSelect name="source" urlValue={filters.source ?? ""}>
               <option value="">Todas</option>
               {listSources(rows).map((source) => (
                 <option key={source} value={source}>
@@ -51,7 +51,7 @@ export function CoverageScreen({ rows, filters }: CoverageScreenProps) {
             />
           </Field>
           <Field label="Orden">
-            <AutoSubmitSelect name="sort" defaultValue={filters.isSortedByCount ? "rows" : ""}>
+            <AutoSubmitSelect name="sort" urlValue={filters.isSortedByCount ? "rows" : ""}>
               <option value="">Fuente y variable</option>
               <option value="rows">Mayor cobertura</option>
             </AutoSubmitSelect>

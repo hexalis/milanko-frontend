@@ -10,7 +10,6 @@ import { analyzeTrend, type Strength, type TrendAnalysis } from "./trend-stats";
 export type Point = readonly [year: number, value: number];
 export type Direction = "up" | "down" | "flat";
 export type Verdict = "confirmed" | "inconclusive";
-export type FileKind = "trend" | "event";
 export type EventVariable = "tmax" | "rain" | "soil";
 
 export type TrendCaseRecord = {

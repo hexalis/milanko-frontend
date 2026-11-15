@@ -44,7 +44,7 @@ export function EventsScreen({ filters, lastYear, page, stats }: EventsScreenPro
       <Form action="/events">
         <FilterBar>
           <Field label="Categoría">
-            <AutoSubmitSelect name="category" defaultValue={filters.category ?? ""}>
+            <AutoSubmitSelect name="category" urlValue={filters.category ?? ""}>
               <option value="">Todas</option>
               {EVENT_CATEGORIES.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -54,7 +54,7 @@ export function EventsScreen({ filters, lastYear, page, stats }: EventsScreenPro
             </AutoSubmitSelect>
           </Field>
           <Field label="Estado">
-            <AutoSubmitSelect name="status" defaultValue={filters.status}>
+            <AutoSubmitSelect name="status" urlValue={filters.status}>
               {EVENT_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {EVENT_STATUS_LABELS[status]}

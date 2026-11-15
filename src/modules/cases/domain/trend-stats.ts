@@ -39,7 +39,7 @@ export function median(values: readonly number[]): number {
 }
 
 /** Standard normal CDF (Abramowitz-Stegun erf approximation). */
-export function normCdf(z: number): number {
+function normCdf(z: number): number {
   const t = 1 / (1 + (0.3275911 * Math.abs(z)) / Math.SQRT2);
   const erf =
     1 -

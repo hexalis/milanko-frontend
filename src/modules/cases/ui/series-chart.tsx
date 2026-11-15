@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { extent, greatest, least } from "d3-array";
 import { scaleLinear } from "d3-scale";
 import { area, line } from "d3-shape";
@@ -47,6 +48,7 @@ export function SeriesChart({
   recordLabel,
   mark,
 }: SeriesChartProps) {
+  const titleId = useId();
   if (!data.length) return null;
   const margin = { top: 16, right: inline ? 128 : 16, bottom: 28, left: 52 };
   const years = data.map(([year]) => year);
@@ -91,8 +93,12 @@ export function SeriesChart({
   }
 
   return (
-    <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="block h-auto w-full text-[11px]">
-      <title>{label}</title>
+    <svg
+      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      aria-labelledby={titleId}
+      className="block h-auto w-full text-[11px]"
+    >
+      <title id={titleId}>{label}</title>
       {yTicks.map((tick) => (
         <g key={tick}>
           <line

@@ -73,7 +73,7 @@ function buildCountryCodes(): Map<string, string> {
   return codes;
 }
 
-export function countryInSpanish(name: string): string {
+function countryInSpanish(name: string): string {
   countryCodes ??= buildCountryCodes();
   const code = countryCodes.get(name.trim());
   if (!code) return name;

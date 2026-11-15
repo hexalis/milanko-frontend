@@ -105,7 +105,7 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
       <Form action="/regions">
         <FilterBar>
           <Field label="Región">
-            <AutoSubmitSelect name="region" defaultValue={String(region.code)}>
+            <AutoSubmitSelect name="region" urlValue={String(region.code)}>
               {regions.map((row) => (
                 <option key={row.code} value={row.code}>
                   {regionLabel(row)}
@@ -114,7 +114,7 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
             </AutoSubmitSelect>
           </Field>
           <Field label="Variable">
-            <AutoSubmitSelect name="variable" defaultValue={variable.variable}>
+            <AutoSubmitSelect name="variable" urlValue={variable.variable}>
               {variables.map((row) => (
                 <option key={row.variable} value={row.variable}>
                   {row.variable} · {row.source}
