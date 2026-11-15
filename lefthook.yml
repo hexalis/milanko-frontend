@@ -11,6 +11,10 @@ pre-commit:
       stage_fixed: true
     - name: lint
       glob: "*.{js,jsx,ts,tsx,mjs,mts,cjs}"
+      # The same paths .oxlintrc.json ignores: oxlint fails with "No files found" when a commit
+      # only stages files it ignores (e.g. the vendored globe), so they never reach it.
+      exclude:
+        - "public/globe/**"
       run: pnpm exec oxlint --deny-warnings {staged_files}
     - name: secrets
       script: secrets.sh

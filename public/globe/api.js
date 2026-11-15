@@ -38,6 +38,10 @@ const ETD_API = (() => {
           if (!res.ok) continue;
           const body = await res.json();
           if (body?.status !== "ok") continue;
+          // /health stays public while the data needs an X-API-Key the browser cannot hold. A
+          // healthy API that refuses its data is no API for the portal: use the snapshots.
+          const data = await fetch(`${root}/world/meta.json`, { signal: timeout(4000) });
+          if (!data.ok) continue;
           base = root;
           status = "api";
           info = body;
