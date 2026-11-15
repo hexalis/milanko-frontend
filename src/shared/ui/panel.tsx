@@ -1,24 +1,34 @@
 import type { ReactNode } from "react";
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardHeadings,
+  CardRoot,
+  CardTitle,
+} from "./hexalis";
 
 type PanelProps = {
   /** Panel heading; rendered as an h2. */
   title?: string;
-  /** Muted line beside the heading (counts, units, period). */
+  /** Muted line under the heading (counts, units, period). */
   meta?: ReactNode;
   children: ReactNode;
 };
 
-/** White clay card holding a record: a table, a chart or a form. */
+/** DS elevated card holding a record: a table, a chart or a form. */
 export function Panel({ title, meta, children }: PanelProps) {
   return (
-    <section className="rounded-card bg-surface shadow-clay min-w-0 p-4 sm:p-6">
+    <CardRoot variant="elevated" className="min-w-0">
       {title ? (
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h2 className="text-[22px]">{title}</h2>
-          {meta ? <p className="text-ink-muted text-[13px] font-semibold">{meta}</p> : null}
-        </div>
+        <CardHeader>
+          <CardHeadings>
+            <CardTitle className="text-heading-h3 font-display">{title}</CardTitle>
+            {meta ? <CardDescription>{meta}</CardDescription> : null}
+          </CardHeadings>
+        </CardHeader>
       ) : null}
-      {children}
-    </section>
+      <CardContent>{children}</CardContent>
+    </CardRoot>
   );
 }

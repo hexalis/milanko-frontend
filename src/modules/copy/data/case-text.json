@@ -1,0 +1,122 @@
+{
+  "svalbard-warming": {
+    "en": {
+      "name": "Svalbard, Arctic",
+      "region": "Arctic Ocean · Norway",
+      "title": "Svalbard is warming about {factor} times faster than the planet",
+      "summary": "The yearly average air temperature has risen {total} °C since {from}, {rate} °C per decade. In the same years, {points} NASA POWER points warmed {global} °C per decade. They are spread evenly over the planet.",
+      "why": "Arctic amplification. Sea ice and snow are retreating. So dark ocean and land absorb sunlight that ice used to reflect. Warmer Atlantic water also flows further into the Barents Sea. Both feed more warming.",
+      "limits": "The value covers a 50 km model cell that mixes sea, glacier and land. The yearly average hides that winters warm fastest. This is reanalysis, not a single weather station.",
+      "metric": "Yearly mean air temperature at 2 m"
+    },
+    "es": {
+      "name": "Svalbard, Ártico",
+      "region": "Océano Ártico · Noruega",
+      "title": "Svalbard se calienta unas {factor} veces más rápido que el planeta",
+      "summary": "La temperatura media anual del aire subió {total} °C desde {from}, {rate} °C por década. En los mismos años, {points} puntos de NASA POWER se calentaron {global} °C por década. Están repartidos por igual en el planeta.",
+      "why": "Amplificación ártica. El hielo marino y la nieve retroceden. Así, el océano y la tierra oscuros absorben la luz del sol que antes reflejaba el hielo. Además, agua atlántica más cálida entra más al mar de Barents. Ambos procesos alimentan más calentamiento.",
+      "limits": "El valor cubre una celda de modelo de 50 km que mezcla mar, glaciar y tierra. El promedio anual oculta que los inviernos son los que más se calientan. Es reanálisis, no una estación meteorológica.",
+      "metric": "Temperatura media anual del aire a 2 m"
+    }
+  },
+  "chile-drying": {
+    "en": {
+      "name": "Central Chile",
+      "region": "Santiago basin · South America",
+      "title": "Central Chile's soil is drying out",
+      "summary": "Water in the root zone of the soil has fallen {rel} since {from}. Since 2010, {dry} of {dryOf} years were drier than the {baseFrom}–{baseTo} average: the “megadrought”.",
+      "why": "Fewer winter storms reach central Chile. Their path has shifted south. This shift is linked to Pacific Ocean patterns and to climate change. Warmer air also evaporates more water from the soil.",
+      "limits": "Soil wetness is an index from 0 (dry) to 1 (saturated). It comes from the MERRA-2 land model, not from a direct measurement. The model does not include irrigation.",
+      "metric": "Yearly mean root-zone soil wetness (0–1)"
+    },
+    "es": {
+      "name": "Chile central",
+      "region": "Cuenca de Santiago · Sudamérica",
+      "title": "El suelo de Chile central se está secando",
+      "summary": "El agua en la zona de raíces del suelo bajó {rel} desde {from}. Desde 2010, {dry} de {dryOf} años fueron más secos que el promedio de {baseFrom}–{baseTo}: la “megasequía”.",
+      "why": "Llegan menos tormentas de invierno a Chile central. Su ruta se desplazó al sur. Este desplazamiento está ligado a patrones del océano Pacífico y al cambio climático. El aire más cálido además evapora más agua del suelo.",
+      "limits": "La humedad del suelo es un índice de 0 (seco) a 1 (saturado). Viene del modelo terrestre de MERRA-2, no de una medición directa. El modelo no incluye el riego.",
+      "metric": "Humedad media anual del suelo en la zona de raíces (0–1)"
+    }
+  },
+  "sahel-wetting": {
+    "en": {
+      "name": "Sahel, Niger",
+      "region": "West Africa",
+      "title": "In the Sahel, the soil is getting wetter",
+      "summary": "The same variable that falls in Chile rises here. Root-zone soil water is up {rel} since {from}. It rose as rains partly recovered from the great droughts of the 1970s and 80s.",
+      "why": "A warmer North Atlantic and a hotter Sahara pull the West African monsoon further north. That brings more rain to the Sahel. Same global warming, opposite local result.",
+      "limits": "Rain now tends to arrive in fewer, heavier storms, so wetter on average does not mean fewer droughts. Rainfall alone does not pass the test here (p = {rainP}); soil water does.",
+      "metric": "Yearly mean root-zone soil wetness (0–1)"
+    },
+    "es": {
+      "name": "Sahel, Níger",
+      "region": "África occidental",
+      "title": "En el Sahel, el suelo se vuelve más húmedo",
+      "summary": "La misma variable que baja en Chile sube aquí. El agua del suelo en la zona de raíces aumentó {rel} desde {from}. Subió a medida que las lluvias se recuperaron en parte de las grandes sequías de los años 70 y 80.",
+      "why": "Un Atlántico Norte más cálido y un Sahara más caliente empujan el monzón de África occidental más al norte. Eso trae más lluvia al Sahel. El mismo calentamiento global, un resultado local opuesto.",
+      "limits": "La lluvia ahora llega en menos tormentas pero más fuertes: más húmedo en promedio no significa menos sequías. La lluvia sola no pasa la prueba aquí (p = {rainP}); el agua del suelo sí.",
+      "metric": "Humedad media anual del suelo en la zona de raíces (0–1)"
+    }
+  },
+  "amazon-browning": {
+    "en": {
+      "name": "Novo Progresso, Amazon",
+      "region": "Pará · Brazil · “arc of deforestation”",
+      "title": "Along the BR-163 highway, the Amazon is losing its green",
+      "summary": "Dry-season greenness measured by NASA's Terra satellite has fallen {rel} since {from}. This area sits on the “arc of deforestation”, where forest meets expanding farmland.",
+      "why": "Forest is cleared for pasture and crops, and fires spread into the remaining forest. Longer, hotter dry seasons add stress to the trees that are left.",
+      "limits": "We average a 2 × 2 km box of MODIS pixels. NDVI saturates over dense forest and clouds can hide the ground. The index alone cannot separate clearing, fire and drought.",
+      "metric": "Mean NDVI of the dry season (June–September)"
+    },
+    "es": {
+      "name": "Novo Progresso, Amazonía",
+      "region": "Pará · Brasil · “arco de deforestación”",
+      "title": "A lo largo de la carretera BR-163, la Amazonía pierde su verde",
+      "summary": "El verdor de la temporada seca, medido por el satélite Terra de NASA, bajó {rel} desde {from}. Esta zona está en el “arco de deforestación”, donde el bosque se encuentra con la frontera agrícola.",
+      "why": "El bosque se tala para pastos y cultivos, y los incendios entran al bosque que queda. Temporadas secas más largas y calientes estresan a los árboles restantes.",
+      "limits": "Promediamos un cuadro de 2 × 2 km de píxeles MODIS. El NDVI se satura en bosque denso y las nubes pueden ocultar el suelo. El índice solo no separa tala, fuego y sequía.",
+      "metric": "NDVI medio de la temporada seca (junio–septiembre)"
+    }
+  },
+  "tundra-greening": {
+    "en": {
+      "name": "North Slope, Alaska",
+      "region": "Arctic tundra · USA",
+      "title": "The Arctic tundra is turning greener",
+      "summary": "The same greenness index that falls in the Amazon rises here: summer NDVI is up {rel} since {from}. Shrubs are spreading across the tundra.",
+      "why": "Longer, warmer summers let shrubs and grasses grow taller and denser. The growing season also starts earlier, as snow melts sooner. Warming shows up as more green, not less.",
+      "limits": "We average a 2 × 2 km box. Summer clouds and early snow can bias single years. Greener does not mean healthier: thawing permafrost and fires also change the tundra.",
+      "metric": "Mean NDVI of peak summer (July–August)"
+    },
+    "es": {
+      "name": "North Slope, Alaska",
+      "region": "Tundra ártica · EE. UU.",
+      "title": "La tundra ártica se vuelve más verde",
+      "summary": "El mismo índice de verdor que baja en la Amazonía sube aquí: el NDVI de verano aumentó {rel} desde {from}. Los arbustos se extienden por la tundra.",
+      "why": "Veranos más largos y cálidos permiten que arbustos y pastos crezcan más altos y densos. La temporada de crecimiento también empieza antes, porque la nieve se derrite más pronto. El calentamiento se ve como más verde, no menos.",
+      "limits": "Promediamos un cuadro de 2 × 2 km. Las nubes de verano y la nieve temprana pueden sesgar años aislados. Más verde no significa más sano: el deshielo del permafrost y los incendios también cambian la tundra.",
+      "metric": "NDVI medio del pico de verano (julio–agosto)"
+    }
+  },
+  "murray-rain": {
+    "en": {
+      "name": "Murray-Darling, Australia",
+      "region": "New South Wales · Australia",
+      "title": "Is it getting drier? Not proven yet",
+      "summary": "Rainfall seems to fall by {rate} mm/day per decade, {rel} since {from}. But with these data and this method, that is not enough to confirm a trend: the evidence is weak.",
+      "why": "Rain here swings wildly from year to year with El Niño and La Niña. Long droughts and big floods alternate. With swings that large, {years} years are not enough to tell a real trend from luck.",
+      "limits": "Not significant does not mean “no change”: it means the data cannot confirm one. More years, or a larger region, might settle the question.",
+      "metric": "Yearly mean rainfall (mm/day)"
+    },
+    "es": {
+      "name": "Murray-Darling, Australia",
+      "region": "Nueva Gales del Sur · Australia",
+      "title": "¿Se está secando? Aún no está probado",
+      "summary": "La lluvia parece bajar {rate} mm/día por década, {rel} desde {from}. Pero con estos datos y este método no alcanza para confirmar una tendencia: la evidencia es débil.",
+      "why": "Aquí la lluvia varía muchísimo de un año a otro con El Niño y La Niña. Se alternan largas sequías y grandes inundaciones. Con oscilaciones tan grandes, {years} años no bastan para distinguir una tendencia real de la suerte.",
+      "limits": "No significativo no quiere decir “sin cambio”: quiere decir que los datos no pueden confirmarlo. Más años, o una región más grande, podrían resolver la duda.",
+      "metric": "Lluvia media anual (mm/día)"
+    }
+  }
+}

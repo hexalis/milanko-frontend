@@ -49,7 +49,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
                 x={PAD.left - 6}
                 y={rowY(year) + ROW_HEIGHT / 2 + 3}
                 textAnchor="end"
-                className="fill-ink-muted"
+                className="fill-text-tertiary"
               >
                 {year}
               </text>
@@ -60,7 +60,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
               key={day}
               x={PAD.left + day * CELL_WIDTH}
               y={PAD.top - 6}
-              className="fill-ink-muted"
+              className="fill-text-tertiary"
             >
               {MONTH_INITIALS[index]}
             </text>
@@ -70,7 +70,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
           ))}
         </svg>
       </div>
-      <div className="text-ink-muted mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-semibold">
+      <div className="text-text-tertiary mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-semibold">
         <span>
           Cada celda es un día; el color es z respecto de la climatología diaria. Sin celda = sin
           dato.

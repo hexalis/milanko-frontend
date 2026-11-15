@@ -1,7 +1,11 @@
 import type { ComponentProps, ReactNode } from "react";
 
+/*
+ * Native controls styled with DS field tokens. They stay native (not the React Aria Select)
+ * because the data pages filter through plain GET forms whose values live in the URL.
+ */
 const CONTROL =
-  "min-h-11 w-full min-w-0 rounded-lg border border-hairline bg-surface px-3 py-2 text-base text-ink shadow-clay placeholder:text-ink-placeholder";
+  "h-touch-min medium:h-10 w-full min-w-0 rounded-field border border-border-input bg-bg-surface px-3 text-body-m text-text-primary shadow-control transition-colors duration-fast hover:border-border-strong focus-visible:focus-ring focus-visible:outline-focus-ring placeholder:text-text-tertiary";
 
 type FieldProps = {
   label: string;
@@ -11,7 +15,7 @@ type FieldProps = {
 /** A label wrapping its control, so the pair needs no id wiring. */
 export function Field({ label, children }: FieldProps) {
   return (
-    <label className="text-ink-muted grid min-w-0 gap-1.5 text-xs font-extrabold tracking-[0.04em]">
+    <label className="text-label-m text-text-secondary grid min-w-0 gap-1.5">
       {label}
       {children}
     </label>
@@ -31,7 +35,7 @@ type FilterBarProps = { children: ReactNode };
 /** Responsive row of filters and actions at the top of a data page. */
 export function FilterBar({ children }: FilterBarProps) {
   return (
-    <div className="rounded-card bg-surface shadow-clay grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
+    <div className="rounded-card border-border-subtle bg-bg-surface shadow-card medium:grid-cols-2 expanded:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] grid grid-cols-1 items-end gap-3 border p-4">
       {children}
     </div>
   );

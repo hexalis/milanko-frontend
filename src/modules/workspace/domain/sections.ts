@@ -1,32 +1,40 @@
 export type WorkspaceSection = {
-  href: "/regions" | "/rankings" | "/events" | "/coverage";
-  label: string;
+  href: "/cases" | "/regions" | "/rankings" | "/events" | "/coverage";
+  /** Copy key (POC i18n) for the menu label. */
+  labelKey: string;
+  /** Spanish summary for the home cards (the persisted-data pages are Spanish only for now). */
   summary: string;
 };
 
-/** The persisted-data views migrated from the POC (regions, rankings, events, coverage). */
 export const WORKSPACE_SECTIONS: readonly WorkspaceSection[] = [
   {
+    href: "/cases",
+    labelKey: "nav.cases",
+    summary: "Expedientes de tendencias y anomalías con datos de NASA, en inglés o español.",
+  },
+  {
     href: "/regions",
-    label: "Regiones",
+    labelKey: "nav.regions",
     summary: "Serie, tendencia, anomalías y eventos de una de las 162 regiones.",
   },
   {
     href: "/rankings",
-    label: "Planet Pulse",
+    labelKey: "nav.rankings",
     summary: "Ranking global de regiones por valor, anomalía o tendencia.",
   },
   {
     href: "/events",
-    label: "Eventos",
+    labelKey: "nav.events-db",
     summary: "Catálogo EONET persistido, con filtros por categoría, estado y fecha.",
   },
   {
     href: "/coverage",
-    label: "Inventario",
+    labelKey: "nav.coverage",
     summary: "Variables, fuentes, filas y rango histórico de los datos guardados.",
   },
 ];
+
+export type SectionLabels = Record<WorkspaceSection["href"], string>;
 
 export function isSectionActive(pathname: string, href: WorkspaceSection["href"]): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);

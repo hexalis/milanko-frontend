@@ -14,7 +14,7 @@ type RankingBarsProps = {
 /** Horizontal bars scaled to the largest absolute value; negative values in the "down" signal. */
 export function RankingBars({ rows, metric, variable, unit }: RankingBarsProps) {
   const bars = rankingBars(rows, metric);
-  if (!bars.length) return <p className="text-ink-muted">Sin datos para esta combinación.</p>;
+  if (!bars.length) return <p className="text-text-tertiary">Sin datos para esta combinación.</p>;
 
   return (
     <ol className="grid gap-2">
@@ -25,17 +25,17 @@ export function RankingBars({ rows, metric, variable, unit }: RankingBarsProps) 
         >
           <Link
             href={`/regions${toQueryString({ region: row.code, variable })}`}
-            className="text-ink hover:text-accent truncate font-bold no-underline"
+            className="text-text-primary hover:text-text-brand truncate font-bold no-underline"
           >
             {regionLabel(row)}
           </Link>
-          <span className="rounded-paper bg-surface-soft h-4 overflow-hidden" aria-hidden="true">
+          <span className="rounded-2xs bg-bg-surface-sunken h-4 overflow-hidden" aria-hidden="true">
             <span
-              className={`rounded-paper block h-full ${isNegative ? "bg-signal-down" : "bg-signal-up"}`}
+              className={`rounded-2xs block h-full ${isNegative ? "bg-trend-down" : "bg-trend-up"}`}
               style={{ width: `${widthPercent.toFixed(1)}%` }}
             />
           </span>
-          <span className="text-ink-muted font-semibold tabular-nums sm:text-right">
+          <span className="text-text-tertiary font-semibold tabular-nums sm:text-right">
             {formatSigned(value)} {unit}
           </span>
         </li>
