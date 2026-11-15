@@ -95,13 +95,17 @@ export function HomeKey({ translator }: { translator: Translator }) {
             key={key}
             className={`grid grid-cols-[112px_1fr] content-start gap-x-4 gap-y-1 @2xl/home:grid-cols-[180px_1fr] @2xl/home:gap-x-5 @3xl/home:grid-cols-1 @3xl/home:gap-3 ${tone}`}
           >
-            <span className="bg-bg-surface shadow-card row-span-2 block max-w-[300px] self-start rounded-[16px] p-1.5 @3xl/home:row-span-1">
-              <span className={`block overflow-hidden rounded-[10px] ${tint}`}>
-                <Glyph word={key} label={t(`home2.key.${key}.x`)} />
+            {/* A <dl> group holds only <dt> and <dd>: the glyph sits in the term, which lays out as
+                two grid items (display: contents) so the card keeps its shape. */}
+            <dt className="contents">
+              <span className="bg-bg-surface shadow-card row-span-2 block max-w-[300px] self-start rounded-[16px] p-1.5 @3xl/home:row-span-1">
+                <span className={`block overflow-hidden rounded-[10px] ${tint}`}>
+                  <Glyph word={key} label={t(`home2.key.${key}.x`)} />
+                </span>
               </span>
-            </span>
-            <dt className="text-[20px] font-semibold tracking-[-0.01em] @2xl/home:text-[22px] @3xl/home:mt-1.5">
-              {t(`home2.key.${key}`)}
+              <span className="text-[20px] font-semibold tracking-[-0.01em] @2xl/home:text-[22px] @3xl/home:mt-1.5">
+                {t(`home2.key.${key}`)}
+              </span>
             </dt>
             <dd className="text-text-secondary m-0 max-w-[34ch]">
               {t(`home2.key.${key}.d`)}

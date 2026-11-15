@@ -11,6 +11,7 @@ import { DEFAULT_LOCALE, type Locale } from "@/shared/lib/i18n";
 import { LanguageSwitch } from "@/shared/ui/language-switch";
 import { setLocale } from "../actions";
 import { TABBAR } from "../domain/sections";
+import { DocumentLang } from "./document-lang";
 import { MobileBar } from "./mobile-bar";
 import type { CaseKindLink } from "./rail-cases-item";
 import { ShellShortcuts } from "./shell-shortcuts";
@@ -99,6 +100,7 @@ export function WorkspaceShell({ locale, environment }: WorkspaceShellProps) {
 
   return (
     <>
+      <DocumentLang locale={locale} />
       <SkipLink label={t("skip")} />
       <MobileBar>
         {languageSwitch}

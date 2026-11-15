@@ -694,6 +694,7 @@
   "doc.why": "Por qué",
   "drawer.close": "Cerrar panel",
   "drawer.view": "Ver expediente",
+  "env.label": "Entorno",
   "ev.a.moderate": "<strong>Algo raro.</strong> {s}",
   "ev.a.strong": "<strong>Sí, muy raro.</strong> {s}",
   "ev.a.weak": "<strong>No, estuvo dentro de lo normal.</strong> {s}",

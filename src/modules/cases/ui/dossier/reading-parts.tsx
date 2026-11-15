@@ -80,7 +80,7 @@ export function ExactList({ rows }: { rows: ExactRow[] }) {
 
 /** A plain sentence, the reading line of every section. */
 export function Plain({ children }: { children: ReactNode }) {
-  return <p className="text-body-l font-reading text-text-primary max-w-[66ch]">{children}</p>;
+  return <p className="text-body-l font-reading text-text-primary max-w-[60ch]">{children}</p>;
 }
 
 const card = tv({

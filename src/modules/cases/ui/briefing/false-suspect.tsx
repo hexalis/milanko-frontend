@@ -30,7 +30,7 @@ export function FalseSuspect({ suspect, audit, realTrends, translator }: FalseSu
       className="rounded-shell bg-surface-tone-5 text-text-primary expanded:grid-cols-2 medium:p-10 shadow-card grid items-center gap-8 p-6"
     >
       <div className="flex flex-col gap-3">
-        <p className="text-label-l text-trend-up flex items-center gap-2">
+        <p className="text-label-l text-feedback-danger-fg flex items-center gap-2">
           <Icon name="warning" />
           {t("brief.suspect.kind")}
         </p>

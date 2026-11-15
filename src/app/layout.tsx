@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import { Suspense, type ReactNode } from "react";
+import { getTranslator } from "@/modules/copy";
 import { SHELL_PREPAINT_SCRIPT } from "@/modules/workspace/domain/shell-script";
 import { EnvironmentBadge } from "@/modules/workspace/ui/environment-badge";
 import { WorkspaceFooter } from "@/modules/workspace/ui/workspace-footer";
@@ -38,7 +39,12 @@ async function CurrentShell() {
   return (
     <WorkspaceShell
       locale={locale}
-      environment={<EnvironmentBadge environment={getServerEnv().appEnvironment} />}
+      environment={
+        <EnvironmentBadge
+          environment={getServerEnv().appEnvironment}
+          label={getTranslator(locale).t("env.label")}
+        />
+      }
     />
   );
 }

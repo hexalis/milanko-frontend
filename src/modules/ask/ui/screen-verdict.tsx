@@ -138,7 +138,7 @@ export function ScreenVerdict(props: StepProps) {
           <Icon name="info" />
           {t("case.why.tag")}
         </p>
-        <p className="text-body-l font-reading text-text-primary max-w-[68ch]">
+        <p className="text-body-l font-reading text-text-primary max-w-[60ch]">
           {trendText(file, "why", context)}
         </p>
       </EvidenceBlock>

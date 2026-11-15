@@ -694,6 +694,7 @@
   "doc.why": "Why",
   "drawer.close": "Close panel",
   "drawer.view": "View case file",
+  "env.label": "Environment",
   "ev.a.moderate": "<strong>Somewhat unusual.</strong> {s}",
   "ev.a.strong": "<strong>Yes, very unusual.</strong> {s}",
   "ev.a.weak": "<strong>No, it was within the usual range.</strong> {s}",

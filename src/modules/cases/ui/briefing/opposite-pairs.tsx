@@ -61,7 +61,7 @@ export function OppositePairs({ pairs, translator, catalog }: OppositePairsProps
       data-theme="light"
       className="rounded-shell bg-bg-inverse text-text-inverse medium:p-10 shadow-card flex flex-col gap-6 p-6"
     >
-      <div className="flex max-w-[68ch] flex-col gap-2">
+      <div className="flex max-w-[60ch] flex-col gap-2">
         <h2 id="pairs-title" className="text-heading-h2 font-display text-balance">
           {t("brief.pairs.title")}
         </h2>

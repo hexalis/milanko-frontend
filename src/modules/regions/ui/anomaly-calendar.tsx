@@ -1,3 +1,4 @@
+import { ScrollRegion } from "@/shared/ui/scroll-region";
 import { zColor, type CalendarLayout } from "../domain/analysis";
 
 type AnomalyCalendarProps = {
@@ -33,15 +34,17 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
       )
       .join("");
 
+  const title = `Calendario de anomalías de ${variable}, ${layout.firstYear} a ${layout.lastYear}, ${layout.dayCount} días`;
+  // Wider than a phone: the frame scrolls, and is focusable while it does.
   return (
     <>
-      <div className="overflow-x-auto">
+      <ScrollRegion className="overflow-x-auto" label={title}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="block h-auto w-full min-w-[900px] text-[10px]"
           shapeRendering="crispEdges"
         >
-          <title>{`Calendario de anomalías de ${variable}, ${layout.firstYear} a ${layout.lastYear}, ${layout.dayCount} días`}</title>
+          <title>{title}</title>
           {years.map((year) =>
             (year - layout.firstYear) % yearStep === 0 ? (
               <text
@@ -69,7 +72,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
             <path key={bucket.z} d={cellPath(bucket.cells)} fill={bucket.color} />
           ))}
         </svg>
-      </div>
+      </ScrollRegion>
       <div className="text-text-tertiary mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-semibold">
         <span>
           Cada celda es un día; el color es z respecto de la climatología diaria. Sin celda = sin

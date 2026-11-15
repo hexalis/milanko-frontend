@@ -20,7 +20,7 @@ function ThinkList({ items, answerLabel }: ThinkListProps) {
         <li key={item.q} className="text-body-m text-text-primary">
           <p>{item.q}</p>
           <details className="mt-0.5">
-            <summary className="text-label-s text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring cursor-pointer rounded-xs">
+            <summary className="text-label-s text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring relative cursor-pointer rounded-xs after:absolute after:inset-x-0 after:-inset-y-1 after:content-['']">
               {answerLabel}
             </summary>
             <p className="text-text-secondary mt-1">{item.a}</p>

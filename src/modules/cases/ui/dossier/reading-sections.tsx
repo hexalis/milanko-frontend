@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { Translator } from "@/shared/lib/i18n";
 import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
+import { ScrollRegion } from "@/shared/ui/scroll-region";
 import { Table, Td, Th, Tr } from "@/shared/ui/table";
 import { ExternalLink } from "@/shared/ui/text-link";
 import type { CaseReading } from "../../domain/case-reading";
@@ -26,7 +27,7 @@ export function DataSection({ reading, translator }: SectionProps) {
         <summary className="text-label-m text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring min-h-8 cursor-pointer rounded-xs">
           {t("cf.table")}
         </summary>
-        <div className="mt-2 max-h-[300px] overflow-auto">
+        <ScrollRegion className="mt-2 max-h-[300px] overflow-auto" label={t("cf.table")}>
           <Table
             caption={chart.plain}
             head={chart.table.head.map((cell) => (
@@ -43,7 +44,7 @@ export function DataSection({ reading, translator }: SectionProps) {
               </Tr>
             ))}
           </Table>
-        </div>
+        </ScrollRegion>
       </details>
       <p className="mt-4">
         <a href={chart.csvHref} download className={buttonLink({ intent: "secondary" })}>
@@ -90,7 +91,7 @@ export function WhySection({ reading }: SectionProps) {
         {why.tag}
       </p>
       <Plain>{why.plain}</Plain>
-      {why.more ? <p className="text-body-m text-text-secondary max-w-[68ch]">{why.more}</p> : null}
+      {why.more ? <p className="text-body-m text-text-secondary max-w-[60ch]">{why.more}</p> : null}
       {why.breaks?.length ? (
         <ul className="grid gap-2">
           {why.breaks.map((item) => (

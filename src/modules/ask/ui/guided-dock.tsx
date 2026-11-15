@@ -3,11 +3,12 @@ import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import type { Sheet } from "../domain/guided";
 import { QUIZ_FORM_ID } from "./guided-quiz";
+import { QuizCheckButton } from "./quiz-check-button";
 
 /*
  * Bottom of the lesson (POC ask.js .lesson-dock): the answer sheet once a quiz is checked, then
  * back, skip and the one button that moves on. On a quiz not yet answered, that button submits the
- * quiz ("Check") and stays faint until a tile is chosen.
+ * quiz ("Check") and stays inactive until a tile is chosen.
  */
 
 const SHEET: Record<Sheet["kind"], string> = {
@@ -73,14 +74,13 @@ function LessonBar({ label, back, quiz, next }: LessonBarProps) {
           >
             {quiz.skip.label}
           </Link>
-          <button
-            type="submit"
-            form={QUIZ_FORM_ID}
-            className={`${buttonLink()} ${GO} opacity-55 group-has-[input:checked]/lesson:opacity-100`}
+          <QuizCheckButton
+            formId={QUIZ_FORM_ID}
+            className={`${buttonLink({ isPressableWhenDisabled: true })} ${GO}`}
           >
             {quiz.check}
             <Icon name="arrow-right" />
-          </button>
+          </QuizCheckButton>
         </>
       ) : (
         <Link href={next.href} className={`${buttonLink()} ${GO}`}>

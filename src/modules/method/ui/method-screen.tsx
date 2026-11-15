@@ -173,7 +173,7 @@ function Process({ translator: { t } }: { translator: Translator }) {
               <div className="grid gap-2">
                 <p className="text-body-m text-text-primary">{t(`${step}.d`)}</p>
                 <details className="group">
-                  <summary className="text-label-m text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring inline-flex cursor-pointer list-none items-center gap-1 rounded-sm">
+                  <summary className="text-label-m text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring relative inline-flex cursor-pointer list-none items-center gap-1 rounded-sm after:absolute after:inset-x-0 after:-inset-y-3 after:content-['']">
                     {t("method.how")}
                     <span className="duration-fast transition-transform group-open:rotate-180">
                       <Icon name="caret-down" size="sm" />

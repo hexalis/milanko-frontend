@@ -90,6 +90,7 @@ async function RegionContent({ searchParams }: PageProps) {
 export default function RegionsPage({ searchParams }: PageProps) {
   return (
     <PageShell
+      lang="es"
       kicker="Earth Trend Detective · datos persistidos"
       title="Explorador de regiones"
       lead="Elige una de las 162 regiones y una variable: serie guardada, tendencia de todo el registro, anomalías y eventos de la zona."

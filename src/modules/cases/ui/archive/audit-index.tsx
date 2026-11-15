@@ -61,7 +61,7 @@ export function AuditIndex({ audit, translator, backHref }: AuditIndexProps) {
       <h2 id="audit-title" className="text-heading-h2 font-display text-text-primary font-semibold">
         {t("audit.title")}
       </h2>
-      <p className="text-body-l font-reading text-text-secondary max-w-[68ch]">{t("audit.lead")}</p>
+      <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">{t("audit.lead")}</p>
       <ul className="medium:grid-cols-2 grid gap-3">
         {audit.categories.map((category) => (
           <li key={category.id}>

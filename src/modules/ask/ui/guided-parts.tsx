@@ -10,8 +10,9 @@ export type StepProps = { view: GuidedView; translator: Translator; catalog: Cas
 
 /* Small pieces shared by the guided steps and the comparison (POC .crumbs, .callout-box, .ask-nav…). */
 
+// A transparent ::after stretches the 18px crumb to a 44px tap target, without reflow.
 const CRUMB_LINK =
-  "hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring underline-offset-2 hover:underline";
+  "hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring relative underline-offset-2 after:absolute after:inset-x-0 after:-inset-y-[13px] after:content-[''] hover:underline";
 
 type GuidedCrumbsProps = {
   navLabel: string;
@@ -51,7 +52,7 @@ export function GuidedCallout({ icon, title, children }: CalloutProps) {
       <span className="text-text-brand mt-0.5 text-[22px]">
         <Icon name={icon} />
       </span>
-      <p className="text-body-l font-reading text-text-primary max-w-[72ch]">
+      <p className="text-body-l font-reading text-text-primary max-w-[60ch]">
         {title ? <strong className="block">{title}</strong> : null}
         {children}
       </p>
@@ -61,7 +62,7 @@ export function GuidedCallout({ icon, title, children }: CalloutProps) {
 
 /** Lead paragraph of a step. */
 export function StepLead({ children }: { children: ReactNode }) {
-  return <p className="text-body-l font-reading text-text-secondary max-w-[68ch]">{children}</p>;
+  return <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">{children}</p>;
 }
 
 export type ScienceRow = { key: string; term: ReactNode; value: ReactNode };

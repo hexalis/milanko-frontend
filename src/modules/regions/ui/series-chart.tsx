@@ -1,4 +1,5 @@
 import { formatNumber } from "@/shared/lib/format";
+import { ScrollRegion } from "@/shared/ui/scroll-region";
 import type { SeriesPoint } from "../domain/series";
 
 type SeriesChartProps = {
@@ -40,13 +41,15 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
     (_, index) => min + ((max - min) * index) / TICKS,
   );
 
+  const title = `${label}: ${first.date} a ${last.date}, entre ${formatNumber(min)} y ${formatNumber(max)}`;
+  // Wider than a phone: the frame scrolls, and is focusable while it does.
   return (
-    <div className="overflow-x-auto">
+    <ScrollRegion className="overflow-x-auto" label={title}>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="block h-[290px] w-full min-w-[640px] text-[11px]"
       >
-        <title>{`${label}: ${first.date} a ${last.date}, entre ${formatNumber(min)} y ${formatNumber(max)}`}</title>
+        <title>{title}</title>
         {ticks.map((tick) => (
           <g key={tick}>
             <line
@@ -101,6 +104,6 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
             ))
           : null}
       </svg>
-    </div>
+    </ScrollRegion>
   );
 }
