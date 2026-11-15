@@ -1,25 +1,45 @@
-# ABC · Next.js Modular Starter
+# Milanko · Earth Trend Detective (frontend)
 
-> Una plantilla de Next.js pensada para iniciar productos mantenibles: pequeña al principio, modular cuando el producto crece y preparada para colaborar con personas y agentes de IA.
+Frontend en Next.js del portal **Earth Trend Detective**: qué está cambiando en la Tierra, dónde, cuánto y si el cambio es estadísticamente significativo. Todos los números vienen de datos públicos de NASA (POWER, MODIS vía GIBS y EONET), persistidos y servidos por la API de Milanko.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-149eca?logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/license-private-lightgrey)](#)
-[![CI](https://github.com/RogerG03/abc-next-js/actions/workflows/ci.yml/badge.svg)](https://github.com/RogerG03/abc-next-js/actions/workflows/ci.yml)
+Nace de la plantilla [`hexalis/template-nextjs-apps`](https://github.com/hexalis/template-nextjs-apps) y migra por fases la POC estática [`hexalis/poc-research-design-concept`](https://github.com/hexalis/poc-research-design-concept) (rama `develop`, commit `0280b3e`).
 
-**Documentación:** [rogerg03.github.io/abc-next-js](https://rogerg03.github.io/abc-next-js/) — auditoría, flujo shift-left y [comparativa antes/después](https://rogerg03.github.io/abc-next-js/comparison.html).
+## Estado de la migración
 
-## ¿Qué resuelve?
+| Fase | Vistas                                                                                                                                                                                                                                       | Estado    |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 1    | Base, ambientes, cliente tipado de la API, tokens de diseño _Arcilla amable_, Explorador de regiones (`/regions`), Planet Pulse (`/rankings`), Archivo de eventos (`/events`), Contexto de evento (`/events/[id]`), Inventario (`/coverage`) | Hecha     |
+| 2+   | Briefing, expedientes (case files), archivo, método, "Tengo una pregunta" (motor de reglas), globo 3D, selector EN/ES                                                                                                                        | Pendiente |
 
-ABC evita dos extremos comunes: una app con todo mezclado en `components/`, `services/` y `utils/`, o una arquitectura demasiado pesada desde el primer commit. Organiza el producto por capacidades de negocio y sólo incorpora nuevas capas cuando una funcionalidad las necesita.
+## Ambientes y API
 
-Es una buena base para:
+| Ambiente   | URL                               | API                                      |
+| ---------- | --------------------------------- | ---------------------------------------- |
+| develop    | `https://dev-milanko.hexalis.org` | `https://dev-milanko.hexalis.org/api/v1` |
+| qa         | `https://qa-milanko.hexalis.org`  | `https://qa-milanko.hexalis.org/api/v1`  |
+| production | `https://milanko.hexalis.org`     | `https://milanko.hexalis.org/api/v1`     |
 
-- Productos SaaS, paneles internos y aplicaciones web que crecerán por módulos.
-- Equipos que combinan componentes propios y librerías de UI.
-- Proyectos que podrán vivir en una app, un monorepo o varios repositorios coordinados.
-- Equipos que trabajan con agentes de IA y necesitan reglas de estructura verificables.
+- El servidor de Next llama a la API con `MILANKO_API_URL` (por defecto, develop). En el VPS puede apuntar al backend interno del mismo ambiente.
+- El navegador sólo usa el mismo origen `/api/v1` (imágenes satelitales, enlace a la documentación). En los ambientes desplegados lo resuelve nginx; en local lo resuelve el `rewrite` de `next.config.mjs`.
+- `APP_ENV` (`local | develop | qa | production`) se lee en tiempo de petición, así que un mismo build sirve para los tres ambientes.
+- Los tipos de la API se generan desde el OpenAPI con `pnpm api:types` (`src/server/integrations/milanko-api/schema.d.ts`). Regenéralos cuando cambie la API.
+
+## Estructura del producto
+
+```text
+src/
+├─ app/                         # /, /regions, /rankings, /events, /events/[id], /coverage
+│  └─ regions/[code]/observations/route.ts   # descarga CSV de la serie
+├─ modules/
+│  ├─ workspace/                # cabecera, navegación, portada
+│  ├─ regions/                  # explorador de regiones y Planet Pulse
+│  ├─ events/                   # archivo EONET y contexto de evento
+│  └─ coverage/                 # inventario de variables persistidas
+├─ shared/                      # UI clay (panel, tabla, campos, botones) y utilidades
+└─ server/                      # env validado y cliente de la API de Milanko
+```
+
+Los filtros de cada vista viven en la URL, así que cualquier vista se puede compartir. Los datos se cargan en Server Components; el cliente sólo hidrata la navegación, los selects que envían el formulario y el botón de copiar enlace.
 
 ## Stack tecnológico
 
@@ -96,9 +116,10 @@ No elimines `src/app/`, `src/shared/`, TypeScript, Oxc, Tailwind, la configuraci
 ## Inicio rápido
 
 ```bash
-git clone https://github.com/RogerG03/abc-next-js.git
-cd abc-next-js
+git clone git@github.com:hexalis/milanko-frontend.git
+cd milanko-frontend
 pnpm install   # descarga Node 24.20.0 si hace falta e instala los hooks de Git
+cp .env.example .env.local
 pnpm dev
 ```
 
@@ -106,9 +127,7 @@ Instala pnpm 12.14.0 una vez con `npm install --global pnpm@12.14.0` (o `corepac
 
 Abre [http://localhost:3000](http://localhost:3000).
 
-## Usar ABC como referencia
-
-Este repositorio no recibe aplicaciones reales: sirve para generar repositorios nuevos que conservan sus reglas y arranque técnico. La guía [Usar ABC como plantilla de proyecto](docs/using-this-template.md) explica el primer arranque, el prompt para agentes, la separación con `code-memory`, los opcionales y cuándo extraer una futura librería de componentes desde Figma.
+> Si Node no logra conectar con la API (`UND_ERR_CONNECT_TIMEOUT`) en una red con IPv6 incompleto, arranca con `NODE_OPTIONS=--dns-result-order=ipv4first pnpm dev`.
 
 ## Scripts
 
@@ -126,6 +145,7 @@ Este repositorio no recibe aplicaciones reales: sirve para generar repositorios 
 | `pnpm format:check` | Verifica el formato con Oxfmt sin modificar archivos.          |
 | `pnpm knip`         | Reporta código o dependencias sin uso; revisa antes de borrar. |
 | `pnpm build`        | Genera el build optimizado de producción.                      |
+| `pnpm api:types`    | Regenera los tipos de la API desde el OpenAPI de develop.      |
 | `pnpm start`        | Sirve el build de producción.                                  |
 
 ## Convenciones para personas y agentes

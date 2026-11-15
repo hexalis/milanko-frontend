@@ -1,1 +1,86 @@
 @import "tailwindcss";
+
+/*
+ * Arcilla amable: tokens from the POC's DESIGN.md (hexalis/poc-research-design-concept).
+ * Reference them by name (bg-surface, text-ink, rounded-card, shadow-clay…) instead of raw values.
+ */
+@theme {
+  --font-display: var(--font-baloo), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --color-ink: #23305a;
+  --color-ink-soft: #3c4a78;
+  --color-ink-muted: #4a5680;
+  --color-ink-placeholder: #66729a;
+  --color-ink-faint: #a9b6d6;
+  --color-canvas: #dce8ff;
+  --color-surface: #ffffff;
+  --color-surface-sky: #eef3ff;
+  --color-surface-soft: #e6edfb;
+  --color-chip: #dbe4fb;
+  --color-hairline: #d4def5;
+  --color-clay: #b9c8ea;
+  --color-night: #23305a;
+  --color-go: #1f8455;
+  --color-go-hover: #1b7449;
+  --color-go-shadow: #155c3b;
+  --color-accent: #1a6e48;
+  --color-accent-soft: #d8f3e5;
+  --color-signal-up: #b23a2a;
+  --color-signal-down: #1f5fa8;
+  --color-signal-flat: #5a6488;
+  --color-block-rose: #ffe1dc;
+  --color-block-tide: #d6eafc;
+  --color-data-series: #3b7fd0;
+  --color-data-grid: #d4def5;
+
+  --radius-paper: 4px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-card: 22px;
+  --radius-slab: 28px;
+
+  /* Clay depth: a solid offset shadow straight down, never a blur. */
+  --shadow-clay: 0 4px 0 var(--color-clay);
+  --shadow-clay-raised: 0 7px 0 var(--color-clay);
+  --shadow-clay-pressed: 0 1px 0 var(--color-clay);
+  --shadow-go: 0 4px 0 var(--color-go-shadow);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-go);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}

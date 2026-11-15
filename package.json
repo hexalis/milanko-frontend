@@ -1,7 +1,8 @@
 {
-  "name": "abc",
+  "name": "milanko-frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "Milanko: Earth Trend Detective frontend (Next.js)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -16,10 +17,12 @@
     "format:check": "oxfmt --check",
     "knip": "knip",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm knip",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "api:types": "pnpm dlx --package openapi-typescript@7.13.0 --package typescript@5.9.3 openapi-typescript https://dev-milanko.hexalis.org/api/v1/openapi.json -o src/server/integrations/milanko-api/schema.d.ts"
   },
   "dependencies": {
     "next": "16.4.2",
+    "openapi-fetch": "^0.17.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "tailwind-variants": "^3.3.1"
