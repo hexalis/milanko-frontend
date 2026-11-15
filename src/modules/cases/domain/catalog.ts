@@ -23,7 +23,19 @@ export type CaseCatalog = {
   /** Days of the anomaly run-up window (90). */
   eventWindowDays: number;
   /** Planet-wide NASA POWER sample the temperature cases compare against. */
-  global: { points: number; perDecade: number; from: number; to: number };
+  global: {
+    variable: string;
+    points: number;
+    perDecade: number;
+    p: number;
+    /** Change over the whole sample, in the variable's unit. */
+    total: number;
+    years: number;
+    from: number;
+    to: number;
+  };
+  /** When the build scripts produced cases.json (shown as the data version). */
+  generated: string;
 };
 
 function buildCatalog(): CaseCatalog {
@@ -42,11 +54,16 @@ function buildCatalog(): CaseCatalog {
     all: [...trends, ...events],
     eventWindowDays: eventFilesData.window,
     global: {
+      variable: globalData.variable,
       points: globalData.points,
       perDecade: globalData.trend.perDecade,
+      p: globalData.trend.p,
+      total: globalData.trend.total,
+      years: globalData.series.length,
       from: globalData.from,
       to: globalData.to,
     },
+    generated: casesData.generated,
   };
 }
 

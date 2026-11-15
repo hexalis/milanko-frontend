@@ -18,6 +18,7 @@ Nace de la plantilla [`hexalis/template-nextjs-apps`](https://github.com/hexalis
 | develop    | `https://dev-milanko.hexalis.org` | `https://dev-milanko.hexalis.org/api/v1` |
 | qa         | `https://qa-milanko.hexalis.org`  | `https://qa-milanko.hexalis.org/api/v1`  |
 | production | `https://milanko.hexalis.org`     | `https://milanko.hexalis.org/api/v1`     |
+| poc        | `https://milanko-poc.hexalis.org` | `https://milanko-poc.hexalis.org/api/v1` |
 
 - El servidor de Next llama a la API con `MILANKO_API_URL` (por defecto, develop). En el VPS puede apuntar al backend interno del mismo ambiente.
 - El navegador sólo usa el mismo origen `/api/v1` (imágenes satelitales, enlace a la documentación). En los ambientes desplegados lo resuelve nginx; en local lo resuelve el `rewrite` de `next.config.mjs`.
