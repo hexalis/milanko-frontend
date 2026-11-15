@@ -63,7 +63,7 @@ describe("BriefingScreen", () => {
     renderBriefing();
     const suspect = within(screen.getByRole("region", { name: /grew 12-fold/ }));
     expect(suspect.getByRole("heading", { level: 2 })).toHaveTextContent(
-      "Wildfires in EONET grew 12-fold. The planet did not.",
+      "The rise in wildfires comes from the catalog, not the planet: EONET counts grew 12-fold.",
     );
     expect(suspect.getByText(/none of the 13 EONET categories/)).toBeVisible();
     expect(suspect.getByTitle(/Wildfires: events per year from 2000/)).toBeInTheDocument();
