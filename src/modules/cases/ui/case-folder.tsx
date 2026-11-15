@@ -64,7 +64,7 @@ const folder = tv({
       "hover:-translate-y-1 focus-within:-translate-y-1",
       "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0",
     ].join(" "),
-    tab: "absolute top-0 left-0 h-7 rounded-t-[14px] px-4 font-mono text-[13px] leading-7 font-extrabold text-text-primary",
+    tab: "absolute top-0 left-0 h-7 rounded-t-[14px] px-4 font-mono text-[13px] leading-7 font-semibold text-text-primary",
     back: "flex flex-1 flex-col rounded-tr-[22px] rounded-b-[22px] px-1.5 pt-2.5 pb-2",
     cover: [
       "flex flex-1 flex-col gap-3 rounded-[22px] p-5 text-text-primary",

@@ -397,7 +397,7 @@ export function TrendDossier({ file, translator, catalog }: TrendDossierProps) {
             <Icon name="info" />
             {t("case.why.tag")}
           </p>
-          <p className="text-body-l text-text-primary max-w-[68ch]">
+          <p className="text-body-l font-reading text-text-primary max-w-[68ch]">
             {trendText(file, "why", context)}
           </p>
         </EvidenceBlock>

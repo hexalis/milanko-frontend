@@ -57,13 +57,13 @@ export function OppositePairs({ pairs, translator, catalog }: OppositePairsProps
   return (
     <section
       aria-labelledby="pairs-title"
-      className="rounded-shell bg-bg-inverse text-text-inverse medium:p-10 flex flex-col gap-6 p-6 shadow-[0_7px_0_var(--color-surface-tone-inverse-edge)]"
+      className="rounded-shell bg-bg-inverse text-text-inverse medium:p-10 shadow-card flex flex-col gap-6 p-6"
     >
       <div className="flex max-w-[68ch] flex-col gap-2">
         <h2 id="pairs-title" className="text-heading-h2 font-display text-balance">
           {t("brief.pairs.title")}
         </h2>
-        <p className="text-body-l opacity-85">{t("brief.pairs.lead")}</p>
+        <p className="text-body-l font-reading opacity-85">{t("brief.pairs.lead")}</p>
       </div>
       <div className="expanded:grid-cols-2 grid gap-5">
         {pairs.map(([first, second]) => (

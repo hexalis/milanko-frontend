@@ -132,7 +132,7 @@ export function CompareScreen({
         current={title}
       />
       <article aria-labelledby="ask-title" className="flex max-w-[980px] flex-col gap-5 pb-8">
-        <p className="text-label-m text-text-tertiary -mb-2.5 font-bold">
+        <p className="text-label-m text-text-tertiary -mb-2.5 font-semibold">
           {t("ask.verb.comparison")}
         </p>
         <h1

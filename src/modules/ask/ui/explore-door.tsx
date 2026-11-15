@@ -18,9 +18,9 @@ type ExploreCard = { href: string; icon: string; title: string; description?: st
 
 const CARD = [
   "flex h-full flex-col gap-1.5 rounded-card bg-bg-surface p-5 text-text-primary no-underline medium:min-h-[170px]",
-  "shadow-[0_5px_0_var(--color-surface-tone-4-edge)] transition-[transform,box-shadow] duration-fast ease-standard",
-  "hover:-translate-y-px hover:shadow-[0_6px_0_var(--color-surface-tone-4-edge)]",
-  "active:translate-y-[3px] active:shadow-[0_2px_0_var(--color-surface-tone-4-edge)]",
+  "shadow-card transition-[transform,box-shadow] duration-fast ease-standard",
+  "hover:-translate-y-px hover:shadow-card",
+  "active:translate-y-[3px] active:shadow-card",
   "motion-reduce:hover:translate-y-0 motion-reduce:active:translate-y-0",
   "focus-visible:focus-ring focus-visible:outline-focus-ring",
 ].join(" ");
@@ -54,15 +54,15 @@ export function ExploreDoor({ translator, fileCount }: ExploreDoorProps) {
   return (
     <section
       aria-labelledby="explore-door-title"
-      className="bg-surface-tone-4 rounded-shell medium:p-7 flex flex-col gap-3 p-5 shadow-[0_7px_0_var(--color-surface-tone-4-edge)]"
+      className="bg-surface-tone-4 rounded-shell medium:p-7 shadow-card flex flex-col gap-3 p-5"
     >
       <h2
         id="explore-door-title"
-        className="text-text-primary m-0 text-[clamp(26px,3vw,32px)] leading-tight font-extrabold"
+        className="text-text-primary m-0 text-[clamp(26px,3vw,32px)] leading-tight font-semibold"
       >
         {t("home.explore.t")}
       </h2>
-      <p className="text-body-l text-text-secondary m-0 max-w-[52ch]">
+      <p className="text-body-l font-reading text-text-secondary m-0 max-w-[52ch]">
         {t("home.explore.d", { n: fileCount })}
       </p>
       <ul className="medium:grid-cols-3 m-0 mt-2 grid list-none grid-cols-1 gap-4 p-0">
@@ -72,13 +72,13 @@ export function ExploreDoor({ translator, fileCount }: ExploreDoorProps) {
               <span className="text-text-brand">
                 <Icon name={card.icon} size="lg" />
               </span>
-              <span className="font-display text-[22px] leading-tight font-extrabold">
+              <span className="font-display text-[22px] leading-tight font-semibold">
                 {card.title}
               </span>
               {card.description ? (
                 <span className="text-body-m text-text-secondary">{card.description}</span>
               ) : null}
-              <span className="text-text-brand mt-auto inline-flex items-center gap-1.5 font-extrabold">
+              <span className="text-text-brand mt-auto inline-flex items-center gap-1.5 font-semibold">
                 {t("home.explore.go")}
                 <Icon name="arrow-right" />
               </span>

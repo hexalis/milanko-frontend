@@ -3,7 +3,7 @@ import { Icon } from "@/shared/ui/icon";
 import type { Verdict } from "../domain/case-file";
 
 const stamp = tv({
-  base: "inline-flex -rotate-3 items-center gap-1.5 rounded-md border-2 px-[11px] py-1 text-[13px] font-extrabold whitespace-nowrap",
+  base: "inline-flex items-center gap-1.5 rounded-md border-2 px-[11px] py-1 text-[13px] font-semibold whitespace-nowrap",
   variants: {
     verdict: {
       confirmed: "border-status-ok-border bg-status-ok-bg text-text-link",

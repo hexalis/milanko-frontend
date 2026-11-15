@@ -37,7 +37,7 @@ export function FeaturedCase({ file, translator, catalog }: FeaturedCaseProps) {
               <Icon name={file.theme} />
               {themeLabel(file.theme, context)} · {fileName(file, context)}
             </p>
-            <p className="text-body-l text-text-secondary max-w-[60ch]">
+            <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">
               {trendText(file, "summary", context)}
             </p>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">

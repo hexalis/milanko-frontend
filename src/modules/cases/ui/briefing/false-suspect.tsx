@@ -27,7 +27,7 @@ export function FalseSuspect({ suspect, audit, realTrends, translator }: FalseSu
   return (
     <section
       aria-labelledby="suspect-title"
-      className="rounded-shell bg-surface-tone-5 text-text-primary expanded:grid-cols-2 medium:p-10 grid items-center gap-8 p-6 shadow-[0_7px_0_var(--color-surface-tone-5-edge)]"
+      className="rounded-shell bg-surface-tone-5 text-text-primary expanded:grid-cols-2 medium:p-10 shadow-card grid items-center gap-8 p-6"
     >
       <div className="flex flex-col gap-3">
         <p className="text-label-l text-trend-up flex items-center gap-2">
@@ -42,7 +42,7 @@ export function FalseSuspect({ suspect, audit, realTrends, translator }: FalseSu
           })}
         </h2>
         {firstBreak !== undefined && lastBreak !== undefined ? (
-          <p className="text-body-l text-text-secondary max-w-[60ch]">
+          <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">
             {t(realTrends ? "brief.suspect.lead" : "brief.suspect.lead0", {
               from: firstBreak,
               to: lastBreak,
@@ -92,7 +92,7 @@ export function FalseSuspect({ suspect, audit, realTrends, translator }: FalseSu
             <ul className="text-body-s text-text-secondary flex flex-col gap-1">
               {suspect.breaks.map((catalogBreak) => (
                 <li key={catalogBreak.year} className="flex gap-3">
-                  <span className="text-text-primary font-mono font-bold tabular-nums">
+                  <span className="text-text-primary font-mono font-semibold tabular-nums">
                     {catalogBreak.year}
                   </span>
                   <span>{breakText(catalogBreak, audit.sources, translator)}</span>
