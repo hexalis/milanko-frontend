@@ -64,6 +64,7 @@ export function BuilderAside({ state, preview, context }: BuilderAsideProps) {
   return (
     <aside
       aria-labelledby="builder-yours"
+      data-tour="ask-go"
       // A night panel in both themes: its light-theme tokens make bg-inverse the night sky.
       data-theme="light"
       className="bg-bg-inverse text-text-inverse shadow-raised expanded:top-6 max-expanded:bottom-[calc(var(--shell-bottom)+0.75rem)] medium:gap-3.5 medium:rounded-[24px] medium:p-6 sticky z-[5] flex flex-col gap-2.5 rounded-[20px] p-4"

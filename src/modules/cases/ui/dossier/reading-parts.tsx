@@ -101,10 +101,10 @@ type ReadingSectionProps = {
   children: ReactNode;
 };
 
-/** One numbered-free section of the reading: an h2 and its card. */
+/** One numbered-free section of the reading: an h2 and its card. Its id is also its tour anchor. */
 export function ReadingSection({ id, title, look, children }: ReadingSectionProps) {
   return (
-    <section aria-labelledby={id} className="flex scroll-mt-20 flex-col gap-2.5">
+    <section aria-labelledby={id} data-tour={id} className="flex scroll-mt-20 flex-col gap-2.5">
       <h2 id={id} className="text-heading-h3 font-display text-text-primary font-semibold">
         {title}
       </h2>

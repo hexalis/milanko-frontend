@@ -13,7 +13,11 @@ const statGrid = tv({
 type StatGridProps = VariantProps<typeof statGrid> & { children: ReactNode };
 
 export function StatGrid({ columns, children }: StatGridProps) {
-  return <div className={statGrid({ columns })}>{children}</div>;
+  return (
+    <div data-tour="data-stats" className={statGrid({ columns })}>
+      {children}
+    </div>
+  );
 }
 
 type StatCardProps = {

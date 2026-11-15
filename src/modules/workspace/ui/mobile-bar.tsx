@@ -21,7 +21,9 @@ export function MobileBar({ children }: MobileBarProps) {
         </span>
         <span className="sr-only">Milanko</span>
       </Link>
-      <div className="flex items-center gap-2">{children}</div>
+      <div data-tour="shell-prefs" className="flex items-center gap-2">
+        {children}
+      </div>
     </header>
   );
 }

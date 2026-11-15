@@ -6,6 +6,7 @@ import { pickExploreMessages } from "@/modules/explore/domain/explore-copy";
 import { initialSelection, parseExploreQuery } from "@/modules/explore/domain/explore-state";
 import { isSectorId } from "@/modules/explore/domain/sectors";
 import { ExploreScreen } from "@/modules/explore/ui/explore-screen";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { withBasePath } from "@/shared/lib/base-path";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
@@ -56,6 +57,7 @@ async function ExploreContent({ searchParams }: PageProps) {
         query={query}
         defaultYear={defaultYear}
         initial={initialSelection(query.open)}
+        tour={<PageTour id="explore" translator={translator} isCompact />}
       />
     </div>
   );

@@ -77,7 +77,11 @@ export function ScreenGuess(props: StepProps) {
         }))}
       />
       {hunch ? (
-        <section aria-labelledby="ask-reveal" className="flex flex-col gap-3">
+        <section
+          aria-labelledby="ask-reveal"
+          data-tour="guess-reveal"
+          className="flex flex-col gap-3"
+        >
           <h2
             id="ask-reveal"
             className="font-display text-text-primary text-[clamp(22px,2.4vw,28px)] leading-tight font-semibold"

@@ -5,6 +5,7 @@ import { getCaseCatalog } from "@/modules/cases/domain/catalog";
 import { getEventAudit } from "@/modules/cases/domain/event-audit";
 import { ArchiveScreen } from "@/modules/cases/ui/archive/archive-screen";
 import { getTranslator } from "@/modules/copy";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import { readString, type SearchParams } from "@/shared/lib/search-params";
@@ -26,6 +27,7 @@ async function ArchiveContent({ searchParams }: PageProps) {
         audit={getEventAudit()}
         locale={locale}
         isSearchFocused={readString(params, "focus") === "1"}
+        tour={<PageTour id="cases" translator={getTranslator(locale)} />}
       />
     </div>
   );

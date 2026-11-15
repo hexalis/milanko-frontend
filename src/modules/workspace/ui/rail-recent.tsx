@@ -21,7 +21,10 @@ export function RailRecent({ heading, titles }: RailRecentProps) {
   if (files.length === 0) return null;
 
   return (
-    <div className="nav-collapsed:hidden mt-3 [@media(max-height:700px)]:hidden">
+    <div
+      data-tour="shell-recent"
+      className="nav-collapsed:hidden mt-3 [@media(max-height:700px)]:hidden"
+    >
       <p id={headingId} className="text-overline text-text-tertiary px-3 pb-1">
         {heading}
       </p>

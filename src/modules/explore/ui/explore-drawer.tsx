@@ -53,6 +53,7 @@ export function ExploreDrawer({
   return (
     <aside
       ref={drawerRef}
+      data-tour="exp-drawer"
       aria-labelledby={DRAWER_TITLE_ID}
       className="border-border-subtle bg-bg-surface shadow-raised absolute inset-x-0 bottom-0 z-10 max-h-[60%] overflow-y-auto overscroll-contain rounded-t-[22px] border p-5 min-[860px]:inset-x-auto min-[860px]:top-3 min-[860px]:right-3 min-[860px]:bottom-3 min-[860px]:max-h-none min-[860px]:w-[400px] min-[860px]:rounded-[22px]"
     >

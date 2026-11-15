@@ -32,6 +32,27 @@ describe("parseGlobeMessage", () => {
     expect(parseGlobeMessage({ etd: 1, type: "escape" })).toEqual({ type: "escape" });
   });
 
+  it("reads where the globe's controls sit, keeping only well-formed known boxes", () => {
+    const rects = {
+      search: [24, 24, 440, 48],
+      zoom: [851, 24, 44, 140],
+      layers: [100, 500, 0, 120],
+      regions: [24, 84, "wide", 36],
+      dock: [0, 0, 10, 10],
+    };
+    expect(parseGlobeMessage({ etd: 1, type: "chrome", rects })).toEqual({
+      type: "chrome",
+      rects: {
+        search: { left: 24, top: 24, width: 440, height: 48 },
+        zoom: { left: 851, top: 24, width: 44, height: 140 },
+      },
+    });
+    expect(parseGlobeMessage({ etd: 1, type: "chrome", rects: "x" })).toEqual({
+      type: "chrome",
+      rects: {},
+    });
+  });
+
   it("reads each kind of selection", () => {
     expect(
       parseGlobeMessage({ etd: 1, type: "select", sel: { type: "case", id: "svalbard-warming" } }),

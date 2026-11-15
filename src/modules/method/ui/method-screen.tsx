@@ -150,7 +150,7 @@ function Facts({ catalog, translator }: { catalog: CaseCatalog; translator: Tran
 
 function Process({ translator: { t } }: { translator: Translator }) {
   return (
-    <section aria-labelledby="method-process" className="grid gap-4">
+    <section aria-labelledby="method-process" data-tour="method-process" className="grid gap-4">
       <SectionHeading id="method-process">{t("method.proc.title")}</SectionHeading>
       <ol className="border-border-subtle m-0 list-none border-t p-0">
         {STATIONS.map((icon, index) => {
@@ -241,7 +241,7 @@ type LabSectionProps = {
 
 function LabSection({ id, icon, title, lead, children }: LabSectionProps) {
   return (
-    <section aria-labelledby={id} className={`${SURFACE} grid gap-5`}>
+    <section aria-labelledby={id} data-tour={id} className={`${SURFACE} grid gap-5`}>
       <header className="grid gap-1">
         <SectionHeading id={id}>
           <span className="inline-flex items-center gap-2">
@@ -260,7 +260,11 @@ function SourcesAndGlossary({ translator: { t } }: { translator: Translator }) {
   const newTabHint = t("link.newTab");
   return (
     <div className="expanded:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] grid gap-4">
-      <article aria-labelledby="method-sources" className={`${SURFACE} grid gap-4`}>
+      <article
+        aria-labelledby="method-sources"
+        data-tour="method-sources"
+        className={`${SURFACE} grid gap-4`}
+      >
         <SectionHeading id="method-sources">{t("method.sources")}</SectionHeading>
         <ul className="m-0 grid list-none gap-3 p-0">
           {SOURCES.map((source) => (
@@ -293,7 +297,11 @@ function SourcesAndGlossary({ translator: { t } }: { translator: Translator }) {
           ))}
         </dl>
       </article>
-      <article aria-labelledby="method-limits" className={`${SURFACE} grid content-start gap-3`}>
+      <article
+        aria-labelledby="method-limits"
+        data-tour="method-limits"
+        className={`${SURFACE} grid content-start gap-3`}
+      >
         <h2 id="method-limits" className="text-heading-h2 font-display text-text-primary">
           {t("method.limits.title")}
         </h2>
@@ -375,7 +383,7 @@ function Aside({ translator }: { translator: Translator }) {
   const { t } = translator;
   return (
     <aside className="expanded:sticky expanded:top-6 grid content-start gap-4 self-start">
-      <nav aria-labelledby="method-toc" className={SURFACE}>
+      <nav aria-labelledby="method-toc" data-tour="method-toc" className={SURFACE}>
         <h2 id="method-toc" className="text-overline text-text-tertiary">
           {t("method.jump")}
         </h2>
@@ -400,13 +408,23 @@ function Aside({ translator }: { translator: Translator }) {
   );
 }
 
-type MethodScreenProps = { catalog: CaseCatalog; translator: Translator };
+type MethodScreenProps = {
+  catalog: CaseCatalog;
+  translator: Translator;
+  /** The page's tour button, beside the kicker. */
+  tour?: ReactNode;
+};
 
-export function MethodScreen({ catalog, translator }: MethodScreenProps) {
+export function MethodScreen({ catalog, translator, tour }: MethodScreenProps) {
   const { t } = translator;
   const lastYear = methodFacts(catalog, getEventAudit().events).lastYear;
   return (
-    <PageShell kicker={t("method.eyebrow")} title={t("method.title")} lead={t("method.lead")}>
+    <PageShell
+      kicker={t("method.eyebrow")}
+      title={t("method.title")}
+      lead={t("method.lead")}
+      aside={tour}
+    >
       <Facts catalog={catalog} translator={translator} />
       <div className="expanded:grid-cols-[minmax(0,1fr)_20rem] grid items-start gap-8">
         <div className="grid min-w-0 gap-10">

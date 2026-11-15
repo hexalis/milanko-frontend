@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   changeLabel,
   EvidenceMeter,
@@ -36,6 +37,8 @@ type CompareScreenProps = {
   rules: Rules;
   translator: Translator;
   catalog: CaseCatalog;
+  /** The page's tour button, beside the kicker. */
+  tour?: ReactNode;
 };
 
 /** The planet-wide sample is T2M, in °C (as the POC wrote it). */
@@ -76,7 +79,7 @@ function SideCard({
           ? t("ask.cmp.planet", { points: side.points })
           : `${t("ask.cmp.reviewed")} · ${trendText(side.file, "region", context)}`}
       </p>
-      <p className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+      <p data-tour="cmp-verdict" className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
         {isPlanet ? (
           <VerdictStamp
             verdict={side.isSignificant ? "confirmed" : "inconclusive"}
@@ -116,6 +119,7 @@ export function CompareScreen({
   rules,
   translator,
   catalog,
+  tour,
 }: CompareScreenProps) {
   const { t } = translator;
   const context = { translator, catalog };
@@ -132,9 +136,12 @@ export function CompareScreen({
         current={title}
       />
       <article aria-labelledby="ask-title" className="flex max-w-[980px] flex-col gap-5 pb-8">
-        <p className="text-label-m text-text-tertiary -mb-2.5 font-semibold">
-          {t("ask.verb.comparison")}
-        </p>
+        <div className="-mb-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <p className="text-label-m text-text-tertiary font-semibold">
+            {t("ask.verb.comparison")}
+          </p>
+          {tour}
+        </div>
         <h1
           id="ask-title"
           className="font-display text-text-primary text-[clamp(30px,4vw,54px)] leading-[1.02] text-balance"
@@ -142,7 +149,7 @@ export function CompareScreen({
           {title}
         </h1>
         <StepLead>{t("ask.cmp.lead")}</StepLead>
-        <div className="medium:grid-cols-2 grid gap-4">
+        <div data-tour="cmp-sides" className="medium:grid-cols-2 grid gap-4">
           {sides.map((side) => (
             <SideCard
               key={side.id}
@@ -153,15 +160,16 @@ export function CompareScreen({
             />
           ))}
         </div>
-        <GuidedCallout icon="decide" title={t("ask.cmp.joined")}>
+        <GuidedCallout icon="decide" title={t("ask.cmp.joined")} tour="cmp-joined">
           {t(`ask.cmp.${compareJoin(a, b)}`)}
         </GuidedCallout>
-        <GuidedCallout icon="warning" title={t("ask.v.cannot")}>
+        <GuidedCallout icon="warning" title={t("ask.v.cannot")} tour="cmp-cannot">
           {t("ask.cmp.cannot")}
         </GuidedCallout>
       </article>
       <GuidedNav
         label={t("ask.steps.aria")}
+        tour="cmp-nav"
         back={{
           href: `/ask${toQueryString({ theme: query.theme, verb: "comparison" })}`,
           label: t("ask.back"),

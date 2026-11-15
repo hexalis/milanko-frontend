@@ -1,6 +1,9 @@
 @import "tailwindcss";
 /* Hexalis Design System: base tokens + Espectral layer (palettes, chart and status colours). */
 @import "@hexalis/design-system/hexalis.css";
+/* Guided tours: driver.js renders its popover outside React, so its styles are global. */
+@import "driver.js/dist/driver.css";
+@import "../modules/tour/ui/tour.css";
 @source "../../node_modules/@hexalis/components/dist";
 
 /*
