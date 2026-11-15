@@ -1,26 +1,28 @@
+import { buttonRecipe, type ButtonIntent } from "@hexalis/components/themes";
 import type { ComponentProps } from "react";
-import { tv, type VariantProps } from "tailwind-variants";
+import { Button as HexalisButton } from "./hexalis";
 
-/** Clay button recipe; also styles links that act as buttons. */
-export const button = tv({
-  base: [
-    "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 py-2.5",
-    "text-[15px] font-extrabold whitespace-nowrap no-underline transition-[transform,box-shadow]",
-    "active:translate-y-[3px] disabled:cursor-not-allowed disabled:opacity-55",
-    "aria-disabled:pointer-events-none aria-disabled:opacity-55",
-  ],
-  variants: {
-    intent: {
-      primary: "bg-go text-white shadow-go hover:bg-go-hover active:shadow-none",
-      secondary:
-        "border border-hairline bg-surface text-ink shadow-clay hover:bg-surface-sky active:shadow-clay-pressed",
-    },
-  },
-  defaultVariants: { intent: "primary" },
-});
+type LinkIntent = Extract<ButtonIntent, "primary" | "secondary">;
 
-type ButtonProps = VariantProps<typeof button> & ComponentProps<"button">;
+/*
+ * The DS recipe styles hover, press and focus through React Aria's data-* attributes. A native <a>
+ * (a Next <Link> styled as a button) has none, so the same states are mapped to CSS pseudo-classes.
+ */
+const NATIVE_STATES: Record<LinkIntent, string> = {
+  primary:
+    "no-underline hover:bg-action-primary-hover hover:shadow-control-hover active:bg-action-primary-pressed active:shadow-control-pressed focus-visible:focus-ring focus-visible:outline-focus-ring aria-disabled:pointer-events-none aria-disabled:opacity-55",
+  secondary:
+    "no-underline hover:bg-action-secondary-hover hover:shadow-control-hover active:bg-action-secondary-pressed active:shadow-control-pressed focus-visible:focus-ring focus-visible:outline-focus-ring aria-disabled:pointer-events-none aria-disabled:opacity-55",
+};
 
-export function Button({ intent, type = "button", ...props }: ButtonProps) {
-  return <button type={type} className={button({ intent })} {...props} />;
+/** Classes for a link that looks like a DS button (navigation stays a link). */
+export function buttonLink({ intent = "primary" }: { intent?: LinkIntent } = {}): string {
+  return `${buttonRecipe({ intent }).root()} ${NATIVE_STATES[intent]}`;
+}
+
+type ButtonProps = ComponentProps<typeof HexalisButton>;
+
+/** DS button (React Aria). Use `type="submit"` inside forms; `onPress` for actions. */
+export function Button(props: ButtonProps) {
+  return <HexalisButton {...props} />;
 }

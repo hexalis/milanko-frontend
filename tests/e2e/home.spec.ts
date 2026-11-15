@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-test("home links to the persisted-data workspace", async ({ page }) => {
+test("home links to the persisted-data workspace", async ({ page, context }) => {
+  // The menu follows the language cookie; the persisted-data pages are Spanish.
+  await context.addCookies([{ name: "etd-lang", value: "es", url: "http://localhost:3000" }]);
   await page.goto("/");
 
   await expect(
@@ -8,8 +10,8 @@ test("home links to the persisted-data workspace", async ({ page }) => {
   ).toBeVisible();
 
   await page
-    .getByRole("navigation", { name: "Secciones" })
-    .getByRole("link", { name: "Inventario" })
+    .getByRole("navigation", { name: "Menú principal" })
+    .getByRole("link", { name: "Inventario de datos" })
     .click();
   await expect(page).toHaveURL(/\/coverage$/);
   await expect(page.getByRole("heading", { name: "Inventario de datos", level: 1 })).toBeVisible();

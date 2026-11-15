@@ -14,7 +14,7 @@ const MIN_BOUND = 0.001;
 export function AnomalyBarsChart({ bars }: AnomalyBarsChartProps) {
   const first = bars[0];
   const last = bars.at(-1);
-  if (!first || !last) return <p className="text-ink-muted">Sin anomalías para graficar.</p>;
+  if (!first || !last) return <p className="text-text-tertiary">Sin anomalías para graficar.</p>;
 
   const bound = Math.max(...bars.map((bar) => Math.abs(bar.value)), MIN_BOUND);
   const x = (index: number) =>
@@ -45,23 +45,28 @@ export function AnomalyBarsChart({ bars }: AnomalyBarsChartProps) {
         y1={zero}
         y2={zero}
         strokeDasharray="4 4"
-        className="stroke-ink-faint"
+        className="stroke-chart-axis"
       />
-      <text x={PAD.left - 6} y={zero + 4} textAnchor="end" className="fill-ink-muted">
+      <text x={PAD.left - 6} y={zero + 4} textAnchor="end" className="fill-text-tertiary">
         0
       </text>
-      <text x={PAD.left - 6} y={PAD.top + 8} textAnchor="end" className="fill-ink-muted">
+      <text x={PAD.left - 6} y={PAD.top + 8} textAnchor="end" className="fill-text-tertiary">
         {formatNumber(bound)}
       </text>
-      <text x={PAD.left - 6} y={HEIGHT - PAD.bottom} textAnchor="end" className="fill-ink-muted">
+      <text
+        x={PAD.left - 6}
+        y={HEIGHT - PAD.bottom}
+        textAnchor="end"
+        className="fill-text-tertiary"
+      >
         {formatNumber(-bound)}
       </text>
-      <path d={shape(true)} className="fill-signal-up" opacity={0.8} />
-      <path d={shape(false)} className="fill-signal-down" opacity={0.8} />
-      <text x={PAD.left} y={HEIGHT - 6} className="fill-ink-muted">
+      <path d={shape(true)} className="fill-trend-up" opacity={0.8} />
+      <path d={shape(false)} className="fill-trend-down" opacity={0.8} />
+      <text x={PAD.left} y={HEIGHT - 6} className="fill-text-tertiary">
         {first.time}
       </text>
-      <text x={WIDTH - PAD.right} y={HEIGHT - 6} textAnchor="end" className="fill-ink-muted">
+      <text x={WIDTH - PAD.right} y={HEIGHT - 6} textAnchor="end" className="fill-text-tertiary">
         {last.time}
       </text>
     </svg>

@@ -1,4 +1,16 @@
+import { tableRecipe } from "@hexalis/components/themes";
 import type { ComponentProps, ReactNode } from "react";
+
+/*
+ * Native table with the DS table recipe. The DS Table is a React Aria collection; these tables are
+ * read-only server-rendered records, so they keep native markup and map row hover to :hover.
+ */
+const recipe = tableRecipe();
+const CONTAINER = recipe.container();
+const TABLE = `${recipe.table()} text-left`;
+const COLUMN = recipe.column();
+const ROW = "group/row";
+const CELL = `${recipe.cell()} align-top group-hover/row:bg-bg-hover`;
 
 type TableProps = {
   /** Accessible name of the table. */
@@ -7,11 +19,10 @@ type TableProps = {
   children: ReactNode;
 };
 
-/** Horizontally scrollable data table with tabular figures. */
 export function Table({ caption, head, children }: TableProps) {
   return (
-    <div className="-mx-1 overflow-x-auto px-1">
-      <table className="w-full border-collapse text-left text-sm tabular-nums">
+    <div className={CONTAINER}>
+      <table className={TABLE}>
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr>{head}</tr>
@@ -22,13 +33,17 @@ export function Table({ caption, head, children }: TableProps) {
   );
 }
 
+export function Tr({ children, ...props }: ComponentProps<"tr">) {
+  return (
+    <tr className={ROW} {...props}>
+      {children}
+    </tr>
+  );
+}
+
 export function Th({ children, ...props }: ComponentProps<"th">) {
   return (
-    <th
-      scope="col"
-      className="border-hairline text-ink-muted border-b px-2.5 py-2 text-[11px] font-extrabold tracking-[0.08em] whitespace-nowrap uppercase"
-      {...props}
-    >
+    <th scope="col" className={COLUMN} {...props}>
       {children}
     </th>
   );
@@ -36,7 +51,7 @@ export function Th({ children, ...props }: ComponentProps<"th">) {
 
 export function Td({ children, ...props }: ComponentProps<"td">) {
   return (
-    <td className="border-hairline border-t px-2.5 py-2 align-top" {...props}>
+    <td className={CELL} {...props}>
       {children}
     </td>
   );
@@ -47,7 +62,7 @@ type EmptyRowProps = { columns: number; children: ReactNode };
 export function EmptyRow({ columns, children }: EmptyRowProps) {
   return (
     <tr>
-      <td colSpan={columns} className="text-ink-muted px-2.5 py-4">
+      <td colSpan={columns} className="text-body-s text-text-tertiary px-4 py-4">
         {children}
       </td>
     </tr>
@@ -56,5 +71,5 @@ export function EmptyRow({ columns, children }: EmptyRowProps) {
 
 /** Secondary line inside a cell (ids, full names). */
 export function CellNote({ children }: { children: ReactNode }) {
-  return <span className="text-ink-muted block text-[13px]">{children}</span>;
+  return <span className="text-caption text-text-tertiary block">{children}</span>;
 }

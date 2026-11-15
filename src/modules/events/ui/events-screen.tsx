@@ -3,7 +3,7 @@ import Link from "next/link";
 import { formatNumber } from "@/shared/lib/format";
 import { toQueryString } from "@/shared/lib/search-params";
 import { AutoSubmitSelect } from "@/shared/ui/auto-submit-select";
-import { Button, button } from "@/shared/ui/button";
+import { Button, buttonLink } from "@/shared/ui/button";
 import { Field, FilterBar, TextInput } from "@/shared/ui/field";
 import { Panel } from "@/shared/ui/panel";
 import { StatCard, StatGrid } from "@/shared/ui/stat-card";
@@ -44,7 +44,7 @@ export function EventsScreen({ filters, lastYear, page, stats }: EventsScreenPro
       <Form action="/events">
         <FilterBar>
           <Field label="Categoría">
-            <AutoSubmitSelect name="category" defaultValue={filters.category ?? ""}>
+            <AutoSubmitSelect name="category" urlValue={filters.category ?? ""}>
               <option value="">Todas</option>
               {EVENT_CATEGORIES.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -54,7 +54,7 @@ export function EventsScreen({ filters, lastYear, page, stats }: EventsScreenPro
             </AutoSubmitSelect>
           </Field>
           <Field label="Estado">
-            <AutoSubmitSelect name="status" defaultValue={filters.status}>
+            <AutoSubmitSelect name="status" urlValue={filters.status}>
               {EVENT_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {EVENT_STATUS_LABELS[status]}
@@ -70,7 +70,7 @@ export function EventsScreen({ filters, lastYear, page, stats }: EventsScreenPro
           </Field>
           <Button type="submit">Buscar</Button>
           <Link
-            className={button({ intent: "secondary" })}
+            className={buttonLink({ intent: "secondary" })}
             href={`/events${toQueryString({ ...filters, ...lastYear })}`}
           >
             Último año
@@ -142,21 +142,21 @@ export function EventsScreen({ filters, lastYear, page, stats }: EventsScreenPro
 
       <nav
         aria-label="Paginación"
-        className="rounded-card bg-surface shadow-clay flex flex-wrap items-center justify-between gap-3 p-3"
+        className="rounded-card bg-bg-surface shadow-card flex flex-wrap items-center justify-between gap-3 p-3"
       >
         <Link
-          className={button({ intent: "secondary" })}
+          className={buttonLink({ intent: "secondary" })}
           href={pageHref(pager.previousOffset)}
           aria-disabled={!pager.hasPrevious}
           tabIndex={pager.hasPrevious ? undefined : -1}
         >
           ← Anterior
         </Link>
-        <span className="text-ink-muted text-sm font-semibold">
+        <span className="text-text-tertiary text-sm font-semibold">
           Página {pager.page} de {pager.pageCount}
         </span>
         <Link
-          className={button({ intent: "secondary" })}
+          className={buttonLink({ intent: "secondary" })}
           href={pageHref(pager.nextOffset)}
           aria-disabled={!pager.hasNext}
           tabIndex={pager.hasNext ? undefined : -1}

@@ -4,7 +4,7 @@ import type { VariableCoverage } from "@/modules/coverage";
 import { formatNumber, formatSigned, withUnit } from "@/shared/lib/format";
 import { toQueryString } from "@/shared/lib/search-params";
 import { AutoSubmitSelect } from "@/shared/ui/auto-submit-select";
-import { Button, button } from "@/shared/ui/button";
+import { Button, buttonLink } from "@/shared/ui/button";
 import { CopyLinkButton } from "@/shared/ui/copy-link-button";
 import { Field, FilterBar, TextInput } from "@/shared/ui/field";
 import { Notice } from "@/shared/ui/notice";
@@ -105,7 +105,7 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
       <Form action="/regions">
         <FilterBar>
           <Field label="Región">
-            <AutoSubmitSelect name="region" defaultValue={String(region.code)}>
+            <AutoSubmitSelect name="region" urlValue={String(region.code)}>
               {regions.map((row) => (
                 <option key={row.code} value={row.code}>
                   {regionLabel(row)}
@@ -114,7 +114,7 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
             </AutoSubmitSelect>
           </Field>
           <Field label="Variable">
-            <AutoSubmitSelect name="variable" defaultValue={variable.variable}>
+            <AutoSubmitSelect name="variable" urlValue={variable.variable}>
               {variables.map((row) => (
                 <option key={row.variable} value={row.variable}>
                   {row.variable} · {row.source}
@@ -130,10 +130,10 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
             <TextInput name="end" type="date" defaultValue={query.end} />
           </Field>
           <Button type="submit">Cargar serie</Button>
-          <Link className={button({ intent: "secondary" })} href={viewHref(query.lastMonth)}>
+          <Link className={buttonLink({ intent: "secondary" })} href={viewHref(query.lastMonth)}>
             Últimos 30 días
           </Link>
-          <a className={button({ intent: "secondary" })} href={csvHref} download>
+          <a className={buttonLink({ intent: "secondary" })} href={csvHref} download>
             Descargar CSV
           </a>
           <CopyLinkButton />
@@ -202,7 +202,7 @@ export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
         ) : calendar ? (
           <AnomalyCalendar layout={calendar} variable={variable.variable} />
         ) : (
-          <p className="text-ink-muted">Sin datos suficientes para el calendario.</p>
+          <p className="text-text-tertiary">Sin datos suficientes para el calendario.</p>
         )}
       </Panel>
 

@@ -17,7 +17,7 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
   const first = points[0];
   const last = points.at(-1);
   if (!first || !last)
-    return <p className="text-ink-muted">No hay valores numéricos para graficar.</p>;
+    return <p className="text-text-tertiary">No hay valores numéricos para graficar.</p>;
 
   const values = points.map((point) => point.value);
   let min = Math.min(...values);
@@ -54,9 +54,9 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
               x2={WIDTH - PAD.right}
               y1={y(tick)}
               y2={y(tick)}
-              className="stroke-data-grid"
+              className="stroke-chart-grid"
             />
-            <text x={PAD.left - 8} y={y(tick) + 4} textAnchor="end" className="fill-ink-muted">
+            <text x={PAD.left - 8} y={y(tick) + 4} textAnchor="end" className="fill-text-tertiary">
               {formatNumber(tick)}
             </text>
           </g>
@@ -66,19 +66,19 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
           x2={PAD.left}
           y1={PAD.top}
           y2={HEIGHT - PAD.bottom}
-          className="stroke-ink-faint"
+          className="stroke-chart-axis"
         />
         <line
           x1={PAD.left}
           x2={WIDTH - PAD.right}
           y1={HEIGHT - PAD.bottom}
           y2={HEIGHT - PAD.bottom}
-          className="stroke-ink-faint"
+          className="stroke-chart-axis"
         />
-        <text x={PAD.left} y={HEIGHT - 8} className="fill-ink-muted">
+        <text x={PAD.left} y={HEIGHT - 8} className="fill-text-tertiary">
           {first.date}
         </text>
-        <text x={WIDTH - PAD.right} y={HEIGHT - 8} textAnchor="end" className="fill-ink-muted">
+        <text x={WIDTH - PAD.right} y={HEIGHT - 8} textAnchor="end" className="fill-text-tertiary">
           {last.date}
         </text>
         <path
@@ -87,7 +87,7 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
           strokeWidth={2.5}
           strokeLinejoin="round"
           strokeLinecap="round"
-          className="stroke-data-series"
+          className="stroke-chart-1"
         />
         {points.length <= MAX_DOTS
           ? points.map((point, index) => (
@@ -96,7 +96,7 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
                 cx={x(index)}
                 cy={y(point.value)}
                 r={2.2}
-                className="fill-data-series"
+                className="fill-chart-1"
               />
             ))
           : null}

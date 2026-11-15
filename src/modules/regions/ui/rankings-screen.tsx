@@ -46,7 +46,7 @@ export function RankingsScreen({ variables, query, ranking }: RankingsScreenProp
       <Form action="/rankings">
         <FilterBar>
           <Field label="Variable">
-            <AutoSubmitSelect name="variable" defaultValue={query.variable}>
+            <AutoSubmitSelect name="variable" urlValue={query.variable}>
               {variables.map((row) => (
                 <option key={row.variable} value={row.variable}>
                   {row.variable} · {row.source}
@@ -55,7 +55,7 @@ export function RankingsScreen({ variables, query, ranking }: RankingsScreenProp
             </AutoSubmitSelect>
           </Field>
           <Field label="Métrica">
-            <AutoSubmitSelect name="metric" defaultValue={metric}>
+            <AutoSubmitSelect name="metric" urlValue={metric}>
               {RANKING_METRICS.map((option) => (
                 <option key={option} value={option}>
                   {RANKING_METRIC_LABELS[option]}
@@ -64,7 +64,7 @@ export function RankingsScreen({ variables, query, ranking }: RankingsScreenProp
             </AutoSubmitSelect>
           </Field>
           <Field label="Orden">
-            <AutoSubmitSelect name="order" defaultValue={query.order}>
+            <AutoSubmitSelect name="order" urlValue={query.order}>
               {RANKING_ORDERS.map((option) => (
                 <option key={option} value={option}>
                   {RANKING_ORDER_LABELS[option]}
@@ -78,7 +78,7 @@ export function RankingsScreen({ variables, query, ranking }: RankingsScreenProp
             </Field>
           )}
           <Field label="Mostrar">
-            <AutoSubmitSelect name="limit" defaultValue={query.limit}>
+            <AutoSubmitSelect name="limit" urlValue={query.limit}>
               {RANKING_LIMITS.map((option) => (
                 <option key={option} value={option}>
                   {option}

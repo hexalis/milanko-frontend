@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
+import { StatFooter, StatLabel, StatRoot, StatValue } from "./hexalis";
 
 const statGrid = tv({
-  base: "grid grid-cols-1 gap-4 sm:grid-cols-2",
+  base: "grid grid-cols-1 gap-4 medium:grid-cols-2",
   variants: {
-    columns: { 3: "lg:grid-cols-3", 4: "lg:grid-cols-4" },
+    columns: { 3: "expanded:grid-cols-3", 4: "expanded:grid-cols-4" },
   },
   defaultVariants: { columns: 4 },
 });
@@ -21,15 +22,16 @@ type StatCardProps = {
   meta?: ReactNode;
 };
 
-/** One figure with its label and a muted context line. */
+/** DS Stat tile: label, figure and a muted context line. */
 export function StatCard({ label, value, meta }: StatCardProps) {
   return (
-    <article className="rounded-card bg-surface shadow-clay min-w-0 p-4 sm:p-5">
-      <p className="text-ink-muted text-xs font-extrabold tracking-[0.1em] uppercase">{label}</p>
-      <p className="font-display mt-1.5 text-[26px] leading-tight font-extrabold break-words">
+    <StatRoot layout="card">
+      <StatLabel>{label}</StatLabel>
+      {/* Region names and periods are longer than a KPI figure: let them wrap. */}
+      <StatValue className="text-heading-h3 font-display break-words whitespace-normal">
         {value}
-      </p>
-      {meta ? <p className="text-ink-muted mt-1 text-[13px] font-semibold">{meta}</p> : null}
-    </article>
+      </StatValue>
+      {meta ? <StatFooter>{meta}</StatFooter> : null}
+    </StatRoot>
   );
 }

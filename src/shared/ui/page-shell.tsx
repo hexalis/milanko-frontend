@@ -8,16 +8,14 @@ type PageShellProps = {
   children: ReactNode;
 };
 
-/** Page frame: desk gutters, max content width and the page heading. */
+/** Page frame: DS content width and gutters, and the page heading. */
 export function PageShell({ kicker, title, lead, children }: PageShellProps) {
   return (
-    <main className="mx-auto w-full max-w-[1360px] px-4 pb-12 sm:px-8 lg:px-12">
-      <header className="pt-6 pb-5 sm:pt-8">
-        <p className="text-ink-muted text-xs font-extrabold tracking-[0.12em] uppercase">
-          {kicker}
-        </p>
-        <h1 className="mt-1 text-[clamp(2rem,4vw,2.875rem)] text-balance">{title}</h1>
-        {lead ? <p className="text-ink-soft mt-2 max-w-[65ch] text-[17px]">{lead}</p> : null}
+    <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto w-full px-4 pb-12">
+      <header className="medium:pt-8 pt-6 pb-5">
+        <p className="text-overline text-text-tertiary">{kicker}</p>
+        <h1 className="text-display-s font-display text-text-primary mt-1 text-balance">{title}</h1>
+        {lead ? <p className="text-body-l text-text-secondary mt-2 max-w-[65ch]">{lead}</p> : null}
       </header>
       <div className="grid gap-4">{children}</div>
     </main>

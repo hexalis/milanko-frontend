@@ -28,7 +28,7 @@ export function CopyLinkButton() {
   }
 
   return (
-    <Button intent="secondary" onClick={handleClick}>
+    <Button intent="secondary" onPress={handleClick}>
       <span aria-live="polite">{LABELS[state]}</span>
     </Button>
   );

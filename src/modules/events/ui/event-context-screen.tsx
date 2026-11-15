@@ -63,24 +63,24 @@ export function EventContextScreen({ context }: EventContextScreenProps) {
       </StatGrid>
 
       {hasCoordinates(region) ? (
-        <figure className="rounded-card bg-surface shadow-clay overflow-hidden">
+        <figure className="rounded-card bg-bg-surface shadow-card overflow-hidden">
           <Image
             unoptimized
-            className="bg-surface-soft block h-72 w-full object-cover"
+            className="bg-bg-surface-sunken block h-72 w-full object-cover"
             src={`/api/v1/world/snapshot${toQueryString({ lat: region.lat, lon: region.lon, date, km: SNAPSHOT_KM, px: SNAPSHOT_PX })}`}
             alt={`Imagen satelital de ${region.name}`}
             width={SNAPSHOT_PX}
             height={288}
             loading="lazy"
           />
-          <figcaption className="text-ink-muted px-4 py-2.5 text-[13px] font-semibold">
+          <figcaption className="text-text-tertiary px-4 py-2.5 text-[13px] font-semibold">
             {region.name} · {date ?? "sin fecha"} · NASA GIBS
           </figcaption>
         </figure>
       ) : null}
 
       <Panel title="Evento" meta={event.id}>
-        <p className="text-ink-soft">{event.description || "Sin descripción."}</p>
+        <p className="text-text-secondary">{event.description || "Sin descripción."}</p>
         {event.link ? (
           <p className="mt-2">
             <ExternalLink href={event.link}>Abrir en EONET</ExternalLink>
