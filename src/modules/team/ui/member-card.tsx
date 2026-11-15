@@ -1,13 +1,15 @@
+import Image from "next/image";
 import { tv, type VariantProps } from "tailwind-variants";
 import type { Translator } from "@/shared/lib/i18n";
 import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { ExternalLink } from "@/shared/ui/text-link";
 import type { TeamLink, TeamLinkType, TeamMember } from "../domain/team";
-import { AvatarFallback, AvatarRoot } from "./hexalis-team";
+import { AvatarFallback, AvatarImage, AvatarRoot } from "./hexalis-team";
 
 /*
- * One person (POC memberCard, DESIGN.md · Team): initials on a tinted frame, an eyebrow for the
+ * One person (POC memberCard, DESIGN.md · Team): their photo filling the frame (initials on a
+ * tinted frame when there is none), an eyebrow for the
  * lead or a seat still to confirm, the name, every role as a pill, a bio and the links.
  * The card itself is not a link; only its buttons react. `compact` is the method page's aside.
  */
@@ -15,7 +17,7 @@ import { AvatarFallback, AvatarRoot } from "./hexalis-team";
 const card = tv({
   slots: {
     root: "min-w-0",
-    frame: "grid place-items-center",
+    frame: "relative grid place-items-center overflow-hidden",
     body: "flex min-w-0 flex-col gap-2",
     name: "font-display text-text-primary text-balance",
     roles: "flex flex-wrap gap-1.5",
@@ -116,11 +118,22 @@ export function MemberCard({ member, translator, layout = "grid" }: MemberCardPr
   return (
     <li className={slots.root()}>
       <div className={slots.frame()}>
-        {/* The name is right beside the avatar, so the avatar stays hidden from assistive tech. */}
-        <AvatarRoot size={isGrid ? "xl" : "m"} tone="brand">
-          {/* Without initials (a seat to confirm) the fallback shows a person icon. */}
-          <AvatarFallback>{member.isPlaceholder ? undefined : member.initials}</AvatarFallback>
-        </AvatarRoot>
+        {/* The name sits right beside the picture, so the picture stays hidden from assistive tech. */}
+        {isGrid && member.photo ? (
+          <Image
+            src={member.photo}
+            alt=""
+            fill
+            sizes="(min-width: 840px) 320px, 100vw"
+            className="object-cover"
+          />
+        ) : (
+          <AvatarRoot size={isGrid ? "xl" : "m"} tone="brand">
+            {member.photo ? <AvatarImage src={member.photo} alt="" /> : null}
+            {/* Without initials (a seat to confirm) the fallback shows a person icon. */}
+            <AvatarFallback>{member.isPlaceholder ? undefined : member.initials}</AvatarFallback>
+          </AvatarRoot>
+        )}
       </div>
       <div className={slots.body()}>
         <Eyebrow member={member} translator={translator} />

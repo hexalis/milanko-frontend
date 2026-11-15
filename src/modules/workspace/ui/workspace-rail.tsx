@@ -6,6 +6,7 @@ import {
   ASK,
   EXPLORE,
   RAIL_DATA,
+  SHOW_DATA_IN_RAIL,
   RAIL_LEARN,
   RAIL_START,
   type NavSection,
@@ -126,19 +127,23 @@ export function WorkspaceRail({
           <RailLink key={section.href} section={section} label={copy.label(section.labelKey)} />
         ))}
 
-        <p
-          id="rail-data-title"
-          className="text-overline text-text-tertiary nav-collapsed:sr-only px-3 pt-3 pb-1"
-        >
-          {copy.dataGroup}
-        </p>
-        <ul aria-labelledby="rail-data-title" className="flex flex-col gap-0.5">
-          {RAIL_DATA.map((section) => (
-            <li key={section.href}>
-              <RailLink section={section} label={copy.label(section.labelKey)} />
-            </li>
-          ))}
-        </ul>
+        {SHOW_DATA_IN_RAIL ? (
+          <>
+            <p
+              id="rail-data-title"
+              className="text-overline text-text-tertiary nav-collapsed:sr-only px-3 pt-3 pb-1"
+            >
+              {copy.dataGroup}
+            </p>
+            <ul aria-labelledby="rail-data-title" className="flex flex-col gap-0.5">
+              {RAIL_DATA.map((section) => (
+                <li key={section.href}>
+                  <RailLink section={section} label={copy.label(section.labelKey)} />
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
 
         <RailRecent heading={copy.recent} titles={caseTitles} />
       </nav>

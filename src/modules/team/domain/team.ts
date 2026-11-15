@@ -38,10 +38,14 @@ export type TeamMember = {
   bio: string;
   /** Affiliation and location, joined. */
   meta: string;
+  /** A photo served by the app itself (public/), or undefined to show the initials. */
+  photo: string | undefined;
   links: TeamLink[];
 };
 
 const EMAIL = /^[^@\s]+@[^@\s]+$/;
+/** Only the app's own files: a site path, never another origin or a protocol-relative URL. */
+const LOCAL_PHOTO = /^\/(?!\/)[\w./-]+\.(?:jpe?g|png|webp|avif)$/i;
 const MAX_INITIALS = 2;
 
 export function localize(value: Localized | undefined, locale: Locale): string {
@@ -86,6 +90,7 @@ function toMember(record: TeamMemberRecord, locale: Locale): TeamMember {
     roles: roles.map((role) => localize(role, locale)).filter(Boolean),
     bio: localize(record.bio, locale),
     meta: [record.affiliation, record.location].filter(Boolean).join(" · "),
+    photo: record.photo && LOCAL_PHOTO.test(record.photo) ? record.photo : undefined,
     links: links.flatMap((link) => safeLink(link) ?? []),
   };
 }

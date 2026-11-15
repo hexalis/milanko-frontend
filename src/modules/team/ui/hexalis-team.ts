@@ -9,3 +9,4 @@ import { Avatar } from "@hexalis/design-system";
 
 export const AvatarRoot = Avatar;
 export const AvatarFallback = Avatar.Fallback;
+export const AvatarImage = Avatar.Image;

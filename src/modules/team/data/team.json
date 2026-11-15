@@ -1,127 +1,99 @@
 {
   "members": [
     {
-      "name": "Jorge Ramos",
+      "name": "Jorge Alberto Ramos Tellez",
       "lead": true,
       "roles": [
         {
           "en": "Product Designer",
-          "es": "Diseñador de producto"
-        },
-        {
-          "en": "AI-Assisted Design Engineer",
-          "es": "Design Engineer asistido por IA"
+          "es": "Diseño de producto"
         }
       ],
-      "bio": {
-        "en": "Designed and built the portal with Claude, from the data scripts to the interface.",
-        "es": "Diseñó y construyó el portal con Claude, desde los scripts de datos hasta la interfaz."
-      },
-      "photo": "",
+      "photo": "/team/jorge-ramos.jpg",
       "links": [
         {
           "type": "linkedin",
-          "url": "https://www.linkedin.com/"
+          "url": "https://www.linkedin.com/in/jorge-ramos-tellez/"
         }
       ]
     },
     {
-      "name": {
-        "en": "Teammate 2",
-        "es": "Integrante 2"
-      },
-      "placeholder": true,
+      "name": "Roger Fernando Guido Cisneros",
       "roles": [
         {
-          "en": "Role to confirm",
-          "es": "Rol por confirmar"
+          "en": "Software Developer",
+          "es": "Desarrollo de software"
         }
       ],
-      "photo": "",
+      "photo": "/team/roger-guido.jpg",
       "links": [
         {
           "type": "linkedin",
-          "url": "https://www.linkedin.com/"
+          "url": "https://www.linkedin.com/in/roger-0113-guido/"
         }
       ]
     },
     {
-      "name": {
-        "en": "Teammate 3",
-        "es": "Integrante 3"
-      },
-      "placeholder": true,
+      "name": "Anthony Alexander Aguilar Parrales",
       "roles": [
         {
-          "en": "Role to confirm",
-          "es": "Rol por confirmar"
+          "en": "Product Investigator",
+          "es": "Investigación de producto"
         }
       ],
-      "photo": "",
+      "photo": "/team/anthony-aguilar.jpg",
       "links": [
         {
           "type": "linkedin",
-          "url": "https://www.linkedin.com/"
+          "url": "https://www.linkedin.com/in/anthony-alexander-aguilar-parrales-755447267/"
         }
       ]
     },
     {
-      "name": {
-        "en": "Teammate 4",
-        "es": "Integrante 4"
-      },
-      "placeholder": true,
+      "name": "Carlos Andrés Perez Ubeda",
       "roles": [
         {
-          "en": "Role to confirm",
-          "es": "Rol por confirmar"
+          "en": "Software Engineer",
+          "es": "Ingeniería de software"
         }
       ],
-      "photo": "",
+      "photo": "/team/carlos-perez.jpg",
       "links": [
         {
           "type": "linkedin",
-          "url": "https://www.linkedin.com/"
+          "url": "https://www.linkedin.com/in/cswni/"
         }
       ]
     },
     {
-      "name": {
-        "en": "Teammate 5",
-        "es": "Integrante 5"
-      },
-      "placeholder": true,
+      "name": "Marlon José Baltodano Delgadillo",
       "roles": [
         {
-          "en": "Role to confirm",
-          "es": "Rol por confirmar"
+          "en": "Software Engineer",
+          "es": "Ingeniería de software"
         }
       ],
-      "photo": "",
+      "photo": "/team/marlon-baltodano.jpg",
       "links": [
         {
           "type": "linkedin",
-          "url": "https://www.linkedin.com/"
+          "url": "https://www.linkedin.com/in/marlon-baltodano/"
         }
       ]
     },
     {
-      "name": {
-        "en": "Teammate 6",
-        "es": "Integrante 6"
-      },
-      "placeholder": true,
+      "name": "Francelia Michell López Alonzo",
       "roles": [
         {
-          "en": "Role to confirm",
-          "es": "Rol por confirmar"
+          "en": "Software Developer",
+          "es": "Desarrollo de software"
         }
       ],
-      "photo": "",
+      "photo": "/team/francelia-lopez.jpg",
       "links": [
         {
           "type": "linkedin",
-          "url": "https://www.linkedin.com/"
+          "url": "https://www.linkedin.com/in/francelia-l%C3%B3pez-97b706339/"
         }
       ]
     }

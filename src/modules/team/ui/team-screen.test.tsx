@@ -24,17 +24,28 @@ describe("TeamScreen", () => {
 
     const [lead, mate] = cards;
     if (!lead || !mate) throw new Error("missing cards");
-    expect(within(lead).getByRole("heading", { level: 3 })).toHaveTextContent("Jorge Ramos");
-    expect(within(lead).getByText("Diseñador de producto")).toBeVisible();
-    expect(within(lead).getByText(/Diseñó y construyó/)).toBeVisible();
-    const linkedin = within(lead).getByRole("link", { name: /Jorge Ramos/ });
-    expect(linkedin).toHaveAttribute("href", "https://www.linkedin.com/");
+    expect(within(lead).getByRole("heading", { level: 3 })).toHaveTextContent(
+      "Jorge Alberto Ramos Tellez",
+    );
+    expect(within(lead).getByText("Diseño de producto")).toBeVisible();
+    // No bio is shown for anyone.
+    expect(screen.queryByText(/Diseñó y construyó/)).toBeNull();
+    const linkedin = within(lead).getByRole("link", { name: /Jorge Alberto Ramos Tellez/ });
+    expect(linkedin).toHaveAttribute("href", "https://www.linkedin.com/in/jorge-ramos-tellez/");
     expect(linkedin).toHaveAttribute("target", "_blank");
     expect(linkedin).toHaveAttribute("rel", "noopener noreferrer");
     expect(linkedin).toHaveTextContent("LinkedIn");
-    expect(within(lead).getByText("JR")).toBeInTheDocument();
+    // The photo fills the frame; it is decorative because the name sits beside it.
+    const photo = lead.querySelector("img");
+    expect(photo).not.toBeNull();
+    expect(photo).toHaveAttribute("alt", "");
+    expect(photo?.getAttribute("src")).toContain("jorge-ramos.jpg");
 
-    expect(within(mate).getByText("Integrante 2")).toBeVisible();
-    expect(within(mate).getByText("Rol por confirmar")).toBeVisible();
+    expect(within(mate).getByRole("heading", { level: 3 })).toHaveTextContent(
+      "Roger Fernando Guido Cisneros",
+    );
+    expect(within(mate).getByText("Desarrollo de software")).toBeVisible();
+    // Every seat is filled: no card is left as a placeholder.
+    expect(screen.queryByText("Rol por confirmar")).toBeNull();
   });
 });

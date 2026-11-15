@@ -59,7 +59,7 @@ describe("MethodScreen", () => {
 
     const team = within(aside).getByRole("list", { name: "Equipo" });
     const [lead] = within(team).getAllByRole("heading", { level: 3 });
-    expect(lead).toHaveTextContent("Jorge Ramos");
+    expect(lead).toHaveTextContent("Jorge Alberto Ramos Tellez");
     expect(screen.getByRole("link", { name: /El equipo/ })).toHaveAttribute("href", "/team");
   });
 });
