@@ -20,6 +20,8 @@ if (basePath && !basePath.startsWith("/")) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   basePath,
+  // The deploy image only needs the traced server, .next/static and public/.
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,

@@ -1,43 +1,23 @@
-FROM node:24-slim AS base
+# The app is built on the GitHub runner (`pnpm build` with NEXT_BASE_PATH=/app); this
+# image only packages the standalone output, so it builds in seconds and stays small.
+FROM node:24-slim AS runner
 
-ENV PNPM_HOME=/pnpm \
-    PATH=/pnpm:$PATH \
-    NEXT_TELEMETRY_DISABLED=1 \
-    LEFTHOOK=0
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
 
-RUN corepack enable
+ARG NEXT_BASE_PATH=/app
+ENV NEXT_BASE_PATH=$NEXT_BASE_PATH
 
 WORKDIR /app
 
-FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
-
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-ARG MILANKO_API_URL
-ARG APP_ENV
-ARG NEXT_BASE_PATH=""
-ARG NEXT_PUBLIC_BASE_PATH=""
-ENV MILANKO_API_URL=$MILANKO_API_URL \
-    APP_ENV=$APP_ENV \
-    NEXT_BASE_PATH=$NEXT_BASE_PATH \
-    NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
-RUN pnpm build
-
-FROM base AS runner
-ARG NEXT_BASE_PATH=""
-ENV NODE_ENV=production \
-    HOSTNAME=0.0.0.0 \
-    PORT=3000 \
-    NEXT_BASE_PATH=$NEXT_BASE_PATH
-
-COPY --from=builder /app ./
+COPY .next/standalone ./
+COPY .next/static ./.next/static
+COPY public ./public
 
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000' + (process.env.NEXT_BASE_PATH || '/')).then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["pnpm", "start"]
+CMD ["node", "server.js"]
