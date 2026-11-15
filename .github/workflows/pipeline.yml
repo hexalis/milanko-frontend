@@ -1,0 +1,241 @@
+name: CI/CD
+
+# Self-contained by design: the public deliverable must include its pipelines.
+# This workflow intentionally does not call hexalis/github-workflows.
+
+on:
+  push:
+    branches: [main, develop, qa]
+  pull_request:
+    branches: [main, develop, qa]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests and image build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      deployable: ${{ steps.identity.outputs.deployable }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Check app identity
+        id: identity
+        shell: bash
+        run: |
+          name=$(node -p "require('./package.json').name")
+          echo "package=$name"
+          if [ "$name" = "milanko-frontend" ]; then
+            echo "deployable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deployable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Checks
+        run: pnpm check
+        env:
+          MILANKO_API_URL: https://dev-milanko.hexalis.org/api/v1
+          APP_ENV: develop
+
+      - name: Build
+        run: pnpm build
+        env:
+          MILANKO_API_URL: https://dev-milanko.hexalis.org/api/v1
+          APP_ENV: develop
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+        env:
+          CI: "true"
+          MILANKO_API_URL: https://dev-milanko.hexalis.org/api/v1
+          APP_ENV: develop
+
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg MILANKO_API_URL=https://dev-milanko.hexalis.org/api/v1 \
+            --build-arg APP_ENV=develop \
+            -t milanko-web:ci .
+
+  deploy:
+    name: Deploy ${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+    needs: test
+    if: |
+      needs.test.outputs.deployable == 'true' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      contains(fromJSON('["develop","qa","main"]'), github.ref_name)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: ${{ github.ref_name == 'main' && 'production' || github.ref_name }}
+    concurrency:
+      group: deploy-frontend-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Prepare SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          SSH_PORT: ${{ vars.DEPLOY_SSH_PORT || 22 }}
+        run: |
+          set -euo pipefail
+          : "${SSH_KEY:?DEPLOY_SSH_KEY is required}"
+          : "${KNOWN_HOSTS:?DEPLOY_KNOWN_HOSTS is required}"
+          : "${HOST:?DEPLOY_HOST is required}"
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        shell: bash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST || vars.DEPLOY_HOST }}
+          USER_NAME: ${{ vars.DEPLOY_USER }}
+          SSH_PORT: ${{ vars.DEPLOY_SSH_PORT || 22 }}
+          REMOTE_PATH: ${{ vars.DEPLOY_REMOTE_PATH }}
+          REPO_URL: https://github.com/${{ github.repository }}.git
+          BRANCH: ${{ github.ref_name }}
+          CONTAINER: ${{ vars.DEPLOY_CONTAINER }}
+          IMAGE_TAG: ${{ vars.DEPLOY_IMAGE_TAG }}
+          DOCKERFILE: ${{ vars.DEPLOY_DOCKERFILE || 'Dockerfile' }}
+          CONTEXT: ${{ vars.DEPLOY_CONTEXT || '.' }}
+          PORTS: ${{ vars.DEPLOY_PORTS }}
+          DOCKER_NETWORK: ${{ vars.DEPLOY_DOCKER_NETWORK || 'milanko' }}
+          ENV_FILE: ${{ vars.DEPLOY_ENV_FILE }}
+          HEALTH_URL: ${{ vars.DEPLOY_HEALTH_URL }}
+          HEALTH_TIMEOUT: ${{ vars.DEPLOY_HEALTH_TIMEOUT_SECONDS || 120 }}
+          MILANKO_API_URL: ${{ vars.MILANKO_API_URL }}
+          APP_ENV: ${{ vars.APP_ENV }}
+          USE_SUDO: ${{ vars.DEPLOY_USE_SUDO || 'false' }}
+        run: |
+          set -euo pipefail
+          : "${HOST:?DEPLOY_HOST is required}"
+          : "${USER_NAME:?DEPLOY_USER is required}"
+          : "${REMOTE_PATH:?DEPLOY_REMOTE_PATH is required}"
+          : "${CONTAINER:?DEPLOY_CONTAINER is required}"
+          : "${IMAGE_TAG:?DEPLOY_IMAGE_TAG is required}"
+          : "${PORTS:?DEPLOY_PORTS is required}"
+          : "${ENV_FILE:?DEPLOY_ENV_FILE is required}"
+          : "${MILANKO_API_URL:?MILANKO_API_URL is required}"
+          : "${APP_ENV:?APP_ENV is required}"
+
+          SSH="ssh -i ~/.ssh/deploy_key -p $SSH_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes"
+          TARGET="$USER_NAME@$HOST"
+
+          $SSH "$TARGET" \
+            "REMOTE_PATH='$REMOTE_PATH' REPO_URL='$REPO_URL' BRANCH='$BRANCH' CONTAINER='$CONTAINER' IMAGE_TAG='$IMAGE_TAG' DOCKERFILE='$DOCKERFILE' CONTEXT='$CONTEXT' PORTS='$PORTS' DOCKER_NETWORK='$DOCKER_NETWORK' ENV_FILE='$ENV_FILE' HEALTH_URL='$HEALTH_URL' HEALTH_TIMEOUT='$HEALTH_TIMEOUT' MILANKO_API_URL='$MILANKO_API_URL' APP_ENV='$APP_ENV' USE_SUDO='$USE_SUDO' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          if [ "$USE_SUDO" = "true" ]; then SUDO="sudo"; else SUDO=""; fi
+
+          if [ ! -d "$REMOTE_PATH/.git" ]; then
+            mkdir -p "$(dirname "$REMOTE_PATH")"
+            git clone --branch "$BRANCH" "$REPO_URL" "$REMOTE_PATH"
+          fi
+
+          cd "$REMOTE_PATH"
+          git remote set-url origin "$REPO_URL"
+          git fetch --prune origin
+          git reset --hard "origin/$BRANCH"
+          SHA="$(git rev-parse --short HEAD)"
+
+          NETWORK_ARGS=()
+          if [ -n "$DOCKER_NETWORK" ]; then NETWORK_ARGS=(--network "$DOCKER_NETWORK"); fi
+          ENV_ARGS=()
+          if [ -n "$ENV_FILE" ]; then
+            if ! $SUDO test -r "$ENV_FILE"; then
+              echo "ERROR: env file not readable by the deploy user: $ENV_FILE" >&2
+              echo "Check owner/group and permissions (for example root:deploy 640)." >&2
+              exit 1
+            fi
+            ENV_ARGS=(--env-file "$ENV_FILE")
+          fi
+
+          echo "==> building $IMAGE_TAG from $SHA"
+          $SUDO docker build \
+            "${NETWORK_ARGS[@]}" \
+            --build-arg MILANKO_API_URL="$MILANKO_API_URL" \
+            --build-arg APP_ENV="$APP_ENV" \
+            -t "$IMAGE_TAG" \
+            -t "${IMAGE_TAG}-${SHA}" \
+            -f "$DOCKERFILE" \
+            "$CONTEXT"
+
+          $SUDO docker stop "$CONTAINER" 2>/dev/null || true
+          $SUDO docker rm "$CONTAINER" 2>/dev/null || true
+
+          $SUDO docker run -d \
+            --name "$CONTAINER" \
+            --restart unless-stopped \
+            "${NETWORK_ARGS[@]}" \
+            -p "$PORTS" \
+            "${ENV_ARGS[@]}" \
+            --log-opt max-size=50m \
+            --log-opt max-file=3 \
+            "$IMAGE_TAG"
+
+          if [ -n "$HEALTH_URL" ]; then
+            healthy=0
+            for i in $(seq 1 "$HEALTH_TIMEOUT"); do
+              if curl -fsSL "$HEALTH_URL" >/dev/null 2>&1; then
+                echo "healthy after ${i}s"
+                healthy=1
+                break
+              fi
+              sleep 1
+            done
+            if [ "$healthy" != "1" ]; then
+              echo "healthcheck failed after ${HEALTH_TIMEOUT}s" >&2
+              $SUDO docker logs --tail 120 "$CONTAINER" >&2 || true
+              exit 1
+            fi
+          else
+            echo "deployed (no health check configured)"
+          fi
+
+          $SUDO docker image prune -f >/dev/null 2>&1 || true
+          REMOTE
+
+      - name: Smoke test public frontend
+        shell: bash
+        env:
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PUBLIC_BASE_URL:-}" ]; then
+            echo "PUBLIC_BASE_URL not configured; skipping public smoke test"
+            exit 0
+          fi
+          curl -fsS "$PUBLIC_BASE_URL/api/v1/health" >/dev/null
+          html="$(curl -fsSL "$PUBLIC_BASE_URL/")"
+          if ! printf '%s' "$html" | grep -q '/_next/'; then
+            echo "frontend assets not served at $PUBLIC_BASE_URL (nginx still on placeholder?)" >&2
+            exit 1
+          fi
+          echo "frontend served by nginx and API healthy"
