@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
   packages: write
 
 jobs:
@@ -21,7 +20,6 @@ jobs:
     timeout-minutes: 30
     outputs:
       deployable: ${{ steps.identity.outputs.deployable }}
-      artifact: ${{ steps.target.outputs.artifact }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -67,13 +65,11 @@ jobs:
             esac
           fi
           image="ghcr.io/${GITHUB_REPOSITORY}-app:${app_env}"
-          artifact="milanko-image-${app_env}-${GITHUB_SHA::7}"
           {
             echo "app_env=$app_env"
             echo "base_path=$base_path"
             echo "publish=$publish"
             echo "image=$image"
-            echo "artifact=$artifact"
           } >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
@@ -108,44 +104,29 @@ jobs:
           MILANKO_API_KEY: ${{ vars.MILANKO_API_KEY }}
           APP_ENV: ${{ steps.target.outputs.app_env }}
 
-      - name: Build image and artifact
+      - name: Log in to GHCR
+        if: steps.identity.outputs.deployable == 'true' && steps.target.outputs.publish == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
         if: steps.identity.outputs.deployable == 'true' && steps.target.outputs.publish == 'true'
         shell: bash
         env:
           IMAGE: ${{ steps.target.outputs.image }}
           BASE_PATH: ${{ steps.target.outputs.base_path }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_GHCR: ${{ vars.PUBLISH_GHCR || 'false' }}
         run: |
           set -euo pipefail
           : "${IMAGE:?image is required}"
           : "${BASE_PATH:?base path is required}"
           sha="${GITHUB_SHA::7}"
           docker build --build-arg NEXT_BASE_PATH="$BASE_PATH" -t "$IMAGE" -t "${IMAGE}-${sha}" .
-
-          # The org currently denies package creation to Actions; the deploy always has the
-          # same image as a workflow artifact. Set the PUBLISH_GHCR variable to true to retry.
-          if [ "$PUBLISH_GHCR" = "true" ] \
-            && printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin >/dev/null 2>&1 \
-            && docker push "$IMAGE" \
-            && docker push "${IMAGE}-${sha}"; then
-            echo "published $IMAGE and ${IMAGE}-${sha}"
-          else
-            echo "GHCR publish skipped; deploy will use the workflow artifact"
-          fi
-
-          docker save "$IMAGE" "${IMAGE}-${sha}" | gzip -1 > /tmp/milanko-image.tar.gz
-          ls -lh /tmp/milanko-image.tar.gz
-
-      - name: Upload image artifact
-        if: steps.identity.outputs.deployable == 'true' && steps.target.outputs.publish == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.target.outputs.artifact }}
-          path: /tmp/milanko-image.tar.gz
-          retention-days: 7
-          compression-level: 0
+          docker push "$IMAGE"
+          docker push "${IMAGE}-${sha}"
+          echo "published $IMAGE and ${IMAGE}-${sha}"
 
   deploy:
     name: Deploy ${{ github.ref_name == 'main' && 'production' || github.ref_name }}
@@ -181,12 +162,6 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.test.outputs.artifact }}
-          path: /tmp/milanko-image
-
       - name: Deploy on server
         shell: bash
         env:
@@ -201,7 +176,8 @@ jobs:
           HEALTH_URL: ${{ vars.DEPLOY_HEALTH_URL }}
           HEALTH_TIMEOUT: ${{ vars.DEPLOY_HEALTH_TIMEOUT_SECONDS || 120 }}
           USE_SUDO: ${{ vars.DEPLOY_USE_SUDO || 'false' }}
-          IMAGE_ARCHIVE: /tmp/milanko-image/milanko-image.tar.gz
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           : "${HOST:?DEPLOY_HOST is required}"
@@ -210,21 +186,17 @@ jobs:
           : "${IMAGE_TAG:?image tag is required}"
           : "${PORTS:?DEPLOY_PORTS is required}"
           : "${ENV_FILE:?DEPLOY_ENV_FILE is required}"
-          : "${IMAGE_ARCHIVE:?image artifact is required}"
-          test -f "$IMAGE_ARCHIVE" || { echo "missing image artifact: $IMAGE_ARCHIVE" >&2; exit 1; }
+          : "${GHCR_TOKEN:?GITHUB_TOKEN is required}"
 
           SSH="ssh -i ~/.ssh/deploy_key -p $SSH_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes"
-          SCP="scp -i ~/.ssh/deploy_key -P $SSH_PORT -o BatchMode=yes -o StrictHostKeyChecking=yes"
           TARGET="$USER_NAME@$HOST"
-          ARCHIVE="/tmp/milanko-image-${GITHUB_SHA::7}.tar.gz"
 
-          echo "==> uploading $IMAGE_ARCHIVE"
-          $SCP "$IMAGE_ARCHIVE" "$TARGET:$ARCHIVE"
+          TOKEN_FILE="$(printf '%s' "$GHCR_TOKEN" | $SSH "$TARGET" 'umask 077; f=$(mktemp); cat > "$f"; printf "%s" "$f"')"
 
           $SSH "$TARGET" \
-            "CONTAINER='$CONTAINER' IMAGE_TAG='$IMAGE_TAG' PORTS='$PORTS' DOCKER_NETWORK='$DOCKER_NETWORK' ENV_FILE='$ENV_FILE' HEALTH_URL='$HEALTH_URL' HEALTH_TIMEOUT='$HEALTH_TIMEOUT' USE_SUDO='$USE_SUDO' ARCHIVE='$ARCHIVE' bash -s" <<'REMOTE'
+            "CONTAINER='$CONTAINER' IMAGE_TAG='$IMAGE_TAG' PORTS='$PORTS' DOCKER_NETWORK='$DOCKER_NETWORK' ENV_FILE='$ENV_FILE' HEALTH_URL='$HEALTH_URL' HEALTH_TIMEOUT='$HEALTH_TIMEOUT' USE_SUDO='$USE_SUDO' GHCR_USER='$GHCR_USER' TOKEN_FILE='$TOKEN_FILE' bash -s" <<'REMOTE'
           set -euo pipefail
-          trap 'rm -f "$ARCHIVE"' EXIT
+          trap 'rm -f "$TOKEN_FILE"' EXIT
 
           if [ "$USE_SUDO" = "true" ]; then SUDO="sudo"; else SUDO=""; fi
 
@@ -240,8 +212,10 @@ jobs:
             ENV_ARGS=(--env-file "$ENV_FILE")
           fi
 
-          echo "==> loading $IMAGE_TAG"
-          gunzip -c "$ARCHIVE" | $SUDO docker load
+          echo "==> pulling $IMAGE_TAG"
+          $SUDO docker login ghcr.io -u "$GHCR_USER" --password-stdin < "$TOKEN_FILE" >/dev/null
+          $SUDO docker pull "$IMAGE_TAG"
+          $SUDO docker logout ghcr.io >/dev/null 2>&1 || true
 
           $SUDO docker stop "$CONTAINER" 2>/dev/null || true
           $SUDO docker rm "$CONTAINER" 2>/dev/null || true
