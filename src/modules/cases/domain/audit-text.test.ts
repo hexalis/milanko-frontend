@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { getTranslator } from "@/modules/copy";
-import { auditEvidence, auditSubtitle, breakText } from "./audit-text";
+import {
+  auditEvidence,
+  auditQuestion,
+  auditSentence,
+  auditSubtitle,
+  auditTitle,
+  breakText,
+} from "./audit-text";
+import { getEventAudit } from "./event-audit";
 import type { AuditTrend } from "./event-audit";
 
 const en = getTranslator("en");
@@ -71,5 +79,24 @@ describe("breakText", () => {
     ).toBe(
       "source mix changed · volume jump · Global Disaster Alert and Coordination System enters · XYZ enters",
     );
+  });
+});
+
+describe("audit file wording", () => {
+  const translator = en;
+  const full = getEventAudit();
+  const category = (id: string) => full.categories.find((item) => item.id === id)!;
+
+  it("answers each verdict in one plain sentence", () => {
+    expect(auditSentence(category("wildfires"), full, translator)).toMatch(/grew 12\.2-fold/);
+    expect(auditSentence(category("severeStorms"), full, translator)).not.toMatch(/\{/);
+    expect(auditSentence(category("snow"), full, translator)).not.toMatch(/\{/);
+    expect(auditQuestion(category("wildfires"), translator)).toMatch(/more and more wildfires/);
+  });
+
+  it("titles each audit card with its verdict", () => {
+    for (const item of full.categories) {
+      expect(auditTitle(item, translator)).not.toMatch(/\{|^chart\./);
+    }
   });
 });

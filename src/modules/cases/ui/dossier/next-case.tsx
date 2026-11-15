@@ -1,21 +1,16 @@
 import Link from "next/link";
 import { Icon } from "@/shared/ui/icon";
-import { TextLink } from "@/shared/ui/text-link";
 
 type NextCaseProps = {
   label: string;
   relatedLabel: string;
   next: { href: string; title: string; meta: string };
-  links: { href: string; icon: string; label: string }[];
 };
 
-/*
- * Night next-case card and the line of related links (POC doc--next). Deferred: the share button
- * and "See on the globe" (no explorer route yet), and View Transitions between folders (data-morph).
- */
-export function NextCase({ label, relatedLabel, next, links }: NextCaseProps) {
+/* Night next-case card (POC cf-next). View Transitions between folders (data-morph) are left out. */
+export function NextCase({ label, relatedLabel, next }: NextCaseProps) {
   return (
-    <nav aria-label={relatedLabel} className="flex flex-col gap-5">
+    <nav aria-label={relatedLabel} className="mt-6">
       <Link
         href={next.href}
         // A night card in both themes: its light-theme tokens make bg-inverse the night sky.
@@ -29,16 +24,6 @@ export function NextCase({ label, relatedLabel, next, links }: NextCaseProps) {
           <Icon name="arrow-right" size="lg" />
         </span>
       </Link>
-      {links.length ? (
-        <ul className="flex flex-wrap gap-x-6 gap-y-2">
-          {links.map((link) => (
-            <li key={link.href} className="inline-flex items-center gap-1.5">
-              <Icon name={link.icon} />
-              <TextLink href={link.href}>{link.label}</TextLink>
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </nav>
   );
 }

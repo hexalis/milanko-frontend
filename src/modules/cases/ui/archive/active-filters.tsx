@@ -17,7 +17,7 @@ const CHIP =
 
 type ActiveFiltersProps = {
   state: ArchiveState;
-  /** Files shown and files under the current kind tab. */
+  /** Files shown and files under the current topic. */
   shown: number;
   total: number;
   translator: Translator;
@@ -29,7 +29,9 @@ export function ActiveFilters({ state, shown, total, translator }: ActiveFilters
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <p className="text-body-s text-text-secondary" aria-live="polite">
-        {shown === total ? t("arch.count.all", { n: total }) : t("arch.count", { n: shown, total })}
+        {shown === total
+          ? t(total === 1 ? "arch.count.one" : "arch.count.all", { n: total })
+          : t("arch.count", { n: shown, total })}
         {state.col ? <span> · {t(`col.${state.col}.d`)}</span> : null}
       </p>
       {filters.length ? (
@@ -37,7 +39,9 @@ export function ActiveFilters({ state, shown, total, translator }: ActiveFilters
           {filters.map((filter) => {
             const label = activeFilterLabel(filter, translator);
             return (
-              <li key={`${filter.type}:${"key" in filter ? filter.key : ""}:${filter.value}`}>
+              <li
+                key={`${filter.type}:${filter.type === "facet" ? filter.key : ""}:${filter.value}`}
+              >
                 <Link
                   href={archiveHref(withoutFilter(state, filter))}
                   aria-label={t("f.remove", { f: label })}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { caseCsv, eventCsv, trendCsv } from "./case-csv";
+import { caseCsv, eventCsv, trendCsv, auditCsv } from "./case-csv";
 import { getCaseCatalog } from "./catalog";
 
 const catalog = getCaseCatalog();
@@ -47,5 +47,24 @@ describe("caseCsv", () => {
   it("names the file after the catalog number", () => {
     expect(caseCsv(svalbard, 90).filename).toBe(`${svalbard.catalog}-svalbard-warming.csv`);
     expect(caseCsv(event, 90).filename).toBe(`${event.catalog}.csv`);
+  });
+});
+
+describe("auditCsv", () => {
+  it("writes events per year of one audit category", () => {
+    const { filename, body } = auditCsv(
+      {
+        id: "floods",
+        years: [
+          [2000, 3],
+          [2001, 5],
+        ],
+      },
+      "2026-10-01",
+    );
+    expect(filename).toBe("eonet-floods.csv");
+    expect(body).toBe(
+      "# NASA EONET floods | events per year | data version 2026-10-01\nyear,events\n2000,3\n2001,5\n",
+    );
   });
 });

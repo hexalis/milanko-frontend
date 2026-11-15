@@ -91,3 +91,18 @@ export function getEventAudit(): EventAudit {
 export function lastAuditYear(category: Pick<AuditCategory, "years">): number {
   return category.years.at(-1)?.[0] ?? 0;
 }
+
+/* ---------- Audit case files ---------- */
+
+/** Each category of the audit opens as a case file at `/cases/audit-<category>` (POC #/case/audit-…). */
+const AUDIT_FILE_PREFIX = "audit-";
+
+export const auditFileId = (category: Pick<AuditCategory, "id">): string =>
+  `${AUDIT_FILE_PREFIX}${category.id}`;
+
+/** The audit category a case-file id names, if any. */
+export function findAuditCategory(id: string, source: EventAudit = getEventAudit()) {
+  if (!id.startsWith(AUDIT_FILE_PREFIX)) return undefined;
+  const category = id.slice(AUDIT_FILE_PREFIX.length);
+  return source.categories.find((candidate) => candidate.id === category);
+}

@@ -1,21 +1,10 @@
 import type { Translator } from "@/shared/lib/i18n";
 import type { ActiveFilter, FacetKey } from "../../domain/archive";
-import { eventFamily } from "../../domain/case-file";
 import { themeLabel } from "../../domain/file-text";
 
-/* Wording and icons of the archive filters (POC renderArchive FACETS). */
+/* Wording of the archive's removable chips (POC renderArchive activeFilters). */
 
-export const FACET_TITLE_KEYS: Record<FacetKey, string> = {
-  region: "f.where",
-  theme: "f.what",
-  ev: "f.how",
-  dir: "f.dir",
-  src: "f.who",
-};
-
-const SOURCE_ICONS: Record<string, string> = { power: "chart", modis: "satellite", eonet: "audit" };
-
-export function facetOptionLabel(key: FacetKey, value: string, translator: Translator): string {
+function facetOptionLabel(key: FacetKey, value: string, translator: Translator): string {
   switch (key) {
     case "region":
       return translator.t(`reg.${value}`);
@@ -30,29 +19,15 @@ export function facetOptionLabel(key: FacetKey, value: string, translator: Trans
   }
 }
 
-/** Sprite icon beside an option, if that facet has one. */
-export function facetOptionIcon(
-  key: FacetKey,
-  value: string,
-  translator: Translator,
-): string | undefined {
-  switch (key) {
-    case "theme":
-      return translator.has(`theme.${value}`) ? value : `ev-${eventFamily(value)}`;
-    case "dir":
-      return value;
-    case "src":
-      return SOURCE_ICONS[value];
-    default:
-      return undefined;
-  }
-}
-
-/** A chip's text: the search keeps its quotes, everything else reads as its option. */
+/** A chip's text: the search keeps its quotes, the place reads "Near …", the rest as its option. */
 export function activeFilterLabel(filter: ActiveFilter, translator: Translator): string {
   switch (filter.type) {
+    case "kind":
+      return translator.t("arch.kind.trend");
     case "col":
       return translator.t(`col.${filter.value}`);
+    case "near":
+      return translator.t("near.chip", { name: filter.value.split(",")[0]?.trim() ?? "" });
     case "q":
       return `“${filter.value}”`;
     case "facet":
