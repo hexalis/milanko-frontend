@@ -35,9 +35,11 @@ type ArchiveScreenProps = {
   state: ArchiveState;
   catalog: CaseCatalog;
   locale: Locale;
+  /** The shell's search opened the archive (`?focus=1`): the search box takes the focus. */
+  isSearchFocused?: boolean;
 };
 
-export function ArchiveScreen({ state, catalog, locale }: ArchiveScreenProps) {
+export function ArchiveScreen({ state, catalog, locale, isSearchFocused }: ArchiveScreenProps) {
   const translator = getTranslator(locale);
   const { t } = translator;
   const kinds = kindCounts(catalog);
@@ -74,7 +76,7 @@ export function ArchiveScreen({ state, catalog, locale }: ArchiveScreenProps) {
           <h2 id="archive-results-title" className="sr-only">
             {t("arch.results")}
           </h2>
-          <ArchiveToolbar state={state} translator={translator} />
+          <ArchiveToolbar state={state} translator={translator} isSearchFocused={isSearchFocused} />
           <ActiveFilters
             state={state}
             shown={hits.length}

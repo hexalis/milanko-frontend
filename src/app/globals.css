@@ -40,9 +40,47 @@
 @theme inline {
   /* Reading text (leads, prose, verdicts) is set in Source Serif 4; UI and headings in Plex. */
   --font-reading: var(--font-source-serif), ui-serif, Georgia, serif;
+  /* Backdrop of the 3D globe: deep space in both themes (the DS has no always-dark role). */
+  --color-space: var(--hexalis-brand-canvas-dark);
+}
+
+@theme {
+  /* The app shell (POC): side rail from 860px, mobile top bar and bottom tabbar below it. */
+  --breakpoint-shell: 53.75rem;
+}
+
+/*
+ * html[data-nav] is set before first paint by the shell script in the root layout, so the rail
+ * width and the page offset never jump. `nav-collapsed:` styles the icon-only rail.
+ */
+@custom-variant nav-collapsed (&:where([data-nav="collapsed"], [data-nav="collapsed"] *));
+
+:root {
+  /* Rail width, open or collapsed. The page leaves the rail, its 12px inset and a 12px gap. */
+  --rail-w: 16.75rem;
+  /* Space the mobile chrome takes at the top (sticky top bar) and bottom (fixed tabbar). */
+  --shell-top: 0px;
+  --shell-bottom: 0px;
+}
+
+:root[data-nav="collapsed"] {
+  --rail-w: 4.5rem;
+}
+
+@media (width < 53.75rem) {
+  :root {
+    --shell-top: 3.5rem;
+    --shell-bottom: 5.5rem;
+  }
 }
 
 @layer base {
+  /* Anchors and focused elements stay clear of the phone bar and the tabbar. */
+  html {
+    scroll-padding-top: var(--shell-top);
+    scroll-padding-bottom: var(--shell-bottom);
+  }
+
   h1,
   h2,
   h3 {

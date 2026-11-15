@@ -1,71 +1,85 @@
-export type WorkspaceSection = {
-  href:
-    | "/ask"
-    | "/briefing"
-    | "/cases"
-    | "/explore"
-    | "/method"
-    | "/regions"
-    | "/rankings"
-    | "/events"
-    | "/coverage";
-  /** Copy key (POC i18n) for the menu label. */
+/*
+ * The app shell's destinations (POC portal/index.html: side rail and phone tabbar). Labels are
+ * copy keys; icons are sprite ids, with an `-on` twin for the active state when `hasActiveIcon`.
+ */
+
+export type SectionHref =
+  | "/"
+  | "/ask"
+  | "/briefing"
+  | "/cases"
+  | "/explore"
+  | "/method"
+  | "/team"
+  | "/regions"
+  | "/rankings"
+  | "/events"
+  | "/coverage";
+
+export type NavSection = {
+  href: SectionHref;
   labelKey: string;
-  /** Spanish summary for the home cards (the persisted-data pages are Spanish only for now). */
-  summary: string;
+  icon: string;
+  hasActiveIcon: boolean;
 };
 
-export const WORKSPACE_SECTIONS: readonly WorkspaceSection[] = [
-  {
-    href: "/ask",
-    labelKey: "nav.ask",
-    summary: "Arma una pregunta sobre la Tierra y sigue la investigación paso a paso.",
-  },
-  {
-    href: "/briefing",
-    labelKey: "nav.briefing",
-    summary:
-      "Lo que muestran los datos de NASA hoy: hallazgos, pares opuestos y el falso sospechoso.",
-  },
-  {
-    href: "/cases",
-    labelKey: "nav.cases",
-    summary: "Expedientes de tendencias y anomalías con datos de NASA, en inglés o español.",
-  },
-  {
-    href: "/explore",
-    labelKey: "nav.explore",
-    summary: "Globo 3D con los expedientes y los eventos de NASA EONET de cada región.",
-  },
-  {
-    href: "/method",
-    labelKey: "nav.method",
-    summary: "Cómo sabemos si un cambio es real o ruido, con un laboratorio para probarlo.",
-  },
-  {
-    href: "/regions",
-    labelKey: "nav.regions",
-    summary: "Serie, tendencia, anomalías y eventos de una de las 162 regiones.",
-  },
-  {
-    href: "/rankings",
-    labelKey: "nav.rankings",
-    summary: "Ranking global de regiones por valor, anomalía o tendencia.",
-  },
-  {
-    href: "/events",
-    labelKey: "nav.events-db",
-    summary: "Catálogo EONET persistido, con filtros por categoría, estado y fecha.",
-  },
-  {
-    href: "/coverage",
-    labelKey: "nav.coverage",
-    summary: "Variables, fuentes, filas y rango histórico de los datos guardados.",
-  },
+const section = (
+  href: SectionHref,
+  labelKey: string,
+  icon: string,
+  hasActiveIcon = true,
+): NavSection => ({ href, labelKey, icon, hasActiveIcon });
+
+export const ASK = section("/ask", "nav.ask", "ask");
+
+/** Before the separator: where an investigation starts. Case files is drawn apart (progress, kinds). */
+export const RAIL_START: readonly NavSection[] = [
+  section("/", "nav.home", "home"),
+  section("/briefing", "nav.briefing", "briefing"),
+];
+export const CASES = section("/cases", "nav.cases.all", "cases");
+export const EXPLORE = section("/explore", "nav.explore", "explore");
+
+/** After the separator: how the project works and who made it. */
+export const RAIL_LEARN: readonly NavSection[] = [
+  section("/method", "nav.method", "method"),
+  section("/team", "nav.team", "team"),
 ];
 
-export type SectionLabels = Record<WorkspaceSection["href"], string>;
+/** The persisted-data pages (live API), grouped under "Open data". */
+export const RAIL_DATA: readonly NavSection[] = [
+  section("/regions", "nav.regions", "place", false),
+  section("/rankings", "nav.rankings", "graph", false),
+  section("/events", "nav.events-db", "calendar", false),
+  section("/coverage", "nav.coverage", "table", false),
+];
 
-export function isSectionActive(pathname: string, href: WorkspaceSection["href"]): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+/** Phone tabbar: five destinations with short labels (POC `.tabbar`). */
+export const TABBAR: readonly NavSection[] = [
+  section("/", "nav.home", "home"),
+  section("/ask", "nav.ask.short", "ask"),
+  section("/cases", "nav.cases", "cases"),
+  EXPLORE,
+  section("/method", "nav.method", "method"),
+];
+
+const ALL_HREFS: readonly SectionHref[] = [
+  ASK,
+  ...RAIL_START,
+  CASES,
+  EXPLORE,
+  ...RAIL_LEARN,
+  ...RAIL_DATA,
+].map((entry) => entry.href);
+
+/**
+ * The section a pathname belongs to: an exact match or a page under it (`/cases/<id>` is Case
+ * files). Home only matches `/` itself; an unknown path has no section.
+ */
+export function activeSection(pathname: string): SectionHref | null {
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  if (path === "/") return "/";
+  return (
+    ALL_HREFS.find((href) => href !== "/" && (path === href || path.startsWith(`${href}/`))) ?? null
+  );
 }

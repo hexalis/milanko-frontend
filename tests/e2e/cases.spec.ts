@@ -19,7 +19,7 @@ test("archive opens a case file and the language switch translates it", async ({
   await page.getByRole("tab", { name: "Table" }).click();
   await expect(page.getByRole("tabpanel").getByRole("row")).toHaveCount(46);
 
-  await page.getByRole("button", { name: "es" }).click();
+  await page.getByRole("button", { name: "es", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1, name: /Svalbard se calienta/ })).toBeVisible();
 });
 

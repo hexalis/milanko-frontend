@@ -25,6 +25,10 @@ import { eventTitle } from "./event-title";
 
 export const ARCHIVE_PATH = "/cases";
 
+/** The archive search box; the shell's "/" key focuses it, or opens `?focus=1` from elsewhere. */
+export const ARCHIVE_SEARCH_ID = "archive-search";
+export const ARCHIVE_FOCUS_HREF = `${ARCHIVE_PATH}?focus=1`;
+
 export const ARCHIVE_KINDS = ["all", "trend", "event"] as const;
 export type ArchiveKind = (typeof ARCHIVE_KINDS)[number];
 

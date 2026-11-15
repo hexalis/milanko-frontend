@@ -355,6 +355,8 @@ function NextCard({ translator: { t } }: { translator: Translator }) {
   return (
     <Link
       href="/team"
+      // A night card in both themes: its light-theme tokens make bg-inverse the night sky.
+      data-theme="light"
       className="rounded-card bg-bg-inverse text-text-inverse shadow-card duration-fast hover:shadow-raised focus-visible:focus-ring focus-visible:outline-focus-ring group grid gap-1 p-5 no-underline transition-shadow"
     >
       <span className="text-overline">{t("method.next")}</span>

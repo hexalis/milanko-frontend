@@ -6,7 +6,7 @@ import { ArchiveScreen } from "@/modules/cases/ui/archive/archive-screen";
 import { getTranslator } from "@/modules/copy";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
-import type { SearchParams } from "@/shared/lib/search-params";
+import { readString, type SearchParams } from "@/shared/lib/search-params";
 import { LoadingPanel } from "@/shared/ui/notice";
 
 export const metadata: Metadata = { title: "Case Files" };
@@ -19,7 +19,12 @@ async function ArchiveContent({ searchParams }: PageProps) {
   const catalog = getCaseCatalog();
   return (
     <div lang={locale}>
-      <ArchiveScreen state={parseArchiveState(params, catalog)} catalog={catalog} locale={locale} />
+      <ArchiveScreen
+        state={parseArchiveState(params, catalog)}
+        catalog={catalog}
+        locale={locale}
+        isSearchFocused={readString(params, "focus") === "1"}
+      />
     </div>
   );
 }

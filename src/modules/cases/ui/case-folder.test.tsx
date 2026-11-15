@@ -50,7 +50,7 @@ describe("CaseFolder", () => {
     expect(screen.getByRole("link")).toHaveAttribute("href", `/cases/${event.id}`);
     expect(screen.getByRole("heading", { level: 4 })).toBeVisible();
     expect(screen.getByText("Antes del evento")).toBeVisible();
-    expect(screen.getByText("Qué tan inusual")).toBeVisible();
+    expect(screen.getByText("Qué tan fuera de lo normal")).toBeVisible();
     expect(container.querySelector("svg circle")).not.toBeNull();
   });
 });
