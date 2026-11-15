@@ -51,7 +51,11 @@ async function EventsContent({ searchParams }: PageProps) {
 
 export default function EventsPage({ searchParams }: PageProps) {
   return (
-    <PageShell kicker="Earth Trend Detective · EONET persistido" title="Archivo de eventos">
+    <PageShell
+      lang="es"
+      kicker="Earth Trend Detective · EONET persistido"
+      title="Archivo de eventos"
+    >
       <Suspense fallback={<LoadingPanel label="Consultando catálogo EONET…" />}>
         <EventsContent searchParams={searchParams} />
       </Suspense>

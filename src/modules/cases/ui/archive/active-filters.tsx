@@ -57,7 +57,7 @@ export function ActiveFilters({ state, shown, total, translator }: ActiveFilters
             <li>
               <Link
                 href={archiveHref(clearFilters(state))}
-                className="text-label-s text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring rounded-xs px-1 hover:underline"
+                className="text-label-s text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring relative rounded-xs px-1 after:absolute after:inset-x-0 after:-inset-y-[15px] after:content-[''] hover:underline"
               >
                 {t("f.clear")}
               </Link>

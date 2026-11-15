@@ -111,7 +111,7 @@ function Shelf({ id, title, lead, more, files, translator, catalog }: ShelfProps
           <h2 id={id} className="text-heading-h2 font-display text-text-primary">
             {title}
           </h2>
-          <p className="text-body-m text-text-secondary max-w-[68ch]">{lead}</p>
+          <p className="text-body-m text-text-secondary max-w-[60ch]">{lead}</p>
         </div>
         <Link href={more.href} className={buttonLink({ intent: "secondary" })}>
           {more.label}
@@ -163,7 +163,7 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
         <h1 className="text-display-s font-display text-text-primary text-balance">
           {t("brief.title")}
         </h1>
-        <p className="text-body-l font-reading text-text-secondary max-w-[68ch]">
+        <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">
           {t("brief.lead", { n: catalog.all.length, years: longestRecord(catalog.trends) })}
         </p>
         <Ledger

@@ -1,5 +1,6 @@
 import { tableRecipe } from "@hexalis/components/themes";
-import type { ComponentProps, ReactNode } from "react";
+import { useId, type ComponentProps, type ReactNode } from "react";
+import { ScrollRegion } from "./scroll-region";
 
 /*
  * Native table with the DS table recipe. The DS Table is a React Aria collection; these tables are
@@ -19,17 +20,21 @@ type TableProps = {
   children: ReactNode;
 };
 
+/** A wide table scrolls in its container, which then takes focus and the caption as its name. */
 export function Table({ caption, head, children }: TableProps) {
+  const captionId = useId();
   return (
-    <div className={CONTAINER}>
+    <ScrollRegion className={CONTAINER} labelledBy={captionId}>
       <table className={TABLE}>
-        <caption className="sr-only">{caption}</caption>
+        <caption id={captionId} className="sr-only">
+          {caption}
+        </caption>
         <thead>
           <tr>{head}</tr>
         </thead>
         <tbody>{children}</tbody>
       </table>
-    </div>
+    </ScrollRegion>
   );
 }
 

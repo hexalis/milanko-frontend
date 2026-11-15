@@ -22,7 +22,7 @@ export function AskPickScreen({ params, translator, catalog }: AskPickScreenProp
           <li>
             <Link
               href="/"
-              className="hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring underline-offset-2 hover:underline"
+              className="hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring relative underline-offset-2 after:absolute after:inset-x-0 after:-inset-y-[13px] after:content-[''] hover:underline"
             >
               {t("nav.home")}
             </Link>

@@ -39,7 +39,11 @@ async function EventContent({ params }: PageProps) {
 
 export default function EventPage({ params }: PageProps) {
   return (
-    <PageShell kicker="Earth Trend Detective · evento + ambiente" title="Contexto del evento">
+    <PageShell
+      lang="es"
+      kicker="Earth Trend Detective · evento + ambiente"
+      title="Contexto del evento"
+    >
       <p>
         <TextLink href="/events">← Volver a eventos</TextLink>
       </p>

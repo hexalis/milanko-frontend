@@ -3,7 +3,8 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 
 /* DS inline link; hover and focus mapped from React Aria's data-* states to pseudo-classes. */
-const TEXT_LINK = `${linkRecipe({ variant: "inline" }).root()} font-semibold hover:text-text-brand hover:decoration-2 focus-visible:focus-ring focus-visible:outline-focus-ring`;
+// A transparent ::after lifts the 20px link to a 24px target without reflow or overlap.
+const TEXT_LINK = `${linkRecipe({ variant: "inline" }).root()} relative font-semibold after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-[''] hover:text-text-brand hover:decoration-2 focus-visible:focus-ring focus-visible:outline-focus-ring`;
 
 /** In-app link styled as text (keeps Next's prefetch and client navigation). */
 export function TextLink(props: ComponentProps<typeof Link>) {

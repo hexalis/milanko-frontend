@@ -27,7 +27,7 @@ async function CoverageContent({ searchParams }: PageProps) {
 
 export default function CoveragePage({ searchParams }: PageProps) {
   return (
-    <PageShell kicker="Earth Trend Detective · datos persistidos" title="Inventario de datos">
+    <PageShell lang="es" kicker="Earth Trend Detective · datos persistidos" title="Inventario de datos">
       <Suspense fallback={<LoadingPanel label="Cargando cobertura…" />}>
         <CoverageContent searchParams={searchParams} />
       </Suspense>

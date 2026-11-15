@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { readLocaleCookie, resolveDocumentLang } from "./document-lang";
 import { resolveNavCollapsed } from "./nav-state";
 import { SHELL_PREPAINT_SCRIPT } from "./shell-script";
 import { resolveTheme, THEME_COLORS } from "./theme";
@@ -29,7 +30,9 @@ afterEach(() => {
   meta()?.remove();
   html().removeAttribute("data-nav");
   html().removeAttribute("data-theme");
+  html().removeAttribute("lang");
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("resolveTheme", () => {
@@ -95,4 +98,41 @@ describe("SHELL_PREPAINT_SCRIPT", () => {
     expect(html().dataset.nav).toBe("open");
     vi.restoreAllMocks();
   });
+});
+
+describe("resolveDocumentLang", () => {
+  it("reads the language cookie among others", () => {
+    expect(readLocaleCookie("a=1; etd-lang=es; b=2")).toBe("es");
+    expect(readLocaleCookie("xetd-lang=es")).toBeNull();
+  });
+
+  it("keeps a valid cookie over the browser languages", () => {
+    expect(resolveDocumentLang("etd-lang=en", ["es-CL"])).toBe("en");
+  });
+
+  it("falls back to the first supported browser language, then English", () => {
+    expect(resolveDocumentLang("etd-lang=fr", ["fr-FR", "es-CL", "en"])).toBe("es");
+    expect(resolveDocumentLang("", ["de"])).toBe("en");
+  });
+});
+
+describe("SHELL_PREPAINT_SCRIPT language", () => {
+  const cases: { cookie: string; languages: string[] }[] = [
+    { cookie: "etd-lang=es", languages: ["en-US"] },
+    { cookie: "theme=x; etd-lang=en", languages: ["es-ES"] },
+    { cookie: "other=1; etd-lang=es", languages: ["en-US"] },
+    { cookie: "etd-lang=pt", languages: ["pt-BR", "es-MX"] },
+    { cookie: "", languages: ["de-DE"] },
+  ];
+
+  it.each(cases)(
+    "matches resolveDocumentLang for $cookie / $languages",
+    ({ cookie, languages }) => {
+      vi.spyOn(Document.prototype, "cookie", "get").mockReturnValue(cookie);
+      vi.spyOn(navigator, "languages", "get").mockReturnValue(languages);
+      runScript({ tablet: false, dark: false });
+
+      expect(html().getAttribute("lang")).toBe(resolveDocumentLang(cookie, languages));
+    },
+  );
 });

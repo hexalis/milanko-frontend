@@ -115,9 +115,10 @@ const TITLE_LINK = [
   "focus-visible:after:focus-ring focus-visible:after:outline-focus-ring",
 ].join(" ");
 
+/* The trend colours are fills; on the tinted covers the text takes their AA foreground pair. */
 const DIRECTION_TEXT: Record<Direction, string> = {
-  up: "text-trend-up",
-  down: "text-trend-down",
+  up: "text-feedback-danger-fg",
+  down: "text-feedback-info-fg",
   flat: "text-trend-neutral",
 };
 

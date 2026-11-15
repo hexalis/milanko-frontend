@@ -8,7 +8,7 @@ export function WorkspaceFooter() {
       <p>
         API:{" "}
         <a
-          className="text-text-link font-semibold underline underline-offset-2"
+          className="text-text-link relative font-semibold underline underline-offset-2 after:absolute after:inset-x-0 after:-inset-y-[14px] after:content-['']"
           href={API_DOCS_PATH}
         >
           {API_DOCS_PATH}

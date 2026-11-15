@@ -92,12 +92,44 @@
     letter-spacing: -0.025em;
   }
 
+  /*
+   * Reduced motion (POC styles.css): no movement and no loops, but a state change still reads.
+   * Only fades and colour shifts transition, briefly; transforms snap and keyframes end at once.
+   * Components drop their own lifts and slides with motion-reduce: / motion-safe:.
+   */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
-      transition-duration: 0.01ms !important;
+      transition-property:
+        opacity, color, background-color, border-color, outline-color, box-shadow !important;
+      transition-duration: 120ms !important;
+      transition-delay: 0ms !important;
       animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /*
+   * Windows High Contrast (forced colours) drops fills and shadows, so a chosen pill, tile or
+   * page link would look like the others. Selected states keep a system Highlight outline.
+   */
+  @media (forced-colors: active) {
+    [aria-current="page"],
+    [aria-current="step"],
+    [aria-current="true"],
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    [aria-checked="true"],
+    label:has(> input:checked) {
+      outline: 2px solid Highlight;
+      outline-offset: 1px;
+    }
+
+    :is(button, a)[aria-disabled="true"] {
+      color: GrayText;
     }
   }
 }

@@ -42,11 +42,15 @@ describe("HomeScreen", () => {
   it("names the three kinds of clue and closes on the motto", () => {
     render(<HomeScreen translator={getTranslator("en")} />);
     const key = screen.getByRole("region", { name: "Three words to read everything" });
-    expect(
-      within(key)
-        .getAllByRole("term")
-        .map((term) => term.textContent),
-    ).toEqual(["Trend", "Anomaly", "Event"]);
+    // Each term also holds its drawn glyph, hidden from assistive tech.
+    const terms = within(key).getAllByRole("term");
+    expect(terms.map((term) => term.lastElementChild?.textContent)).toEqual([
+      "Trend",
+      "Anomaly",
+      "Event",
+    ]);
+    for (const term of terms)
+      expect(term.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     const close = screen.getByRole("region", { name: "Not every change is a trend." });
     expect(within(close).getByRole("link", { name: "See the method" })).toHaveAttribute(
       "href",

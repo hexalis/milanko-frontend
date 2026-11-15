@@ -41,6 +41,7 @@ async function RankingsContent({ searchParams }: PageProps) {
 export default function RankingsPage({ searchParams }: PageProps) {
   return (
     <PageShell
+      lang="es"
       kicker="Earth Trend Detective · datos persistidos"
       title="Planet Pulse"
       lead="Las 162 regiones ordenadas por valor actual, anomalía mensual o tendencia de una variable."

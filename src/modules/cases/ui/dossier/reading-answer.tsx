@@ -41,7 +41,7 @@ function Crumbs({ reading, translator }: HeadProps) {
         <li>
           <Link
             href={reading.crumb.href}
-            className="hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring underline-offset-2 hover:underline"
+            className="hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring relative underline-offset-2 after:absolute after:inset-x-0 after:-inset-y-[13px] after:content-[''] hover:underline"
           >
             {reading.crumb.label}
           </Link>
