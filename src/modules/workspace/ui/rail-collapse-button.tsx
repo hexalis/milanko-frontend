@@ -22,7 +22,7 @@ export function RailCollapseButton({
       aria-controls={railId}
       aria-label={label}
       aria-keyshortcuts="["
-      className="group/item text-icon-secondary hover:bg-bg-hover hover:text-icon-primary focus-visible:focus-ring focus-visible:outline-focus-ring relative grid size-9 shrink-0 cursor-pointer place-items-center rounded-md text-lg"
+      className="group/item text-icon-secondary hover:bg-bg-hover hover:text-icon-primary focus-visible:focus-ring focus-visible:outline-focus-ring relative grid size-9 shrink-0 cursor-pointer place-items-center rounded-sm text-lg"
     >
       <Icon name="sidebar" />
       <RailTip label={`${label} · [`} when="always" />

@@ -22,7 +22,7 @@ export function LanguageSwitch({ current, label, onSelect }: LanguageSwitchProps
   return (
     <fieldset
       aria-busy={isPending}
-      className="rounded-control bg-bg-surface-sunken inline-flex border-0 p-1"
+      className="bg-bg-canvas inline-flex rounded-sm border-0 p-1"
     >
       <legend className="sr-only">{label}</legend>
       {LOCALES.map((locale) => (
@@ -31,7 +31,7 @@ export function LanguageSwitch({ current, label, onSelect }: LanguageSwitchProps
           type="button"
           aria-pressed={locale === current}
           onClick={() => handleSelect(locale)}
-          className="text-label-s text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-text-inverse min-h-8 rounded-xs px-2.5 font-mono uppercase"
+          className="text-label-s text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-text-inverse min-h-8 min-w-10 rounded-xs px-2.5 font-mono font-semibold uppercase"
         >
           {locale}
         </button>
