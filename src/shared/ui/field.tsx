@@ -26,8 +26,9 @@ export function TextInput(props: ComponentProps<"input">) {
   return <input className={CONTROL} {...props} />;
 }
 
+/** Styled as the portal's own dropdown where the browser allows it (see .field-select in globals.css). */
 export function Select(props: ComponentProps<"select">) {
-  return <select className={CONTROL} {...props} />;
+  return <select className={`field-select ${CONTROL}`} {...props} />;
 }
 
 type FilterBarProps = { children: ReactNode };

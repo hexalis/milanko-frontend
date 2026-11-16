@@ -34,6 +34,15 @@ describe("BriefingScreen", () => {
     ).toHaveAttribute("href", "#suspect-title");
   });
 
+  it("explains the three sheets of a case file in plain words and for scientists", () => {
+    renderBriefing();
+    const read = within(screen.getByRole("region", { name: "How to read a case file" }));
+    expect(read.getAllByRole("listitem")).toHaveLength(3);
+    expect(read.getAllByText("In plain words")).toHaveLength(3);
+    expect(read.getAllByText("For scientists")).toHaveLength(3);
+    expect(read.getByText(/Mann-Kendall with p < 0.05/)).toBeVisible();
+  });
+
   it("lists the three usage steps", () => {
     renderBriefing();
     const steps = within(screen.getByRole("region", { name: "How to use this portal" }));

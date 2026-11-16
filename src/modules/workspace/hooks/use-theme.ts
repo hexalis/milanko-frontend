@@ -47,7 +47,12 @@ export function useTheme(): { theme: Theme | null; setTheme: (theme: Theme) => v
     } catch {
       // Storage is blocked: the choice lasts this visit.
     }
-    applyTheme(theme);
+    // The page cross-fades to the new theme where the browser can (view transitions, globals.css).
+    const canFade =
+      typeof document.startViewTransition === "function" &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (canFade) document.startViewTransition(() => applyTheme(theme));
+    else applyTheme(theme);
   }, []);
 
   return { theme: isTheme(attribute) ? attribute : null, setTheme };

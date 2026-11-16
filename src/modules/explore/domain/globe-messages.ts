@@ -75,6 +75,8 @@ export type FrameCommand =
       ev?: Pick<GlobeEvent, "cat" | "id" | "date" | "title" | "lat" | "lon">;
     }
   | { type: "inset"; side: "right" | "bottom"; px: number }
+  /** The portal's side rail floats over the frame's left edge, px wide (0 without it). */
+  | { type: "rail"; px: number }
   | { type: "closed" }
   | { type: "focus" }
   | { type: "layer"; layer: "cases" | "events"; cat?: string; year?: number };

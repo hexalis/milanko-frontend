@@ -21,7 +21,7 @@ function paintHorizon(canvas: HTMLCanvasElement, texture: Texture) {
   canvas.style.height = `${height}px`;
   const r = width * 0.9;
   const frame = { cssWidth: width, cssHeight: height, cx: width * 0.58, cy: 36 + r, r };
-  createSpherePainter(canvas, { ...frame, roll: 8, pitch: 28 }, texture)?.(TURN);
+  createSpherePainter(canvas, { ...frame, roll: 8, pitch: 28, smooth: true }, texture)?.(TURN);
 }
 
 export function HomeHorizonCanvas() {

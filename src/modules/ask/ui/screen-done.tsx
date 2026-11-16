@@ -8,7 +8,6 @@ import {
   VerdictStamp,
 } from "@/modules/cases";
 import { withBasePath } from "@/shared/lib/base-path";
-import { buttonLink } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon";
 import { askHref } from "../domain/ask-state";
 import { compareHref } from "../domain/compare";
@@ -30,7 +29,8 @@ import { testRows } from "./test-rows";
 
 type DoneProps = StepProps & { rules: Rules };
 
-const ACTION = `${buttonLink({ intent: "secondary" })} gap-2`;
+const ACTION =
+  "group/act rounded-card bg-bg-surface shadow-card text-text-primary duration-fast hover:shadow-raised focus-visible:focus-ring focus-visible:outline-focus-ring flex flex-1 items-start gap-3.5 p-4 no-underline transition-[translate,box-shadow] hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 function DoneCard({ view, translator, catalog }: StepProps) {
   const { t } = translator;
@@ -105,28 +105,53 @@ function NextLinks({ view, translator, catalog, rules }: DoneProps) {
   return null;
 }
 
+/** One way to go deeper: an icon, what it is, and one line on what you get there. */
+function ActionBody({ icon, title, note }: { icon: string; title: string; note: string }) {
+  return (
+    <>
+      <span className="bg-surface-tone-3 text-text-brand grid size-11 flex-none place-items-center rounded-xl text-[22px]">
+        <Icon name={icon} />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-body-m-strong text-text-primary">{title}</span>
+        <span className="text-body-s text-text-secondary">{note}</span>
+      </span>
+      <span className="text-text-tertiary duration-fast group-hover/act:text-text-brand mt-2.5 flex transition-[translate,color] group-hover/act:translate-x-0.5 motion-reduce:transition-none">
+        <Icon name="arrow-right" />
+      </span>
+    </>
+  );
+}
+
 function DeeperActions({ view, translator }: Omit<StepProps, "catalog">) {
   const { t } = translator;
   const { file } = view;
   return (
-    <div data-tour="done-deeper" className="flex flex-wrap gap-3">
-      <a href={withBasePath(`/cases/${file.id}/data`)} download className={ACTION}>
-        <Icon name="csv" />
-        {t("case.download")}
-      </a>
-      <Link href={`/cases/${file.id}`} className={ACTION}>
-        <Icon name="cases" />
-        {t("ask.deep.case")}
-      </Link>
-      <Link href={`/explore?case=${encodeURIComponent(file.id)}`} className={ACTION}>
-        <Icon name="explore" />
-        {t("case.globe")}
-      </Link>
-      <Link href="/method" className={ACTION}>
-        <Icon name="method" />
-        {t("ask.deep.method")}
-      </Link>
-    </div>
+    <ul
+      data-tour="done-deeper"
+      className="medium:grid-cols-2 m-0 grid list-none grid-cols-1 gap-3 p-0"
+    >
+      <li className="flex">
+        <a href={withBasePath(`/cases/${file.id}/data`)} download className={ACTION}>
+          <ActionBody icon="csv" title={t("case.download")} note={t("ask.deep.csv.d")} />
+        </a>
+      </li>
+      <li className="flex">
+        <Link href={`/cases/${file.id}`} className={ACTION}>
+          <ActionBody icon="cases" title={t("ask.deep.case")} note={t("ask.deep.case.d")} />
+        </Link>
+      </li>
+      <li className="flex">
+        <Link href={`/explore?case=${encodeURIComponent(file.id)}`} className={ACTION}>
+          <ActionBody icon="explore" title={t("case.globe")} note={t("ask.deep.globe.d")} />
+        </Link>
+      </li>
+      <li className="flex">
+        <Link href="/method" className={ACTION}>
+          <ActionBody icon="method" title={t("ask.deep.method")} note={t("ask.deep.method.d")} />
+        </Link>
+      </li>
+    </ul>
   );
 }
 
@@ -155,13 +180,25 @@ export function ScreenDone(props: DoneProps) {
   return (
     <>
       <DoneCard {...props} />
-      <h2 className="font-display text-text-primary mt-2 text-[20px] font-semibold">
-        {t("ask.done.next")}
-      </h2>
-      <div data-tour="done-next" className="empty:hidden">
-        <NextLinks {...props} />
-      </div>
-      <DeeperActions view={props.view} translator={props.translator} />
+      {/* Where to go next is the close's main act, so it gets a section and a heading of its own. */}
+      <section
+        aria-labelledby="ask-next"
+        className="bg-bg-surface-sunken medium:p-6 -mx-1 mt-3 flex flex-col gap-4 rounded-[28px] p-4"
+      >
+        <header className="flex flex-col gap-1">
+          <h2
+            id="ask-next"
+            className="font-display text-text-primary text-[clamp(24px,2.6vw,30px)] leading-tight font-semibold"
+          >
+            {t("ask.done.next")}
+          </h2>
+          <p className="text-body-m text-text-secondary">{t("ask.next.lead")}</p>
+        </header>
+        <div data-tour="done-next" className="empty:hidden">
+          <NextLinks {...props} />
+        </div>
+        <DeeperActions view={props.view} translator={props.translator} />
+      </section>
       <div data-tour="done-check">
         <CheckYourself {...props} />
       </div>

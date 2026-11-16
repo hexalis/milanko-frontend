@@ -54,6 +54,26 @@ describe("paintSphere", () => {
     expect(out[centre]).toBeGreaterThan(0);
     expect(out[centre]).toBeLessThanOrEqual(200);
   });
+
+  it("blends neighbouring texels when smooth, wrapping across the date line", () => {
+    const map = projectSphere({ width: 10, height: 10, dpr: 1, cx: 5, cy: 5, r: 5 });
+    const texture = {
+      width: 2,
+      height: 1,
+      data: new Uint8ClampedArray([0, 0, 0, 255, 240, 240, 240, 255]),
+    };
+    const sharp = new Uint8ClampedArray(10 * 10 * 4);
+    const soft = new Uint8ClampedArray(10 * 10 * 4);
+    paintSphere(map, texture, 0, sharp);
+    paintSphere(map, texture, 0, soft, true);
+    const reds = (out: Uint8ClampedArray) =>
+      new Set(Array.from(map.at.subarray(0, map.count), (at) => out[at]));
+    // Nearest sampling knows two values (times the light); blending finds many in between.
+    expect(reds(soft).size).toBeGreaterThan(reds(sharp).size);
+    expect(Array.from(map.at.subarray(0, map.count)).every((at) => soft[at + 3] === 255)).toBe(
+      true,
+    );
+  });
 });
 
 describe("helpers", () => {

@@ -191,16 +191,33 @@ export function GuidedNav({ label, back, next, tour }: GuidedNavProps) {
   );
 }
 
-/** A card-sized link to the next question or comparison (POC .compare). */
+/**
+ * The next question or comparison (POC .compare), as the close's main way on: a brand-filled card
+ * with the question in large type and one round arrow, so it reads as the next step, not a link.
+ */
 export function NextQuestionLink({ href, label, title }: NavLink & { title: string }) {
   return (
     <Link
       href={href}
-      className="rounded-card bg-bg-surface shadow-card text-text-primary duration-fast hover:shadow-raised focus-visible:focus-ring focus-visible:outline-focus-ring relative flex flex-col gap-0.5 py-[18px] pr-14 pl-5 no-underline transition-[transform,box-shadow] hover:-translate-y-0.5"
+      className="group/next bg-action-primary text-text-on-primary shadow-raised duration-base hover:shadow-dropdown focus-visible:focus-ring focus-visible:outline-focus-ring medium:gap-5 medium:p-6 relative isolate flex items-center gap-4 overflow-hidden rounded-[24px] p-5 no-underline transition-[translate,box-shadow] hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
-      <span className="text-label-m text-text-secondary">{label}</span>
-      <span className="text-heading-h3 font-display">{title}</span>
-      <span className="text-text-brand absolute top-1/2 right-5 -translate-y-1/2 text-[22px]">
+      {/* A large faint mark of the question, behind the words. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -end-6 -bottom-10 -z-10 text-[160px] opacity-10 transition-[rotate] duration-500 group-hover/next:-rotate-6 motion-reduce:transition-none"
+      >
+        <Icon name="ask" />
+      </span>
+      <span className="medium:grid hidden size-14 flex-none place-items-center rounded-2xl bg-[color-mix(in_oklab,currentColor_14%,transparent)] text-[28px]">
+        <Icon name="ask" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="text-label-m font-semibold opacity-80">{label}</span>
+        <span className="font-display medium:text-[26px] text-[21px] leading-tight font-semibold text-balance">
+          {title}
+        </span>
+      </span>
+      <span className="bg-bg-surface text-text-primary shadow-card duration-fast grid size-12 flex-none place-items-center rounded-full text-[22px] transition-[translate] group-hover/next:translate-x-1 motion-reduce:transition-none">
         <Icon name="arrow-right" />
       </span>
     </Link>

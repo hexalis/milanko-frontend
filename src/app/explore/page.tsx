@@ -67,7 +67,7 @@ export default function ExplorePage({ searchParams }: PageProps) {
   return (
     <Suspense
       fallback={
-        <div className="bg-space grid h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] place-items-center p-4">
+        <div className="bg-space shell:fixed shell:inset-0 shell:z-10 shell:h-auto grid h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] place-items-center p-4">
           <LoadingPanel label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
         </div>
       }

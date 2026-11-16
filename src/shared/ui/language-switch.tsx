@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { LOCALES, type Locale } from "@/shared/lib/i18n";
 
 type LanguageSwitchProps = {
@@ -14,16 +14,18 @@ type LanguageSwitchProps = {
 export function LanguageSwitch({ current, label, onSelect }: LanguageSwitchProps) {
   const [isPending, startTransition] = useTransition();
 
+  // While the server re-renders the page in the other language, the page dims (globals.css).
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-lang-busy", isPending);
+  }, [isPending]);
+
   function handleSelect(locale: Locale) {
     if (locale === current) return;
     startTransition(() => onSelect(locale));
   }
 
   return (
-    <fieldset
-      aria-busy={isPending}
-      className="rounded-control bg-bg-surface-sunken inline-flex border-0 p-1"
-    >
+    <fieldset aria-busy={isPending} className="bg-bg-canvas inline-flex rounded-sm border-0 p-1">
       <legend className="sr-only">{label}</legend>
       {LOCALES.map((locale) => (
         <button
@@ -31,7 +33,7 @@ export function LanguageSwitch({ current, label, onSelect }: LanguageSwitchProps
           type="button"
           aria-pressed={locale === current}
           onClick={() => handleSelect(locale)}
-          className="text-label-s text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-text-inverse min-h-8 rounded-xs px-2.5 font-mono uppercase"
+          className="text-label-s text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-text-inverse min-h-8 min-w-10 rounded-xs px-2.5 font-mono font-semibold uppercase"
         >
           {locale}
         </button>

@@ -67,6 +67,9 @@ function tourButtonPlace(cover: { side: "right" | "bottom"; px: number } | null)
   return { top: "auto", bottom: cover.px + 12, insetInlineStart: 12, insetInlineEnd: "auto" };
 }
 
+/** How long a linked panel waits for the globe before it shows over whatever is there. */
+const GLOBE_WAIT_MS = 12_000;
+
 /**
  * The globe explorer (the POC's renderExplore): the 3D world in a frame, and a drawer for whatever
  * the reader picks in it, docked on the side on wide screens and as a bottom sheet on phones. The
@@ -103,6 +106,14 @@ export function ExploreScreen(props: ExploreScreenProps) {
     () => true,
     () => false,
   );
+
+  // Whatever a link opened waits for the world to appear, so its panel never covers the loader.
+  // If the globe never answers (a blocked frame, a failed load), the panel shows anyway.
+  const [isGlobeReady, setGlobeReady] = useState(false);
+  useEffect(() => {
+    const fallback = window.setTimeout(() => setGlobeReady(true), GLOBE_WAIT_MS);
+    return () => window.clearTimeout(fallback);
+  }, []);
 
   const caseRegion = (id: string): SectorId | undefined => {
     const region = byId.get(id)?.region;
@@ -163,7 +174,9 @@ export function ExploreScreen(props: ExploreScreenProps) {
   }
 
   function handleMessage(message: GlobeMessage) {
-    if (message.type === "select") {
+    if (message.type === "ready") {
+      setGlobeReady(true);
+    } else if (message.type === "select") {
       if (message.sel.type === "case" && !byId.has(message.sel.id)) return;
       select(toSelection(message.sel));
     } else if (message.type === "chrome") {
@@ -237,11 +250,38 @@ export function ExploreScreen(props: ExploreScreenProps) {
     return () => document.removeEventListener("keydown", listen, true);
   }, []);
 
+  // On wide screens the globe runs under the floating rail; the frame keeps its picture and
+  // controls clear of it, so it hears the rail's right edge whenever the rail changes width.
+  useEffect(() => {
+    const rail = document.getElementById("rail");
+    if (!rail) return;
+    const tell = () => {
+      const box = rail.getBoundingClientRect();
+      send({ type: "rail", px: box.width ? Math.round(box.right) : 0 });
+    };
+    tell();
+    const observer = new ResizeObserver(tell);
+    observer.observe(rail);
+    // The globe's loader listens before the world is built, so it can centre beside the rail at
+    // once; the queue above only opens once the world says "ready".
+    const frame = frameRef.current;
+    const early = () => {
+      const box = rail.getBoundingClientRect();
+      const px = box.width ? Math.round(box.right) : 0;
+      frame?.contentWindow?.postMessage({ etd: 1, type: "rail", px }, "*");
+    };
+    frame?.addEventListener("load", early);
+    return () => {
+      observer.disconnect();
+      frame?.removeEventListener("load", early);
+    };
+  }, [send]);
+
   return (
     <section
       aria-label={props.viewerLabel}
       data-tour="exp-globe"
-      className="bg-space relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] w-full overflow-hidden"
+      className="bg-space shell:fixed shell:inset-0 shell:z-10 shell:h-auto relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] w-full overflow-hidden"
     >
       <h1 className="sr-only">{props.heading}</h1>
       <iframe
@@ -298,6 +338,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
             setCover({ side, px });
             send({ type: "inset", side, px });
           }}
+          isHeld={!isGlobeReady}
         >
           <SelectionPanel
             selection={selection}

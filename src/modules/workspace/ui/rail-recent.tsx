@@ -12,7 +12,8 @@ type RailRecentProps = {
 
 /**
  * The last three case files the reader opened (POC nav__recent). It lives in storage, so nothing
- * renders until mounted, nor when the trail is empty; short or collapsed rails leave it out.
+ * renders until mounted, nor when the trail is empty; the collapsed rail leaves it out. It is a
+ * section of its own (rule, heading), and a short rail scrolls to it instead of hiding it.
  */
 export function RailRecent({ heading, titles }: RailRecentProps) {
   const headingId = useId();
@@ -23,20 +24,23 @@ export function RailRecent({ heading, titles }: RailRecentProps) {
   return (
     <div
       data-tour="shell-recent"
-      className="nav-collapsed:hidden mt-3 [@media(max-height:700px)]:hidden"
+      className="border-border-default nav-collapsed:hidden mx-3 mt-2 border-t pt-3"
     >
-      <p id={headingId} className="text-overline text-text-tertiary px-3 pb-1">
+      <p id={headingId} className="text-overline text-text-tertiary pb-1.5">
         {heading}
       </p>
-      <ul aria-labelledby={headingId} className="flex flex-col gap-0.5">
+      <ul aria-labelledby={headingId} className="-mx-3 flex flex-col gap-0.5">
         {files.map((file) => (
           <li key={file.id}>
             <Link
               href={`/cases/${file.id}`}
               title={file.title}
-              className="text-label-s text-text-secondary hover:bg-bg-hover hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring flex min-h-10 items-center gap-2.5 rounded-md px-3 py-1 no-underline"
+              className="text-label-s text-text-secondary hover:bg-bg-hover hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring rounded-control flex min-h-10 items-center gap-3 px-3 py-1.5 font-semibold no-underline"
             >
-              <span aria-hidden="true" className="bg-icon-brand size-2 shrink-0 rounded-full" />
+              <span
+                aria-hidden="true"
+                className="bg-icon-brand mx-1.5 size-2 shrink-0 rounded-full"
+              />
               <span className="line-clamp-2 min-w-0">{file.title}</span>
             </Link>
           </li>

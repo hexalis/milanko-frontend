@@ -12,6 +12,8 @@ type SparklineProps = {
   isLastMarked?: boolean;
   /** Unique within the page: names the area gradient. */
   id: string;
+  /** Stretch to fill its box (a short strip, like the first sheet of a folder) instead of keeping its shape. */
+  isFilled?: boolean;
 };
 
 const WIDTH = 300;
@@ -28,7 +30,14 @@ const DIRECTION_FILL: Record<Direction, string> = {
 };
 
 /** Decorative yearly sparkline (the figures beside it carry the meaning). */
-export function Sparkline({ series, trend, direction, isLastMarked = false, id }: SparklineProps) {
+export function Sparkline({
+  series,
+  trend,
+  direction,
+  isLastMarked = false,
+  id,
+  isFilled = false,
+}: SparklineProps) {
   const [x0 = 0, x1 = 1] = extent(series, ([year]) => year);
   const [y0 = 0, y1 = 1] = extent(series, ([, value]) => value);
   const x = scaleLinear()
@@ -46,7 +55,8 @@ export function Sparkline({ series, trend, direction, isLastMarked = false, id }
   return (
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      className="block h-auto w-full"
+      className={isFilled ? "block h-full w-full" : "block h-auto w-full"}
+      preserveAspectRatio={isFilled ? "none" : undefined}
       aria-hidden="true"
       focusable="false"
     >
@@ -64,6 +74,7 @@ export function Sparkline({ series, trend, direction, isLastMarked = false, id }
         d={line<Point>().x(toX).y(toY)(series) ?? ""}
         fill="none"
         strokeWidth={1.6}
+        vectorEffect="non-scaling-stroke"
         className="stroke-chart-1"
       />
       {trend ? (
@@ -73,6 +84,7 @@ export function Sparkline({ series, trend, direction, isLastMarked = false, id }
           y1={y(trend.intercept + trend.slope * x0)}
           y2={y(trend.intercept + trend.slope * x1)}
           strokeWidth={2}
+          vectorEffect="non-scaling-stroke"
           strokeDasharray="5 4"
           className={DIRECTION_STROKE[direction]}
         />

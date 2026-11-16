@@ -27,6 +27,8 @@ export const NOISE_LAB_KEYS = [
   "method.play.shuffle",
   "method.play.result",
   "method.play.title",
+  "method.demo.turn",
+  "method.demo.replay",
   "unit.decade",
   "verdict.confirmed",
   "verdict.inconclusive",
@@ -50,4 +52,6 @@ export const RARE_LAB_KEYS = [
   "method.rare.bar.record",
   "method.rare.bar.moderate",
   "method.rare.result",
+  "method.demo.turn",
+  "method.demo.replay",
 ] as const;
