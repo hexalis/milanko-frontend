@@ -14,12 +14,15 @@ test("briefing leads to the featured case file and the archive", async ({ page }
 });
 
 test("the planet lab redraws its verdict when the trend changes", async ({ page }) => {
+  // Reduced motion keeps the lab's demo from moving the sliders while the test does.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/method");
   // The sliders are React Aria client components: wait for hydration before using the keyboard.
   await page.waitForLoadState("networkidle");
 
-  const trend = page.locator('input[type="range"]').nth(2);
-  const lab = trend.locator("xpath=ancestor::section[1]");
+  // Found by name: the lab now has several sliders, and their order may change again.
+  const trend = page.getByRole("slider", { name: "Real trend" });
+  const lab = page.locator('[data-tour="method-lab"]');
   await expect(lab).toContainText("Sen +0.30");
   await trend.focus();
   await page.keyboard.press("Home");
