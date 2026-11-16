@@ -1,193 +1,169 @@
-# Desarrollo · Milanko frontend
+# Guía de desarrollo · Milanko frontend
 
-> Guía técnica del repositorio. La presentación del producto está en el [README](../README.md).
+> La presentación del producto está en el [README](../README.md). Esta guía es para quien va a tocar el código.
 
-Frontend en Next.js del portal **Earth Trend Detective**: qué está cambiando en la Tierra, dónde, cuánto y si el cambio es estadísticamente significativo. Todos los números vienen de datos públicos de NASA (POWER, MODIS vía GIBS y EONET), persistidos y servidos por la API de Milanko.
+Frontend en Next.js de **Milanko · Earth Trend Detective**: qué cambia en la Tierra, dónde, cuánto y si el cambio es estadísticamente significativo. Todos los números vienen de datos públicos de NASA (POWER, MODIS vía GIBS y EONET), persistidos y servidos por la API de Milanko.
 
-Nace de la plantilla [`hexalis/template-nextjs-apps`](https://github.com/hexalis/template-nextjs-apps) y migra por fases la POC estática [`hexalis/poc-research-design-concept`](https://github.com/hexalis/poc-research-design-concept) (rama `develop`, commit `0280b3e`).
+- **Producción:** [milanko.hexalis.org/app](https://milanko.hexalis.org/app)
+- **Stack:** Next.js 16 · React 19 · TypeScript · Tailwind CSS 4
+- **Runtime:** Node 24.20.0 · pnpm 12.14.0
+- **Barrera de calidad:** `pnpm check`, en local, en el hook `pre-push` y en CI
 
-## Estado de la migración
+**Contenido:** [Arranque](#arranque-en-2-minutos) · [Mapa del producto](#mapa-del-producto) · [Ambientes y API](#ambientes-y-api) · [Arquitectura](#arquitectura) · [Calidad](#calidad-shift-left) · [Ramas y despliegue](#ramas-y-despliegue) · [Reglas](#reglas-del-repositorio) · [Problemas frecuentes](#problemas-frecuentes)
 
-| Fase | Vistas                                                                                                                                                                                                                                       | Estado |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 1    | Base, ambientes, cliente tipado de la API, tokens de diseño _Arcilla amable_, Explorador de regiones (`/regions`), Planet Pulse (`/rankings`), Archivo de eventos (`/events`), Contexto de evento (`/events/[id]`), Inventario (`/coverage`) | Hecha  |
-| 2+   | Briefing, expedientes (case files), archivo, método, "Tengo una pregunta" (motor de reglas), globo 3D, selector EN/ES, equipo, tours guiados                                                                                                 | Hecha  |
+## Arranque en 2 minutos
+
+```bash
+corepack enable                 # o: npm install --global pnpm@12.14.0
+git clone git@github.com:hexalis/milanko-frontend.git && cd milanko-frontend
+pnpm install                    # descarga Node 24.20.0 si falta e instala los hooks de Git
+cp .env.example .env.local
+pnpm dev                        # → http://localhost:3000
+```
+
+- No hace falta `nvm use`: `devEngines.runtime` en `package.json` hace que pnpm use Node 24.20.0 exacto. `.nvmrc` queda para editores y CI.
+- pnpm sólo instala versiones publicadas hace al menos 24 h (`minimumReleaseAge` en `pnpm-workspace.yaml`).
+- Opcional: instala [gitleaks](https://github.com/gitleaks/gitleaks#installing) para revisar secretos al hacer commit. CI lo ejecuta siempre.
+
+### Comandos del día a día
+
+| Comando                         | Para qué                                                            |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `pnpm dev`                      | Servidor local con Turbopack.                                       |
+| `pnpm check`                    | **La definición de "listo"**: formato, lint, tipos, tests y Knip.   |
+| `pnpm test` · `pnpm test:watch` | Pruebas unitarias y de componentes (Vitest).                        |
+| `pnpm test:e2e`                 | Recorridos de navegador en Chromium (Playwright).                   |
+| `pnpm format` · `pnpm lint:fix` | Corrige el formato (Oxfmt) y lo que Oxlint arregla solo.            |
+| `pnpm typecheck`                | `next typegen` + TypeScript. Oxc no sustituye esta comprobación.    |
+| `pnpm knip`                     | Informe de código y dependencias sin uso. Revísalo antes de borrar. |
+| `pnpm api:types`                | Regenera los tipos de la API desde el OpenAPI de develop.           |
+| `pnpm build` · `pnpm start`     | Build de producción y servidor de ese build.                        |
+
+## Mapa del producto
+
+| Ruta                           | Qué es                                                             | Módulo     |
+| ------------------------------ | ------------------------------------------------------------------ | ---------- |
+| `/`                            | Portada: la Tierra y sus cuatro puertas                            | `ask`      |
+| `/ask` · `/ask/[qid]`          | "Tengo una pregunta": motor de reglas y lección guiada de 8 pasos  | `ask`      |
+| `/ask/compare`                 | Dos lugares lado a lado, cada uno con su veredicto                 | `ask`      |
+| `/briefing`                    | Método del equipo: la auditoría EONET y cómo se arma un expediente | `cases`    |
+| `/cases` · `/cases/[id]`       | Archivo de expedientes y cada expediente con su veredicto          | `cases`    |
+| `/cases/[id]/data`             | Descarga CSV de la serie del expediente                            | `cases`    |
+| `/explore`                     | Globo 3D con expedientes, eventos NASA, clima en vivo y capas      | `explore`  |
+| `/method`                      | Cómo lo sabemos: cinco pasos, dos laboratorios y los límites       | `method`   |
+| `/team`                        | El equipo                                                          | `team`     |
+| `/regions` · `/rankings`       | Explorador de regiones y Planet Pulse                              | `regions`  |
+| `/regions/[code]/observations` | Descarga CSV de la serie de una región                             | `regions`  |
+| `/events` · `/events/[id]`     | Archivo EONET y contexto de cada evento                            | `events`   |
+| `/coverage`                    | Inventario de variables persistidas                                | `coverage` |
+
+Módulos que cruzan todo el producto:
+
+- **`workspace`**: el marco común (menú lateral, barra inferior en móvil, búsqueda y preferencias).
+- **`copy`**: los textos en inglés y español (`data/messages.{en,es}.json`). El idioma sale de la cookie y, en la primera visita, del navegador (`src/server/locale.ts`).
+- **`tour`**: los recorridos guiados con Driver.js. Cada paso apunta a un ancla `data-tour` y su texto vive en `copy` como `tour.<id>.<n>.t` / `.d`. Si el ancla no está visible, el paso se omite.
+
+El globo de `/explore` es un visor 3D independiente en `public/globe/` (fuera del lint). Corre en un `iframe` aislado y habla con la página por `postMessage`.
 
 ## Ambientes y API
 
-| Ambiente   | URL                               | API                                      |
-| ---------- | --------------------------------- | ---------------------------------------- |
-| develop    | `https://dev-milanko.hexalis.org` | `https://dev-milanko.hexalis.org/api/v1` |
-| qa         | `https://qa-milanko.hexalis.org`  | `https://qa-milanko.hexalis.org/api/v1`  |
-| production | `https://milanko.hexalis.org`     | `https://milanko.hexalis.org/api/v1`     |
-| poc        | `https://milanko-poc.hexalis.org` | `https://milanko-poc.hexalis.org/api/v1` |
+| Ambiente   | Rama      | URL                               | API                                      |
+| ---------- | --------- | --------------------------------- | ---------------------------------------- |
+| develop    | `develop` | `https://dev-milanko.hexalis.org` | `https://dev-milanko.hexalis.org/api/v1` |
+| qa         | `qa`      | `https://qa-milanko.hexalis.org`  | `https://qa-milanko.hexalis.org/api/v1`  |
+| production | `main`    | `https://milanko.hexalis.org`     | `https://milanko.hexalis.org/api/v1`     |
+| poc        | —         | `https://milanko-poc.hexalis.org` | `https://milanko-poc.hexalis.org/api/v1` |
 
-- El servidor de Next llama a la API con `MILANKO_API_URL` (por defecto, develop). En el VPS puede apuntar al backend interno del mismo ambiente.
-- El navegador sólo usa el mismo origen `/api/v1` (imágenes satelitales, enlace a la documentación). En los ambientes desplegados lo resuelve nginx; en local lo resuelve el `rewrite` de `next.config.mjs`.
-- `APP_ENV` (`local | develop | qa | production`) se lee en tiempo de petición, así que un mismo build sirve para los tres ambientes.
-- Los tipos de la API se generan desde el OpenAPI con `pnpm api:types` (`src/server/integrations/milanko-api/schema.d.ts`). Regenéralos cuando cambie la API.
+| Variable          | Qué hace                                                                                      |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| `MILANKO_API_URL` | API que llama el servidor de Next. Por defecto, develop. En el VPS apunta al backend interno. |
+| `MILANKO_API_KEY` | Sólo si el servidor usa la API pública en lugar de la interna.                                |
+| `APP_ENV`         | `local · develop · qa · production`. Se lee en cada petición: un mismo build sirve a todos.   |
+| `NEXT_BASE_PATH`  | Prefijo del despliegue (`/app`). Se fija al construir la imagen; en local va vacío.           |
 
-## Estructura del producto
-
-```text
-src/
-├─ app/                         # /, /regions, /rankings, /events, /events/[id], /coverage
-│  └─ regions/[code]/observations/route.ts   # descarga CSV de la serie
-├─ modules/
-│  ├─ workspace/                # cabecera, navegación, portada
-│  ├─ regions/                  # explorador de regiones y Planet Pulse
-│  ├─ events/                   # archivo EONET y contexto de evento
-│  └─ coverage/                 # inventario de variables persistidas
-├─ shared/                      # UI clay (panel, tabla, campos, botones) y utilidades
-└─ server/                      # env validado y cliente de la API de Milanko
-```
-
-Los filtros de cada vista viven en la URL, así que cualquier vista se puede compartir. Los datos se cargan en Server Components; el cliente sólo hidrata la navegación, los selects que envían el formulario y el botón de copiar enlace.
-
-## Stack tecnológico
-
-| Tecnología                                                             | Uso en la plantilla                                                                   |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [Next.js 16](https://nextjs.org/)                                      | Framework full-stack, App Router y optimización de producción.                        |
-| [React 19](https://react.dev/)                                         | Interfaz de usuario y Server/Client Components.                                       |
-| [TypeScript](https://www.typescriptlang.org/)                          | Tipado estricto y contratos claros.                                                   |
-| [Turbopack](https://nextjs.org/docs/app/api-reference/turbopack) + SWC | Bundling y transpilación rápidos, incluidos por Next.js.                              |
-| [Oxlint](https://oxc.rs/docs/guide/usage/linter/quickstart.html)       | Lint rápido para JavaScript/TypeScript; TypeScript conserva la comprobación de tipos. |
-| [Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html)                | Formato consistente, incluido el orden de clases de Tailwind.                         |
-| [Tailwind CSS v4](https://tailwindcss.com/)                            | Estilos con utilidades estáticas junto al componente.                                 |
-| [tailwind-variants](https://www.tailwind-variants.org/)                | Variantes semánticas y seguras para componentes reutilizables.                        |
-| [Knip](https://knip.dev/)                                              | Reporte de dependencias, exports y archivos potencialmente sin uso.                   |
-| [Lefthook](https://lefthook.dev/)                                      | Hooks de Git: formato, lint, secretos, commits y `pnpm check` antes de push.          |
-| GitHub Actions                                                         | Verificación automática en cada pull request y push a `main`.                         |
-
-## Runtime de Node.js
-
-La plantilla usa **Node.js 24.20.0 LTS**. `devEngines.runtime` en `package.json` hace que pnpm descargue y use esa versión exacta, registrada en `pnpm-lock.yaml`; no hace falta `nvm use`. `.nvmrc` se conserva para editores y GitHub Actions.
+- `src/server/env.ts` valida las variables al usarlas y falla con un mensaje claro si alguna está mal.
+- El navegador sólo pide al mismo origen `/api/v1`. En los ambientes desplegados lo resuelve nginx; en local, el `rewrite` de `next.config.mjs`.
+- Los tipos de la API (`src/server/integrations/milanko-api/schema.d.ts`) salen del OpenAPI con `pnpm api:types`. Regenéralos cuando cambie la API.
+- Los expedientes y la auditoría de eventos se sirven desde `src/modules/cases/data/*.json`, generados a partir de datos de NASA.
 
 ## Arquitectura
 
 ```mermaid
-flowchart TB
-  Route[app\nURL, layout, metadata] --> Screen[modules/*/ui\nPantalla o componente del producto]
-  Screen --> Shared[shared\nUI y utilidades sin negocio]
-  Screen --> UseCase[modules/*/application\nSólo si hay caso de uso]
-  UseCase --> Domain[modules/*/domain\nReglas y contratos]
-  Route -. sólo servidor .-> Server[server\nDB, auth e integraciones]
+flowchart LR
+  App["app/<br><sub>URL, layout, metadata</sub>"] --> UI["modules/*/ui<br><sub>pantallas del producto</sub>"]
+  UI --> Domain["modules/*/domain<br><sub>reglas y contratos</sub>"]
+  UI --> Shared["shared/<br><sub>UI y utilidades sin negocio</sub>"]
+  App -. sólo servidor .-> Server["server/<br><sub>env, idioma, cliente de la API</sub>"]
   Server --> Domain
-
-  Change[Cambio] --> Checks[format + lint + typecheck]
-  Checks --> Unit[Vitest\npruebas junto al código]
-  Unit --> E2E[Playwright\ntests/e2e]
-  E2E --> Build[Build de producción]
 ```
 
 ```text
 src/
-├─ app/                    # Rutas, layouts, metadata y handlers de Next.js
-├─ modules/                # Capacidades: projects/, auth/, billing/, etc.
-│  └─ <modulo>/
-│     ├─ ui/               # UI exclusiva del módulo
-│     ├─ application/      # Casos de uso, sólo si existen
-│     ├─ domain/           # Reglas y contratos, sólo si existen
-│     ├─ data/             # DTOs/mappers/queries, sólo si existen
-│     ├─ hooks/            # Hooks propios, sólo si existen
-│     └─ schemas/          # Validación, sólo si existe
-├─ shared/                 # UI y utilidades sin vocabulario de negocio
-└─ server/                 # DB, auth e integraciones privadas cuando se requieran
+├─ app/        # Rutas, layouts, metadata y handlers. Conoce las URLs, nada más.
+├─ modules/    # Una carpeta por capacidad del producto (ver el mapa de arriba)
+│  └─ <módulo>/  ui/ · domain/ · data/ · hooks/ · actions.ts   ← sólo las que existan
+├─ shared/     # ui/, lib/ y hooks/ sin vocabulario de negocio
+└─ server/     # Entorno, idioma y adaptadores privados (sólo servidor)
 ```
 
-`app/` conoce las URLs; un módulo conoce una capacidad del producto; `shared/` no conoce el negocio; `server/` conserva secretos y adaptadores privados. Las carpetas son permitidas, no obligatorias: no se crean directorios vacíos ni capas “por si acaso”.
+- Los datos se cargan en **Server Components**; el cliente sólo hidrata lo interactivo.
+- Los **filtros viven en la URL**, así que cualquier vista se puede compartir.
+- **Oxlint hace cumplir los límites**: `shared` no importa `app`, `modules` ni `server`; un módulo no importa `app`, y entre módulos sólo se usa `@/modules/<módulo>` (su `index.ts`), nunca sus rutas internas.
+- Un componente cliente nunca importa `src/server`.
+- Las carpetas son permitidas, no obligatorias: no se crean directorios vacíos ni capas "por si acaso".
 
-La guía ampliada está en [docs/architecture.md](architecture.md).
+La guía completa está en [architecture.md](architecture.md).
 
-## Piezas opcionales y qué se puede eliminar
+## Calidad shift-left
 
-La plantilla no obliga a conservar capas sin uso. Elimina una pieza sólo junto con su configuración, scripts, CI y documentación relacionados.
+Cada control corre lo antes posible, y CI repite exactamente el comando que ya corriste en local.
 
-| Pieza                                                         | Úsala cuando                                                               | Se puede eliminar si                                                                                                              |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `modules/*/application`, `domain`, `data`, `hooks`, `schemas` | La capacidad tiene esa responsabilidad real                                | Aún no existe esa responsabilidad; no crees directorios vacíos.                                                                   |
-| `src/server/`                                                 | Hay DB, autenticación, secretos o integración privada                      | La app no tiene infraestructura de servidor propia.                                                                               |
-| `tests/e2e/` + Playwright                                     | Hay flujos críticos de navegador, rutas, cookies o Server Components async | Es un prototipo sin flujo de navegador que proteger. Quita también `playwright.config.ts`, `test:e2e`, dependencia y pasos de CI. |
-| Vitest y pruebas junto a fuente                               | Quieres feedback rápido de lógica o componentes                            | Sólo en un experimento desechable. Quita `vitest.config.mts`, `vitest.setup.ts`, tests, scripts, dependencias y CI relacionados.  |
-| Job `Build + E2E` de CI                                       | Hay flujos de navegador que proteger                                       | Se elimina junto con Playwright.                                                                                                  |
-| GitHub Pages (`docs/`, `pages.yml`)                           | Quieres documentación publicada del producto                               | El producto documenta en otro sitio. Borra `.github/workflows/pages.yml` y `docs/_config.yml`.                                    |
-| `.codex/skills/` y `AGENTS.md`                                | Colaboran agentes o quieres hacer cumplir la arquitectura                  | Trabaja un equipo que no usará agentes ni estas reglas; perderás sus límites documentados.                                        |
+| Momento        | Qué corre                                                                    |
+| -------------- | ---------------------------------------------------------------------------- |
+| `pnpm install` | Node exacto, dependencias con 24 h o más de publicadas, hooks instalados     |
+| `pre-commit`   | Oxfmt y Oxlint sobre los archivos staged, gitleaks                           |
+| `commit-msg`   | Conventional Commits (`tipo(alcance): resumen`)                              |
+| `pre-push`     | `pnpm check`: format:check → lint → typecheck → test → knip                  |
+| CI             | `pnpm check` y build; E2E en pull requests; imagen y despliegue en cada rama |
 
-No elimines `src/app/`, `src/shared/`, TypeScript, Oxc, Tailwind, la configuración de Node, Lefthook ni el job `Calidad` de CI: son el núcleo mínimo de la plantilla y la base del flujo shift-left.
+- Las pruebas unitarias van **junto al archivo** que cubren (`<archivo>.test.tsx`). `tests/e2e` queda para recorridos de navegador, incluida la revisión de accesibilidad con axe.
+- Un control nuevo se añade como script dentro de `check`, no como un paso suelto de CI.
+- Nunca `git commit --no-verify` ni desactivar reglas de Oxlint para pasar un hook: se corrige la causa.
 
-## Inicio rápido
+Más detalle en [shift-left.md](shift-left.md) y en la [auditoría](audit.md).
 
-```bash
-git clone git@github.com:hexalis/milanko-frontend.git
-cd milanko-frontend
-pnpm install   # descarga Node 24.20.0 si hace falta e instala los hooks de Git
-cp .env.example .env.local
-pnpm dev
-```
-
-Instala pnpm 12.14.0 una vez con `npm install --global pnpm@12.14.0` (o `corepack enable`). Opcional: instala [gitleaks](https://github.com/gitleaks/gitleaks#installing) para detectar secretos al hacer commit; CI lo ejecuta siempre.
-
-Abre [http://localhost:3000](http://localhost:3000).
-
-> Si Node no logra conectar con la API (`UND_ERR_CONNECT_TIMEOUT`) en una red con IPv6 incompleto, arranca con `NODE_OPTIONS=--dns-result-order=ipv4first pnpm dev`.
-
-## Scripts
-
-| Comando             | Descripción                                                    |
-| ------------------- | -------------------------------------------------------------- |
-| `pnpm dev`          | Inicia el entorno local con Turbopack.                         |
-| `pnpm check`        | Barrera completa: formato, lint, tipos, tests y Knip.          |
-| `pnpm lint`         | Ejecuta Oxlint y falla ante advertencias.                      |
-| `pnpm lint:fix`     | Aplica correcciones seguras de Oxlint.                         |
-| `pnpm typecheck`    | Genera tipos de rutas (`next typegen`) y ejecuta TypeScript.   |
-| `pnpm test`         | Ejecuta pruebas unitarias y de componentes.                    |
-| `pnpm test:watch`   | Ejecuta las pruebas unitarias en modo watch.                   |
-| `pnpm test:e2e`     | Ejecuta el flujo E2E en Chromium.                              |
-| `pnpm format`       | Aplica formato con Oxfmt.                                      |
-| `pnpm format:check` | Verifica el formato con Oxfmt sin modificar archivos.          |
-| `pnpm knip`         | Reporta código o dependencias sin uso; revisa antes de borrar. |
-| `pnpm build`        | Genera el build optimizado de producción.                      |
-| `pnpm api:types`    | Regenera los tipos de la API desde el OpenAPI de develop.      |
-| `pnpm start`        | Sirve el build de producción.                                  |
-
-## Convenciones para personas y agentes
-
-La plantilla incluye las skills locales [`next-modular-architecture`](../.codex/skills/next-modular-architecture/SKILL.md) y [`tailwind-component-creation`](../.codex/skills/tailwind-component-creation/SKILL.md), además de un [`AGENTS.md`](../AGENTS.md). Antes de tocar la estructura o crear UI, cualquier agente debe leer la que corresponda.
-
-Estas reglas impiden crear carpetas genéricas como `src/components`, `src/services`, `src/utils` o `src/features`. También definen:
-
-- Nombres para archivos, componentes, hooks, tipos, DTOs y esquemas.
-- Límites de importación entre `app`, `modules`, `shared` y `server`.
-- Ubicación de imágenes, iconos y fuentes.
-- Criterios para crecer a monorepo o coordinar varias apps desde un repositorio orquestador.
-
-## Componentes y estilos
-
-Tailwind CSS v4 se carga desde `src/app/globals.css` y se procesa con PostCSS. Las clases permanecen junto a cada componente; no se crean hojas de estilos por componente ni carpetas globales nuevas. Para una variante semántica y estable —por ejemplo, `intent`, `size` o `tone`— se usa `tailwind-variants` con `tv` en el nivel del módulo. La skill local indica cuándo una pieza pertenece a `modules/<modulo>/ui` y cuándo ha madurado lo suficiente para `shared/ui`.
-
-Evita componer nombres de clase dinámicamente (`bg-${color}-500`): Tailwind necesita ver las clases completas en el código fuente. `pnpm format` ordena las clases de Tailwind automáticamente mediante Oxfmt.
-
-## Cuando haya varios repositorios
-
-Cada aplicación conserva esta arquitectura y puede instalarse, probarse y desplegarse por sí sola. El repositorio orquestador conserva ADRs, contratos API versionados, composición local y CI reutilizable; no absorbe el código de las aplicaciones.
-
-El código compartido se publica como paquetes versionados —por ejemplo `@organizacion/ui` y `@organizacion/contracts`— o se comparte mediante contratos API. No se usan imports relativos entre repositorios, copias manuales ni submódulos Git como dependencias de producción.
-
-## Calidad continua
-
-La calidad es **shift-left**: cada control corre lo antes posible y CI repite exactamente el mismo comando que el developer ya ejecutó en local.
+## Ramas y despliegue
 
 ```text
-pnpm install  → Node 24.20.0 exacto, dependencias con ≥ 24 h publicadas, hooks instalados
-pre-commit    → Oxfmt + Oxlint sobre archivos staged, gitleaks
-commit-msg    → Conventional Commits
-pre-push      → pnpm check (format:check → lint → typecheck → test → knip)
-CI            → pnpm check · build + E2E · pnpm audit + gitleaks + dependency review
+rama de trabajo ──PR──▶ develop ──▶ qa ──▶ main
+                           │          │       │
+                     dev-milanko  qa-milanko  milanko.hexalis.org
+                     (cada push despliega su ambiente automáticamente)
 ```
 
-Oxlint también hace cumplir los límites de arquitectura: `shared` no puede importar `app`, `modules` ni `server`; un módulo no importa `app` ni rutas internas de otro módulo.
+- El pipeline (`.github/workflows/pipeline.yml`) corre las verificaciones, construye la imagen standalone con `NEXT_BASE_PATH=/app` y la publica en `ghcr.io`; el VPS sólo la descarga y reinicia el contenedor.
+- **Un push a `main` es un despliegue a producción.**
+- Ambientes, variables y secretos de GitHub: [deployment.md](deployment.md).
 
-Las pruebas unitarias viven junto al archivo que cubren. Los recorridos E2E viven en `tests/e2e/`; en local Playwright arranca `next dev` y en CI el build de producción.
+## Reglas del repositorio
 
-El detalle de cada etapa, los ajustes de GitHub que hay que activar (branch protection, push protection, CodeQL, Pages) y cómo añadir un control nuevo están en [docs/shift-left.md](shift-left.md). La auditoría que motivó estos cambios está en [docs/audit.md](audit.md).
+Antes de crear o mover código, lee [`AGENTS.md`](../AGENTS.md) y las skills [`next-modular-architecture`](../.codex/skills/next-modular-architecture/SKILL.md) y [`tailwind-component-creation`](../.codex/skills/tailwind-component-creation/SKILL.md). Valen para personas y para agentes.
+
+- **Sin carpetas genéricas**: aquí no existen `src/components`, `src/services`, `src/utils`, `src/features` ni `src/store`.
+- **Tailwind estático**: las clases van completas junto al componente, nunca `bg-${color}-500`. `tailwind-variants` sólo para variantes semánticas y estables (`intent`, `size`, `tone`). Sin `tailwind-merge`.
+- **Textos en `copy`**, en inglés y español.
+- **Tours**: si mueves o renombras un ancla `data-tour`, actualiza `src/modules/tour/domain/tours.ts`.
+- **Commits** con Conventional Commits. Sólo `pnpm`; nunca `package-lock.json`.
+
+## Problemas frecuentes
+
+| Síntoma                                                 | Solución                                                                      |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `UND_ERR_CONNECT_TIMEOUT` al llamar a la API            | Red con IPv6 incompleto: `NODE_OPTIONS=--dns-result-order=ipv4first pnpm dev` |
+| Los hooks fallan con `pnpm: command not found`          | `corepack enable` y abre una terminal nueva.                                  |
+| Errores de tipos de la API tras un cambio en el backend | `pnpm api:types` y vuelve a correr `pnpm typecheck`.                          |
+| `pnpm test:e2e` no encuentra el navegador               | `pnpm exec playwright install chromium`                                       |
+
+## Origen
+
+El repositorio nace de la plantilla [`hexalis/template-nextjs-apps`](https://github.com/hexalis/template-nextjs-apps) ([cómo se usa](using-this-template.md)) y migró por fases la POC estática [`hexalis/poc-research-design-concept`](https://github.com/hexalis/poc-research-design-concept) (rama `develop`, commit `0280b3e`). La migración está completa: todas las vistas de la POC viven ya en este frontend.
