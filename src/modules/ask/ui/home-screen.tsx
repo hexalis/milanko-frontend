@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Translator } from "@/shared/lib/i18n";
+import { Icon } from "@/shared/ui/icon";
 import { HomeClose } from "./home-close";
 import { HomeDoors } from "./home-doors";
 import { HomeHero } from "./home-hero";
@@ -20,15 +21,21 @@ export function HomeScreen({ translator }: { translator: Translator }) {
       <HomeDoors translator={translator} />
       <HomeKey translator={translator} />
       <HomeClose translator={translator} />
-      <p className="text-body-s text-text-secondary m-0 mt-6 max-w-[72ch]">
-        {t("home.note")}{" "}
+      <footer className="border-border-subtle mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-t pt-5">
+        <p className="text-body-s text-text-secondary m-0 max-w-[72ch] text-pretty">
+          {t("home.note")}
+        </p>
         <Link
           href="/team"
-          className="text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring underline underline-offset-2"
+          className="group/team text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring inline-flex items-center gap-2 font-semibold underline decoration-transparent underline-offset-4 transition-[text-decoration-color] hover:decoration-current"
         >
+          <Icon name="team" />
           {t("home.team")}
+          <span className="ease-enter inline-flex transition-transform duration-[220ms] group-hover/team:translate-x-0.5 motion-reduce:transition-none">
+            <Icon name="arrow-right" size="sm" />
+          </span>
         </Link>
-      </p>
+      </footer>
     </main>
   );
 }

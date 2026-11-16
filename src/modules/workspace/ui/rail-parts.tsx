@@ -2,14 +2,14 @@ import { Icon } from "@/shared/ui/icon";
 
 /*
  * Building blocks shared by the rail's links and buttons. Each item is a `group/item`, so its
- * icon, active bar and tooltip follow the item's hover, focus and aria-current.
+ * icon, current-page pill and tooltip follow the item's hover, focus and aria-current.
  */
 
-/** Every rail link and button: shape, type, colour, the current page bar and the collapsed layout. */
+/** Every rail link and button: shape, type, colour, the current page (a tinted pill with a brand dot at its end) and the collapsed layout. */
 const RAIL_ITEM_BASE =
-  "group/item relative flex min-h-10 items-center gap-3 rounded-control px-3 text-label-m font-semibold text-text-secondary no-underline transition-colors duration-fast motion-reduce:transition-none hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:text-text-primary before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-action-primary before:opacity-0 aria-[current=page]:before:opacity-100 nav-collapsed:justify-center nav-collapsed:px-0";
+  "group/item relative flex min-h-10 items-center gap-3 rounded-control px-3 text-label-m font-semibold text-text-secondary no-underline transition-colors duration-fast motion-reduce:transition-none hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:bg-action-selected aria-[current=page]:text-text-primary after:absolute after:end-3 after:top-1/2 after:size-1.5 after:-translate-y-1/2 after:rounded-full after:bg-action-primary after:opacity-0 aria-[current=page]:after:opacity-100 nav-collapsed:justify-center nav-collapsed:after:hidden nav-collapsed:px-0";
 
-export const RAIL_ITEM = `${RAIL_ITEM_BASE} hover:bg-bg-hover`;
+export const RAIL_ITEM = `${RAIL_ITEM_BASE} hover:bg-bg-hover aria-[current=page]:hover:bg-action-selected`;
 
 /** An item inside a group that paints the hover for all its controls at once (case files and its caret). */
 export const RAIL_GROUP_ITEM = RAIL_ITEM_BASE;

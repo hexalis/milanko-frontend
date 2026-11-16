@@ -44,8 +44,8 @@ export function RailCasesItem({
 
   return (
     <>
-      <div className="rounded-control has-[>a:hover,>button:hover]:bg-bg-hover flex items-center gap-0.5">
-        <ShellNavLink href={CASES.href} className={`${RAIL_GROUP_ITEM} min-h-14 flex-1`}>
+      <div className="rounded-control has-[>a:hover,>button:hover]:bg-bg-hover has-[>a[aria-current=page]]:bg-action-selected flex items-center gap-0.5">
+        <ShellNavLink href={CASES.href} className={`${RAIL_GROUP_ITEM} min-h-14 flex-1 after:hidden aria-[current=page]:bg-transparent`}>
           <NavIcon icon={CASES.icon} hasActiveIcon={CASES.hasActiveIcon} />
           <span className="nav-collapsed:sr-only flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="truncate">{label}</span>

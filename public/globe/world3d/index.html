@@ -226,7 +226,67 @@
   @container dock (max-width: 420px) { .gx-dock__layers .num { display: none; } .legend li:nth-child(n+5) { display: none; } }
   @container dock (max-width: 330px) { .gx-dock__layers button { flex: 1 1 auto; padding: 6px 4px; font-size: 12px; } .gx-dock__layers button .ic { display: none; } }
   @media (pointer: coarse) { .gx-regions button, .chips button, .now { min-height: 44px; } }
-  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; } }
+
+  /* Milanko: the board assembles itself while NASA's tiles download, then the planet is born and the controls rise. */
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity 600ms var(--ease-out); }
+  .ld-orb { width: min(220px, 46vw); height: auto; overflow: visible; transition: scale 700ms var(--ease-out), filter 700ms var(--ease-out); }
+  .ld-halo { fill: none; stroke: var(--glow); stroke-opacity: 0.18; stroke-width: 1; animation: ld-breathe 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+  .ld-ball { fill: #0f1830; stroke: var(--space-line); stroke-width: 1; }
+  .ld-hex polygon { opacity: 0.08; animation: ld-tile 2.6s var(--d) ease-in-out infinite; }
+  .ld-shade { fill: url(#ldShade); pointer-events: none; }
+  .ld-orbit { fill: none; stroke: var(--glow); stroke-opacity: 0.35; stroke-width: 2.4; stroke-dasharray: 2 6; }
+  .ld-spin { animation: ld-spin 3.2s linear infinite; }
+  .ld-sat { fill: #ffb347; }
+  .ld-msg { margin: 0; max-width: 34ch; font-size: 14px; line-height: 1.5; color: var(--rail-ink); animation: ld-fade 400ms var(--ease-out); }
+  .ld-bar { width: min(220px, 46vw); height: 3px; border-radius: 999px; background: var(--space-line); overflow: hidden; }
+  .ld-bar i { display: block; height: 100%; width: calc(var(--p, 0.12) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--glow), #8ff0d8); transition: width 600ms var(--ease-out); }
+  .loading.is-done { opacity: 0; pointer-events: none; }
+  .loading.is-done .ld-orb { scale: 1.8; filter: blur(8px); }
+  @keyframes ld-tile { 0%, 100% { opacity: 0.08; } 40%, 60% { opacity: 1; } }
+  @keyframes ld-spin { to { rotate: 360deg; } }
+  @keyframes ld-breathe { 50% { scale: 1.06; stroke-opacity: 0.32; } }
+  @keyframes ld-fade { from { opacity: 0; translate: 0 4px; } }
+  body:not(.is-ready) #stage, body:not(.is-ready) :is(.gx-search, .gx-regions, .gx-tools, .gx-dock) { opacity: 0; pointer-events: none; }
+  body.is-ready #stage { animation: gx-born 1200ms var(--ease-out) backwards; }
+  body.is-ready :is(.gx-search, .gx-regions, .gx-tools, .gx-dock) { animation: gx-in 600ms var(--ease-out) backwards; }
+  body.is-ready .gx-search { animation-delay: 350ms; }
+  body.is-ready .gx-regions { animation-delay: 450ms; }
+  body.is-ready .gx-tools { animation-delay: 520ms; }
+  body.is-ready .gx-dock { animation-delay: 620ms; }
+  @keyframes gx-born { from { opacity: 0; scale: 0.72; filter: blur(10px); } }
+  @keyframes gx-in { from { opacity: 0; translate: 0 14px; } }
+  /* The portal's rail floats over the left of the frame (--cover-l): the picture and the controls keep clear of it. */
+  .gx-search, .gx-regions { margin-left: var(--cover-l, 0px); }
+  .gx-dock { margin-left: calc(var(--cover-l, 0px) / 2); max-width: calc(100% - 48px - var(--cover-l, 0px)); }
+  @media (min-width: 861px) {
+    .gx:not(.is-covered) .gx-regions { max-width: calc(100% - 200px - var(--cover-l, 0px)); }
+    .gx.is-covered .gx-regions { max-width: calc(100% - 120px - var(--cover-r) - var(--cover-l, 0px)); }
+  }
+
+  /* Loader polish: it centres in the space beside the portal's rail, stars twinkle behind it, a ping
+     leaves the planet, a moon keeps a second orbit, and three steps tick off with a percent. */
+  .loading { padding-left: calc(24px + var(--cover-l, 0px)); transition: opacity 600ms var(--ease-out), padding-left 400ms var(--ease-out); background: radial-gradient(1px 1px at 12% 22%, #fff8, transparent), radial-gradient(1px 1px at 78% 18%, #fff6, transparent), radial-gradient(1.5px 1.5px at 64% 72%, #fff7, transparent), radial-gradient(1px 1px at 28% 80%, #fff5, transparent), radial-gradient(1px 1px at 88% 58%, #fff6, transparent), radial-gradient(1.5px 1.5px at 40% 12%, #fff5, transparent), var(--space); animation: ld-twinkle 4s ease-in-out infinite alternate; }
+  .ld-orb { animation: ld-rise 700ms var(--ease-out) both; }
+  .ld-ping { fill: none; stroke: var(--glow); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: ld-ping 2.4s var(--ease-out) infinite; }
+  .ld-trail { fill: #ffb347; opacity: 0.35; filter: blur(2.5px); }
+  .ld-orbit--b { stroke: #8ff0d8; stroke-opacity: 0.25; stroke-dasharray: 1 5; }
+  .ld-spin--b { animation-duration: 5.4s; animation-direction: reverse; }
+  .ld-moon { fill: #d7dcea; }
+  .ld-meter { display: flex; align-items: center; gap: 10px; animation: ld-fade 500ms 120ms var(--ease-out) both; }
+  .ld-pct { min-width: 4ch; font-size: 12px; color: var(--glow); text-align: right; }
+  .ld-steps { display: flex; gap: 18px; margin: 2px 0 0; padding: 0; list-style: none; font-size: 12px; color: #6f7a92; animation: ld-fade 500ms 220ms var(--ease-out) both; }
+  .ld-steps li { display: inline-flex; align-items: center; gap: 6px; transition: color 300ms var(--ease-out); }
+  .ld-steps li::before { content: ""; width: 8px; height: 8px; border-radius: 999px; border: 1.5px solid currentColor; transition: background 300ms var(--ease-out), border-color 300ms var(--ease-out), scale 300ms var(--ease-out); }
+  .ld-steps li.is-active { color: var(--rail-ink); }
+  .ld-steps li.is-active::before { border-color: var(--glow); animation: ld-blink 900ms ease-in-out infinite; }
+  .ld-steps li.is-done { color: #8ff0d8; }
+  .ld-steps li.is-done::before { background: #8ff0d8; border-color: #8ff0d8; scale: 1.15; }
+  @keyframes ld-ping { from { scale: 0.95; stroke-opacity: 0.5; } to { scale: 1.45; stroke-opacity: 0; } }
+  @keyframes ld-rise { from { opacity: 0; scale: 0.8; } }
+  @keyframes ld-blink { 50% { background: var(--glow); } }
+  @keyframes ld-twinkle { to { background-position: 2px 1px, -1px 2px, 1px -1px, -2px 0, 0 2px, 1px 1px, 0 0; } }
+  @media (max-width: 600px) { .ld-steps { gap: 10px; font-size: 11px; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; } .ld-hex polygon { animation: none; opacity: 0.6; } }
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script src="../stats.js?v=42"></script>
@@ -237,7 +297,19 @@
 <body>
 <section class="gx" aria-label="Explorador global, Mundo 3D">
 <div id="stage" role="img" aria-label="Globo 3D como un tablero de hexágonos con biomas y relieve de NASA. Arrastra para girarlo; toca un expediente o un fenómeno para acercarte."></div>
-<div class="loading" id="loading">Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…</div>
+<div class="loading" id="loading">
+  <svg class="ld-orb" viewBox="-64 -64 128 128" aria-hidden="true">
+    <defs><radialGradient id="ldShade" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity="0.12"/><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient></defs>
+    <circle class="ld-halo" r="50"/>
+    <circle class="ld-ball" r="40"/>
+    <g class="ld-hex"><polygon points="-26.7,-9.0 -29.0,-5.1 -33.4,-5.1 -35.7,-9.0 -33.4,-12.9 -29.0,-12.9" fill="#2b6cb0" style="--d:234ms"/><polygon points="-26.7,0.0 -29.0,3.9 -33.4,3.9 -35.7,0.0 -33.4,-3.9 -29.0,-3.9" fill="#2b6cb0" style="--d:243ms"/><polygon points="-26.7,9.0 -29.0,12.9 -33.4,12.9 -35.7,9.0 -33.4,5.1 -29.0,5.1" fill="#2b6cb0" style="--d:202ms"/><polygon points="-18.9,-22.5 -21.2,-18.6 -25.6,-18.6 -27.9,-22.5 -25.6,-26.4 -21.2,-26.4" fill="#2b6cb0" style="--d:411ms"/><polygon points="-18.9,-13.5 -21.2,-9.6 -25.6,-9.6 -27.9,-13.5 -25.6,-17.4 -21.2,-17.4" fill="#3f8f5a" style="--d:481ms"/><polygon points="-18.9,-4.5 -21.2,-0.6 -25.6,-0.6 -27.9,-4.5 -25.6,-8.4 -21.2,-8.4" fill="#2b6cb0" style="--d:369ms"/><polygon points="-18.9,4.5 -21.2,8.4 -25.6,8.4 -27.9,4.5 -25.6,0.6 -21.2,0.6" fill="#dfe8f2" style="--d:420ms"/><polygon points="-18.9,13.5 -21.2,17.4 -25.6,17.4 -27.9,13.5 -25.6,9.6 -21.2,9.6" fill="#3f8f5a" style="--d:373ms"/><polygon points="-18.9,22.5 -21.2,26.4 -25.6,26.4 -27.9,22.5 -25.6,18.6 -21.2,18.6" fill="#dfe8f2" style="--d:376ms"/><polygon points="-11.1,-27.0 -13.4,-23.1 -17.8,-23.1 -20.1,-27.0 -17.8,-30.9 -13.4,-30.9" fill="#2b6cb0" style="--d:543ms"/><polygon points="-11.1,-18.0 -13.4,-14.1 -17.8,-14.1 -20.1,-18.0 -17.8,-21.9 -13.4,-21.9" fill="#2b6cb0" style="--d:564ms"/><polygon points="-11.1,-9.0 -13.4,-5.1 -17.8,-5.1 -20.1,-9.0 -17.8,-12.9 -13.4,-12.9" fill="#dfe8f2" style="--d:609ms"/><polygon points="-11.1,0.0 -13.4,3.9 -17.8,3.9 -20.1,0.0 -17.8,-3.9 -13.4,-3.9" fill="#3f8f5a" style="--d:542ms"/><polygon points="-11.1,9.0 -13.4,12.9 -17.8,12.9 -20.1,9.0 -17.8,5.1 -13.4,5.1" fill="#2b6cb0" style="--d:541ms"/><polygon points="-11.1,18.0 -13.4,21.9 -17.8,21.9 -20.1,18.0 -17.8,14.1 -13.4,14.1" fill="#dfe8f2" style="--d:573ms"/><polygon points="-11.1,27.0 -13.4,30.9 -17.8,30.9 -20.1,27.0 -17.8,23.1 -13.4,23.1" fill="#2b6cb0" style="--d:554ms"/><polygon points="-3.3,-31.5 -5.6,-27.7 -10.0,-27.7 -12.3,-31.5 -10.0,-35.4 -5.6,-35.4" fill="#6aa84f" style="--d:781ms"/><polygon points="-3.3,-22.5 -5.6,-18.6 -10.0,-18.6 -12.3,-22.5 -10.0,-26.4 -5.6,-26.4" fill="#2b6cb0" style="--d:779ms"/><polygon points="-3.3,-13.5 -5.6,-9.6 -10.0,-9.6 -12.3,-13.5 -10.0,-17.4 -5.6,-17.4" fill="#3f8f5a" style="--d:721ms"/><polygon points="-3.3,-4.5 -5.6,-0.6 -10.0,-0.6 -12.3,-4.5 -10.0,-8.4 -5.6,-8.4" fill="#2b6cb0" style="--d:755ms"/><polygon points="-3.3,4.5 -5.6,8.4 -10.0,8.4 -12.3,4.5 -10.0,0.6 -5.6,0.6" fill="#2b6cb0" style="--d:778ms"/><polygon points="-3.3,13.5 -5.6,17.4 -10.0,17.4 -12.3,13.5 -10.0,9.6 -5.6,9.6" fill="#2b6cb0" style="--d:780ms"/><polygon points="-3.3,22.5 -5.6,26.4 -10.0,26.4 -12.3,22.5 -10.0,18.6 -5.6,18.6" fill="#3f8f5a" style="--d:787ms"/><polygon points="-3.3,31.5 -5.6,35.4 -10.0,35.4 -12.3,31.5 -10.0,27.7 -5.6,27.7" fill="#dfe8f2" style="--d:771ms"/><polygon points="4.5,-27.0 2.2,-23.1 -2.2,-23.1 -4.5,-27.0 -2.2,-30.9 2.2,-30.9" fill="#c9a66b" style="--d:979ms"/><polygon points="4.5,-18.0 2.2,-14.1 -2.2,-14.1 -4.5,-18.0 -2.2,-21.9 2.2,-21.9" fill="#1f4e8c" style="--d:939ms"/><polygon points="4.5,-9.0 2.2,-5.1 -2.2,-5.1 -4.5,-9.0 -2.2,-12.9 2.2,-12.9" fill="#6aa84f" style="--d:926ms"/><polygon points="4.5,0.0 2.2,3.9 -2.2,3.9 -4.5,0.0 -2.2,-3.9 2.2,-3.9" fill="#2b6cb0" style="--d:911ms"/><polygon points="4.5,9.0 2.2,12.9 -2.2,12.9 -4.5,9.0 -2.2,5.1 2.2,5.1" fill="#3f8f5a" style="--d:969ms"/><polygon points="4.5,18.0 2.2,21.9 -2.2,21.9 -4.5,18.0 -2.2,14.1 2.2,14.1" fill="#6aa84f" style="--d:890ms"/><polygon points="4.5,27.0 2.2,30.9 -2.2,30.9 -4.5,27.0 -2.2,23.1 2.2,23.1" fill="#1f4e8c" style="--d:947ms"/><polygon points="12.3,-31.5 10.0,-27.7 5.6,-27.7 3.3,-31.5 5.6,-35.4 10.0,-35.4" fill="#c9a66b" style="--d:1163ms"/><polygon points="12.3,-22.5 10.0,-18.6 5.6,-18.6 3.3,-22.5 5.6,-26.4 10.0,-26.4" fill="#1f4e8c" style="--d:1144ms"/><polygon points="12.3,-13.5 10.0,-9.6 5.6,-9.6 3.3,-13.5 5.6,-17.4 10.0,-17.4" fill="#2b6cb0" style="--d:1087ms"/><polygon points="12.3,-4.5 10.0,-0.6 5.6,-0.6 3.3,-4.5 5.6,-8.4 10.0,-8.4" fill="#dfe8f2" style="--d:1066ms"/><polygon points="12.3,4.5 10.0,8.4 5.6,8.4 3.3,4.5 5.6,0.6 10.0,0.6" fill="#c9a66b" style="--d:1072ms"/><polygon points="12.3,13.5 10.0,17.4 5.6,17.4 3.3,13.5 5.6,9.6 10.0,9.6" fill="#1f4e8c" style="--d:1070ms"/><polygon points="12.3,22.5 10.0,26.4 5.6,26.4 3.3,22.5 5.6,18.6 10.0,18.6" fill="#2b6cb0" style="--d:1104ms"/><polygon points="12.3,31.5 10.0,35.4 5.6,35.4 3.3,31.5 5.6,27.7 10.0,27.7" fill="#2b6cb0" style="--d:1136ms"/><polygon points="20.1,-27.0 17.8,-23.1 13.4,-23.1 11.1,-27.0 13.4,-30.9 17.8,-30.9" fill="#c9a66b" style="--d:1320ms"/><polygon points="20.1,-18.0 17.8,-14.1 13.4,-14.1 11.1,-18.0 13.4,-21.9 17.8,-21.9" fill="#c9a66b" style="--d:1266ms"/><polygon points="20.1,-9.0 17.8,-5.1 13.4,-5.1 11.1,-9.0 13.4,-12.9 17.8,-12.9" fill="#1f4e8c" style="--d:1299ms"/><polygon points="20.1,0.0 17.8,3.9 13.4,3.9 11.1,0.0 13.4,-3.9 17.8,-3.9" fill="#1f4e8c" style="--d:1297ms"/><polygon points="20.1,9.0 17.8,12.9 13.4,12.9 11.1,9.0 13.4,5.1 17.8,5.1" fill="#2b6cb0" style="--d:1231ms"/><polygon points="20.1,18.0 17.8,21.9 13.4,21.9 11.1,18.0 13.4,14.1 17.8,14.1" fill="#6aa84f" style="--d:1343ms"/><polygon points="20.1,27.0 17.8,30.9 13.4,30.9 11.1,27.0 13.4,23.1 17.8,23.1" fill="#2b6cb0" style="--d:1283ms"/><polygon points="27.9,-22.5 25.6,-18.6 21.2,-18.6 18.9,-22.5 21.2,-26.4 25.6,-26.4" fill="#6aa84f" style="--d:1401ms"/><polygon points="27.9,-13.5 25.6,-9.6 21.2,-9.6 18.9,-13.5 21.2,-17.4 25.6,-17.4" fill="#1f4e8c" style="--d:1476ms"/><polygon points="27.9,-4.5 25.6,-0.6 21.2,-0.6 18.9,-4.5 21.2,-8.4 25.6,-8.4" fill="#dfe8f2" style="--d:1430ms"/><polygon points="27.9,4.5 25.6,8.4 21.2,8.4 18.9,4.5 21.2,0.6 25.6,0.6" fill="#c9a66b" style="--d:1507ms"/><polygon points="27.9,13.5 25.6,17.4 21.2,17.4 18.9,13.5 21.2,9.6 25.6,9.6" fill="#1f4e8c" style="--d:1396ms"/><polygon points="27.9,22.5 25.6,26.4 21.2,26.4 18.9,22.5 21.2,18.6 25.6,18.6" fill="#2b6cb0" style="--d:1439ms"/><polygon points="35.7,-9.0 33.4,-5.1 29.0,-5.1 26.7,-9.0 29.0,-12.9 33.4,-12.9" fill="#2b6cb0" style="--d:1644ms"/><polygon points="35.7,0.0 33.4,3.9 29.0,3.9 26.7,0.0 29.0,-3.9 33.4,-3.9" fill="#2b6cb0" style="--d:1629ms"/><polygon points="35.7,9.0 33.4,12.9 29.0,12.9 26.7,9.0 29.0,5.1 33.4,5.1" fill="#6aa84f" style="--d:1593ms"/></g>
+    <circle class="ld-shade" r="40"/>
+    <circle class="ld-ping" r="42"/><g transform="rotate(-18) scale(1 0.3)"><circle class="ld-orbit" r="56"/><g class="ld-spin"><circle class="ld-trail" cx="56" r="4"/><circle class="ld-sat" cx="56" r="4"/></g></g><g transform="rotate(28) scale(1 0.42)"><circle class="ld-orbit ld-orbit--b" r="48"/><g class="ld-spin ld-spin--b"><circle class="ld-moon" cx="48" r="3"/></g></g>
+  </svg>
+  <p class="ld-msg" id="loadingMsg" role="status">Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…</p>
+  <div class="ld-meter" aria-hidden="true"><div class="ld-bar"><i></i></div><span class="ld-pct num" id="loadingPct">0%</span></div>
+  <ol class="ld-steps" id="loadingSteps" aria-hidden="true"><li>Datos de NASA</li><li>Casillas del tablero</li><li>Mundo en órbita</li></ol>
+</div>
 
 <div class="gx-search" role="search">
   <label class="gx-search__field">
@@ -293,7 +365,7 @@
     <section aria-labelledby="detT"><h3 id="detT">Detalle del mundo</h3><p class="gx-panel__note">Solo cambia el aspecto; los datos no cambian.</p>
       <label class="toggle">Árboles, montañas y volcanes <input type="checkbox" id="tProps" checked></label>
       <label class="toggle">Nubes de adorno <input type="checkbox" id="tClouds" checked></label>
-      <label class="toggle">Estrellas y cometas <input type="checkbox" id="tSky" checked></label>
+      <label class="toggle">Cielo: estrellas, cometas, Luna y auroras <input type="checkbox" id="tSky" checked></label>
       <label class="toggle">Girar solo <input type="checkbox" id="tSpin" checked></label>
     </section>
     <div class="gx-panel__foot"><button type="button" class="linklike" id="setClear" hidden>Limpiar</button><button type="button" class="btn btn--glow" id="setDone">Listo</button></div>
@@ -313,6 +385,14 @@
 </section>
 
 <script>
+/* Milanko: the portal says how wide its rail is as soon as this page loads (before the world is
+   built), so the loader centres in the free space beside it. */
+addEventListener('message', (e) => {
+  if (e.source !== window.parent || !e.data || e.data.etd !== 1 || e.data.type !== 'rail') return;
+  document.documentElement.style.setProperty('--cover-l', `${Math.max(0, Math.min(400, +e.data.px || 0))}px`);
+});
+</script>
+<script>
 /* Language first, in a classic script that runs before the module below. The module waits for three.js from
    jsDelivr before any of its code runs, and this page's own text is written in Spanish: translated in there,
    an English portal showed a Spanish globe while the library downloaded, and for good if it never came. */
@@ -321,7 +401,7 @@
   const ql = new URLSearchParams(location.search).get('lang'); if (ql && ql !== I18N.lang) I18N.set(ql);
   const LANG = window.W3_LANG = I18N.lang === 'es' ? 'es' : 'en';
   document.documentElement.lang = LANG;
-  const EN = window.W3_EN = {"No se pudo cargar el mundo 3D: la biblioteca three.js no llegó desde jsDelivr. Revisa tu conexión.": "The 3D world could not load: the three.js library did not arrive from jsDelivr. Check your connection.", "Reintentar": "Try again", "Explorador · Mundo 3D": "Explorer · 3D world", "Explorador global, Mundo 3D": "Global explorer, 3D world", "Globo 3D como un tablero de hexágonos con biomas y relieve de NASA. Arrastra para girarlo; toca un expediente o un fenómeno para acercarte.": "A 3D globe as a board of hexagons, with NASA biomes and relief. Drag to turn it; tap a case file or a phenomenon to get close.", "Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…": "Loading the NASA board: land cover, elevation, color and the sea floor…", "No se pudo cargar el tablero de NASA. Revisa la conexión y recarga.": "The NASA board could not be loaded. Check the connection and reload.", "Buscar en el globo": "Search the globe", "Busca una región, expediente o tormenta": "Search a region, case file or storm", "Ir a una región": "Go to a region", "Acercar": "Zoom in", "Alejar": "Zoom out", "Ver el planeta completo": "See the whole planet", "Capa": "Layer", "Expedientes": "Case files", "Eventos": "Events", "Clima": "Weather", "En vivo": "Live", "Ajustes": "Settings", "Datos": "Data", "Métrica": "Metric", "Fecha": "Date", "Valor": "Value", "Anomalía mensual": "Monthly anomaly", "Ocultar panel": "Hide panel", "Mostrar panel": "Show panel", "Reproducir los años": "Play the years", "Pausar": "Pause", "Ahora": "Now", "Eventos reportados en": "Events reported in", "Hoy": "Today", "Ajustes de la vista": "View settings", "Cerrar": "Close", "Qué mostrar": "What to show", "Detalle del mundo": "World detail", "Solo cambia el aspecto; los datos no cambian.": "This changes the look only; the data stays the same.", "Árboles, montañas y volcanes": "Trees, mountains and volcanoes", "Nubes de adorno": "Decorative clouds", "Estrellas y cometas": "Stars and comets", "Girar solo": "Turn on its own", "Limpiar": "Clear", "Listo": "Done", "Cerrar y volver al planeta": "Close and go back to the planet", "Leyenda": "Key", "Bosque de coníferas": "Coniferous forest", "Selva tropical": "Tropical rainforest", "Bosque caducifolio o mixto": "Deciduous or mixed forest", "Matorral": "Shrubland", "Sabana": "Savanna", "Pradera": "Grassland", "Humedal": "Wetland", "Cultivos": "Cropland", "Ciudad": "City", "Hielo y nieve permanentes": "Permanent snow and ice", "Desierto o suelo desnudo": "Desert or bare ground", "Tundra": "Tundra", "Montaña (más de 3.000 m)": "Mountain (over 3,000 m)", "Volcán con actividad en EONET": "Volcano active in EONET", "Lago": "Lake", "Costa y mar poco profundo": "Coast and shallow sea", "Mar": "Sea", "Mar profundo": "Deep sea", "No se pudo descargar una capa de NASA GIBS. Revisa la conexión y recarga.": "A NASA GIBS layer could not be downloaded. Check the connection and reload.", "Pintando las casillas…": "Painting the tiles…", "Pidiendo los eventos a NASA EONET…": "Asking NASA EONET for events…", "No se pudo leer NASA EONET ahora. Prueba con un año.": "NASA EONET could not be read right now. Try a year.", "Evidencia fuerte": "Strong evidence", "Evidencia moderada": "Moderate evidence", "Evidencia débil": "Weak evidence", "No concluyente": "Inconclusive", "Tendencia confirmada": "Confirmed trend", "Expediente de anomalía": "Anomaly file", "Tormenta severa": "Severe storm", "Tornado": "Tornado", "Inundación": "Flood", "Incendio forestal": "Wildfire", "Volcán": "Volcano", "Hielo marino o lacustre": "Sea or lake ice", "Polvo y bruma": "Dust and haze", "Sismo": "Earthquake", "Ciclón (gira según su hemisferio)": "Cyclone (turns with its hemisphere)", "Lluvia e inundación": "Rain and flood", "Incendio y humo": "Wildfire and smoke", "Ceniza volcánica": "Volcanic ash", "Hielo y nieve": "Ice and snow", "tormentas": "storms", "tornado": "tornado", "inundaciones": "floods", "incendios": "wildfires", "volcanes": "volcanoes", "de hielo o nieve": "ice or snow", "de polvo": "dust", "sismos": "earthquakes", "Anomalías": "Anomalies", "Tormentas": "Storms", "Inundaciones": "Floods", "Incendios": "Wildfires", "Volcanes": "Volcanoes", "Sismos": "Earthquakes", "Todos": "All", "Mueve la barra para ver un año": "Move the bar to see a year", "Fenómenos registrados en": "Phenomena recorded in", "Sube": "Rising", "Baja": "Falling", "Anomalía": "Anomaly", "Biomas: MODIS (NASA) · relieve: ASTER GDEM (NASA/METI) · color y mar: Blue Marble (NASA) · vía NASA GIBS": "Biomes: MODIS (NASA) · relief: ASTER GDEM (NASA/METI) · color and sea: Blue Marble (NASA) · via NASA GIBS", "NASA EONET en vivo: eventos abiertos de los últimos 45 días, con trayectoria de cada tormenta": "NASA EONET live: open events of the last 45 days, with each storm’s track", "Un tipo de expediente a la vez. El globo cambia al elegir.": "One kind of case file at a time. The globe changes as you pick.", "Un tipo de fenómeno a la vez. Cada forma es un evento real de EONET.": "One kind of phenomenon at a time. Every shape is a real EONET event.", "Ajustes · 1 filtro activo": "Settings · 1 filter on", "Regiones": "Regions", "Clima en pantalla": "Weather on screen", "Sin resultados. Prueba con un país, una región o el nombre de una tormenta.": "No results. Try a country, a region or a storm’s name.", "Expediente del portal: datos de NASA POWER, MODIS y EONET.": "A portal case file: data from NASA POWER, MODIS and EONET.", "Fuente: NASA EONET. La forma en el globo es un símbolo del tipo de evento.": "Source: NASA EONET. The shape on the globe is a symbol of the kind of event.", "Abrir el expediente": "Open the case file", "Volver al planeta": "Back to the planet", "Toca para acercarte": "Tap to get close", "Agua": "Water", "Sin dato de elevación": "No elevation data"};
+  const EN = window.W3_EN = {"No se pudo cargar el mundo 3D: la biblioteca three.js no llegó desde jsDelivr. Revisa tu conexión.": "The 3D world could not load: the three.js library did not arrive from jsDelivr. Check your connection.", "Reintentar": "Try again", "Datos de NASA": "NASA data", "Casillas del tablero": "Board tiles", "Mundo en órbita": "World in orbit", "Explorador · Mundo 3D": "Explorer · 3D world", "Explorador global, Mundo 3D": "Global explorer, 3D world", "Globo 3D como un tablero de hexágonos con biomas y relieve de NASA. Arrastra para girarlo; toca un expediente o un fenómeno para acercarte.": "A 3D globe as a board of hexagons, with NASA biomes and relief. Drag to turn it; tap a case file or a phenomenon to get close.", "Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…": "Loading the NASA board: land cover, elevation, color and the sea floor…", "No se pudo cargar el tablero de NASA. Revisa la conexión y recarga.": "The NASA board could not be loaded. Check the connection and reload.", "Buscar en el globo": "Search the globe", "Busca una región, expediente o tormenta": "Search a region, case file or storm", "Ir a una región": "Go to a region", "Acercar": "Zoom in", "Alejar": "Zoom out", "Ver el planeta completo": "See the whole planet", "Capa": "Layer", "Expedientes": "Case files", "Eventos": "Events", "Clima": "Weather", "En vivo": "Live", "Ajustes": "Settings", "Datos": "Data", "Métrica": "Metric", "Fecha": "Date", "Valor": "Value", "Anomalía mensual": "Monthly anomaly", "Ocultar panel": "Hide panel", "Mostrar panel": "Show panel", "Reproducir los años": "Play the years", "Pausar": "Pause", "Ahora": "Now", "Eventos reportados en": "Events reported in", "Hoy": "Today", "Ajustes de la vista": "View settings", "Cerrar": "Close", "Qué mostrar": "What to show", "Detalle del mundo": "World detail", "Solo cambia el aspecto; los datos no cambian.": "This changes the look only; the data stays the same.", "Árboles, montañas y volcanes": "Trees, mountains and volcanoes", "Nubes de adorno": "Decorative clouds", "Estrellas y cometas": "Stars and comets", "Cielo: estrellas, cometas, Luna y auroras": "Sky: stars, comets, Moon and auroras", "Girar solo": "Turn on its own", "Limpiar": "Clear", "Listo": "Done", "Cerrar y volver al planeta": "Close and go back to the planet", "Leyenda": "Key", "Bosque de coníferas": "Coniferous forest", "Selva tropical": "Tropical rainforest", "Bosque caducifolio o mixto": "Deciduous or mixed forest", "Matorral": "Shrubland", "Sabana": "Savanna", "Pradera": "Grassland", "Humedal": "Wetland", "Cultivos": "Cropland", "Ciudad": "City", "Hielo y nieve permanentes": "Permanent snow and ice", "Desierto o suelo desnudo": "Desert or bare ground", "Tundra": "Tundra", "Montaña (más de 3.000 m)": "Mountain (over 3,000 m)", "Volcán con actividad en EONET": "Volcano active in EONET", "Lago": "Lake", "Costa y mar poco profundo": "Coast and shallow sea", "Mar": "Sea", "Mar profundo": "Deep sea", "No se pudo descargar una capa de NASA GIBS. Revisa la conexión y recarga.": "A NASA GIBS layer could not be downloaded. Check the connection and reload.", "Pintando las casillas…": "Painting the tiles…", "Pidiendo los eventos a NASA EONET…": "Asking NASA EONET for events…", "No se pudo leer NASA EONET ahora. Prueba con un año.": "NASA EONET could not be read right now. Try a year.", "Evidencia fuerte": "Strong evidence", "Evidencia moderada": "Moderate evidence", "Evidencia débil": "Weak evidence", "No concluyente": "Inconclusive", "Tendencia confirmada": "Confirmed trend", "Expediente de anomalía": "Anomaly file", "Tormenta severa": "Severe storm", "Tornado": "Tornado", "Inundación": "Flood", "Incendio forestal": "Wildfire", "Volcán": "Volcano", "Hielo marino o lacustre": "Sea or lake ice", "Polvo y bruma": "Dust and haze", "Sismo": "Earthquake", "Ciclón (gira según su hemisferio)": "Cyclone (turns with its hemisphere)", "Lluvia e inundación": "Rain and flood", "Incendio y humo": "Wildfire and smoke", "Ceniza volcánica": "Volcanic ash", "Hielo y nieve": "Ice and snow", "tormentas": "storms", "tornado": "tornado", "inundaciones": "floods", "incendios": "wildfires", "volcanes": "volcanoes", "de hielo o nieve": "ice or snow", "de polvo": "dust", "sismos": "earthquakes", "Anomalías": "Anomalies", "Tormentas": "Storms", "Inundaciones": "Floods", "Incendios": "Wildfires", "Volcanes": "Volcanoes", "Sismos": "Earthquakes", "Todos": "All", "Mueve la barra para ver un año": "Move the bar to see a year", "Fenómenos registrados en": "Phenomena recorded in", "Sube": "Rising", "Baja": "Falling", "Anomalía": "Anomaly", "Biomas: MODIS (NASA) · relieve: ASTER GDEM (NASA/METI) · color y mar: Blue Marble (NASA) · vía NASA GIBS": "Biomes: MODIS (NASA) · relief: ASTER GDEM (NASA/METI) · color and sea: Blue Marble (NASA) · via NASA GIBS", "NASA EONET en vivo: eventos abiertos de los últimos 45 días, con trayectoria de cada tormenta": "NASA EONET live: open events of the last 45 days, with each storm’s track", "Un tipo de expediente a la vez. El globo cambia al elegir.": "One kind of case file at a time. The globe changes as you pick.", "Un tipo de fenómeno a la vez. Cada forma es un evento real de EONET.": "One kind of phenomenon at a time. Every shape is a real EONET event.", "Ajustes · 1 filtro activo": "Settings · 1 filter on", "Regiones": "Regions", "Clima en pantalla": "Weather on screen", "Sin resultados. Prueba con un país, una región o el nombre de una tormenta.": "No results. Try a country, a region or a storm’s name.", "Expediente del portal: datos de NASA POWER, MODIS y EONET.": "A portal case file: data from NASA POWER, MODIS and EONET.", "Fuente: NASA EONET. La forma en el globo es un símbolo del tipo de evento.": "Source: NASA EONET. The shape on the globe is a symbol of the kind of event.", "Abrir el expediente": "Open the case file", "Volver al planeta": "Back to the planet", "Toca para acercarte": "Tap to get close", "Toca para saber más": "Tap to learn more", "Agua": "Water", "Sin dato de elevación": "No elevation data"};
   const T = (s) => (LANG === 'en' ? EN[s] ?? s : s);
   if (LANG === 'en') {
     // Static text in the page: text nodes and the labels people and screen readers see.
@@ -350,6 +430,7 @@ import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cells as gridCells, cellGeometry, basis, regionCentres, regionOf, BIOMES, RECORD, FLAG } from './grid.js?v=42';
+import { createSky } from './sky.js?v=5';
 
 // Language and the page's static text: set by the classic script above, which runs before three.js arrives.
 const LANG = window.W3_LANG, EN = window.W3_EN;
@@ -364,6 +445,19 @@ reducedMQ.addEventListener('change', (e) => { REDUCED = e.matches; if (REDUCED) 
 // narrow for a moment while it loads, which must not pick the phone's grid on a desktop.
 const MOBILE = matchMedia('(pointer: coarse)').matches || (() => { try { return (window.top || window).innerWidth <= 700; } catch (e) { return innerWidth <= 700; } })();
 const stage = document.getElementById('stage'), loading = document.getElementById('loading');
+// The loader's line and bar: each step says what is happening and moves the bar on.
+let pctNow = 0;
+const loadStep = (msg, p, step) => {
+  const m = document.getElementById('loadingMsg'); if (m && msg) { m.textContent = msg; m.style.animation = 'none'; void m.offsetWidth; m.style.animation = ''; }
+  loading.style.setProperty('--p', p);
+  document.querySelectorAll('#loadingSteps li').forEach((li, i) => { li.classList.toggle('is-done', i < step); li.classList.toggle('is-active', i === step); });
+  // The percent counts up to where the bar is heading.
+  const el = document.getElementById('loadingPct'), from = pctNow, to = Math.round(p * 100), t0 = performance.now();
+  pctNow = to; if (!el) return;
+  const tick = (now) => { const k = Math.min(1, (now - t0) / 600); el.textContent = `${Math.round(from + (to - from) * (1 - (1 - k) ** 3))}%`; if (k < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+};
+loadStep(null, 0.35, 0);
 const R = 1;
 // The board comes from api-processor /world/ when available, else data/world/: a base grid for the whole planet — 64,002
 // hexagons about 90 km across on desktop, 31,362 about 130 km across on phones — and a fine grid of 829,442
@@ -606,35 +700,9 @@ const atmo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.17, 64, 48), new THRE
 }));
 scene.add(atmo);
 
-/* ---------- Sky ---------- */
-const sky = new THREE.Group(); scene.add(sky);
-function starLayer(n, rMin, rMax, size, twinkle) {
-  const pos = new Float32Array(n * 3), seed = new Float32Array(n);
-  for (let i = 0; i < n; i++) { const v = new THREE.Vector3().randomDirection().multiplyScalar(rMin + Math.random() * (rMax - rMin)); pos.set([v.x, v.y, v.z], i * 3); seed[i] = Math.random() * 6.28; }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('seed', new THREE.BufferAttribute(seed, 1));
-  const m = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { t: { value: 0 }, s: { value: size }, tw: { value: twinkle ? 1 : 0 } },
-    vertexShader: 'attribute float seed; uniform float t; uniform float s; uniform float tw; varying float a; void main(){ vec4 p = modelViewMatrix * vec4(position,1.); a = 0.55 + 0.45 * mix(1., sin(t * 1.3 + seed * 3.), tw); gl_PointSize = s * (300. / -p.z); gl_Position = projectionMatrix * p; }',
-    fragmentShader: 'varying float a; void main(){ float d = length(gl_PointCoord - .5); if (d > .5) discard; gl_FragColor = vec4(vec3(1.,.97,.92), a * smoothstep(.5, .0, d)); }' });
-  sky.add(new THREE.Points(g, m)); return m;
-}
-const starMats = [starLayer(2600, 60, 120, 0.35, false), starLayer(700, 30, 60, 0.45, true), starLayer(90, 18, 30, 0.7, true)];
-function bandTexture() { const c = document.createElement('canvas'); c.width = 4; c.height = 128; const g = c.getContext('2d'); ['#c9a77c', '#e3cfa4', '#b98d62', '#e8d8b4', '#a87d55', '#d9be8f', '#c39a6c'].forEach((b, i, a) => { g.fillStyle = b; g.fillRect(0, i * 128 / a.length, 4, 128 / a.length + 1); }); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
-const planet = new THREE.Group();
-planet.add(new THREE.Mesh(new THREE.SphereGeometry(1.4, 48, 32), new THREE.MeshStandardMaterial({ map: bandTexture(), roughness: 1 })));
-const ringM = new THREE.Mesh(new THREE.RingGeometry(1.9, 3, 96), new THREE.MeshBasicMaterial({ color: '#d8c7a4', transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
-ringM.rotation.x = Math.PI / 2.4; planet.add(ringM); planet.position.set(-26, 9, -38); sky.add(planet);
-const comets = []; let nextComet = 3;
-function spawnComet() {
-  const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
-  const right = new THREE.Vector3().crossVectors(dir, camera.up).normalize(), up = new THREE.Vector3().crossVectors(right, dir).normalize();
-  const start = camera.position.clone().add(dir.clone().multiplyScalar(26)).add(right.clone().multiplyScalar((Math.random() - 0.5) * 30)).add(up.clone().multiplyScalar(6 + Math.random() * 8));
-  const vel = right.clone().multiplyScalar(Math.random() < 0.5 ? -1 : 1).add(up.clone().multiplyScalar(-0.45)).normalize().multiplyScalar(18 + Math.random() * 10);
-  const N = 24, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
-  for (let i = 0; i < N; i++) { const k = 1 - i / (N - 1); col.set([k, k * 0.95, k * 0.85], i * 3); pos.set([start.x, start.y, start.z], i * 3); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const line = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending }));
-  scene.add(line); comets.push({ line, head: start.clone(), vel, trail: Array.from({ length: N }, () => start.clone()), life: 0, max: 1.6 });
-}
+/* ---------- Sky (sky.js): Milky Way, coloured stars, planets, the Moon, shooting stars, comets, auroras, Terra ---------- */
+const skyFx = createSky({ renderer, scene, camera, sun, R, mobile: MOBILE, reduced: () => REDUCED, say: F });
+const sky = skyFx.group;
 
 /* ---------- The board: hexagons from data/world/ (scripts/build_world.mjs) ---------- */
 // The NASA layers were sampled once, by the script; each cell arrives with its land-cover group, mean
@@ -737,7 +805,7 @@ const [meta, baseBuf, casesJson, filesJson, evJson, volcJson] = await Promise.al
   fetch(wv('../data/cases.json')).then(r => r.json()), fetch(wv('../data/event-files.json')).then(r => r.json()), fetch(wv('../data/events/2025.json')).then(r => r.json()),
   fetch(wv('../data/volcanoes.json')).then(r => r.json()),
 ]).catch((e) => { window.W3_FAIL('No se pudo cargar el tablero de NASA. Revisa la conexión y recarga.'); throw e; });
-loading.textContent = T('Pintando las casillas…');
+loadStep(T('Pintando las casillas…'), 0.75, 1);
 // Let the sentence paint before the board is built (a hidden tab would hold a timer back for a second).
 await (document.hidden ? new Promise(r => { const ch = new MessageChannel(); ch.port1.onmessage = r; ch.port2.postMessage(0); }) : new Promise(r => setTimeout(r, 30)));
 const BASE = readCells(baseBuf, 0), CELLS = BASE.cells, baseIndex = new CellIndex(CELLS, 3);
@@ -1227,7 +1295,7 @@ for (const f of filesJson.files) {
   markers.add(s);
 }
 seatMarkers(false);
-loading.style.opacity = 0; setTimeout(() => loading.remove(), 450);
+loadStep(null, 1, 2); setTimeout(() => loadStep(null, 1, 3), 200); setTimeout(() => { document.body.classList.add('is-ready'); loading.classList.add('is-done'); setTimeout(() => loading.remove(), 700); }, 550);
 performance.mark('etd-world-ready');   // probe: when the board is built (load time)
 
 const nf = (n) => n.toLocaleString(LANG);
@@ -1780,7 +1848,7 @@ function placeCaption() {
   _rt.setFromMatrixColumn(camera.matrixWorld, 0).applyQuaternion(_qi.copy(_cap.quaternion).invert());
   const at = (k) => { _cv.copy(_rt).multiplyScalar(1.3 * k).setY(_rt.y * 1.3 * k + 0.6); _cap.localToWorld(_cv).project(camera); return [(_cv.x + 1) / 2 * innerWidth, (1 - _cv.y) / 2 * innerHeight]; };
   const dock = document.querySelector('.gx-dock').getBoundingClientRect();
-  const free = { l: 8, r: innerWidth - cover.right - 8, t: chromeTop(), b: Math.min(innerHeight - cover.bottom, dock.top) - 8 };
+  const free = { l: 8 + cover.left, r: innerWidth - cover.right - 8, t: chromeTop(), b: Math.min(innerHeight - cover.bottom, dock.top) - 8 };
   const gap = REDUCED ? 44 : 14;
   const fits = (room, y) => { if (room < 190) return false; box.style.maxWidth = `${Math.min(250, room)}px`; const h = box.offsetHeight; return y - h / 2 >= free.t && y + h / 2 <= free.b; };
   const [rx, ry] = at(1), [lx, ly] = at(-1);
@@ -2070,7 +2138,7 @@ $('setClose').addEventListener('click', () => closePanel(true));
 $('setDone').addEventListener('click', () => closePanel(true));
 const tSky = $('tSky'), tSpin = $('tSpin'), tProps = $('tProps'), tClouds = $('tClouds');
 if (REDUCED || Q0.has('lat')) tSpin.checked = false;
-tSky.addEventListener('change', () => { sky.visible = tSky.checked; });
+tSky.addEventListener('change', () => { skyFx.setVisible(tSky.checked); });
 tSpin.addEventListener('change', () => { camCtl.spin = tSpin.checked; });
 tProps.addEventListener('change', () => { props.visible = tProps.checked && layer !== 'events' && layer !== 'data'; });
 tClouds.addEventListener('change', () => { cloudsWanted = tClouds.checked && layer === 'cases'; });
@@ -2138,6 +2206,7 @@ function pickHit(i) { const h = hits[i]; qList.hidden = true; q.setAttribute('ar
 /* Card: what was tapped, in the same light drawer as view A */
 const card = $('card');
 function openCard(u) {
+  skyFx.select(null);
   const d = document.createElement('div'); d.innerHTML = u.tip;
   const title = d.querySelector('strong')?.textContent || ''; d.querySelector('strong')?.remove(); d.querySelector('br')?.remove();
   const lines = d.innerHTML.split('<br>').filter(Boolean), first = (lines[0] || '').split(' · ');
@@ -2152,7 +2221,22 @@ function openCard(u) {
   card.hidden = false; requestAnimationFrame(() => card.classList.add('is-open'));
   $('cardT').focus({ preventScroll: true });
 }
+// The satellite's card: what it is and what it gives the portal, a link to NASA, and back to the planet without flying.
+function openSatCard(id) {
+  const i = skyFx.info(id); if (!i) return;
+  tip.hidden = true;
+  $('cardKind').textContent = i.kind;
+  $('cardT').textContent = i.title;
+  $('cardBody').innerHTML = `<ul class="card__facts">${i.facts.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  $('cardSrc').textContent = i.src;
+  $('cardActions').innerHTML = `<a class="btn btn--primary" href="${i.link.href}" target="_blank" rel="noopener">${i.link.label}</a><button type="button" class="btn btn--ghost" id="cardBack">${T('Volver al planeta')}</button>`;
+  $('cardBack').onclick = () => closeCard(false);
+  skyFx.select(id);
+  card.hidden = false; requestAnimationFrame(() => card.classList.add('is-open'));
+  $('cardT').focus({ preventScroll: true });
+}
 function closeCard(home) {
+  skyFx.select(null);
   if (home) dropLift();
   if (card.hidden) { if (home) flyHome(); return; }
   card.classList.remove('is-open');
@@ -2205,7 +2289,7 @@ function pickRegion(id) { if (EMBED) tell({ type: 'select', sel: { type: 'sector
 // The portal's drawer covers part of this frame: its right side (a side panel) or its bottom (a sheet), px wide
 // or tall. The picture slides so the selection sits in the free space, the zoom, the dock, the regions and the
 // search move out from under a side panel (--cover-r), and the caption keeps to the free space.
-const cover = { right: 0, bottom: 0 };
+const cover = { right: 0, bottom: 0, left: 0 };
 // The bottom of the controls along the top (the region strip, or the search when the strip is hidden).
 function chromeTop() {
   const el = [$('regions'), document.querySelector('.gx-search')].find(e => e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height);
@@ -2215,7 +2299,7 @@ function setCover(side, px) {
   cover.right = side === 'right' ? px : 0; cover.bottom = side === 'bottom' ? px : 0;
   const gx = document.querySelector('.gx');
   gx.style.setProperty('--cover-r', `${cover.right}px`); gx.classList.toggle('is-covered', cover.right > 0); gx.classList.toggle('is-sheet', cover.bottom > 0);
-  insetGoal.x = cover.right / 2;
+  insetGoal.x = (cover.right - cover.left) / 2;
   // Under a sheet the free band runs from the controls at the top down to the sheet: centre the picture there.
   insetGoal.y = cover.bottom ? Math.max(0, (cover.bottom - chromeTop()) / 2) : 0;
   if (lift.cap) lift.capSide = undefined;
@@ -2235,6 +2319,8 @@ addEventListener('message', (e) => {
     }
   }
   else if (m.type === 'inset') setCover(m.side, m.px);
+  // The portal's side rail floats over the frame's left edge, px wide.
+  else if (m.type === 'rail') { cover.left = Math.max(0, Math.min(400, +m.px || 0)); document.documentElement.style.setProperty('--cover-l', `${cover.left}px`); insetGoal.x = (cover.right - cover.left) / 2; }
   else if (m.type === 'closed') { setCover(null, 0); markRegion(null); dropLift(); }
   // The portal closed its drawer and hands the focus back: to the control used last here, else the globe.
   else if (m.type === 'focus') { const to = lastFocus?.isConnected && lastFocus.offsetParent !== null ? lastFocus : renderer.domElement; to.focus({ preventScroll: true }); }
@@ -2245,6 +2331,8 @@ renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
   mouse.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(mouse, camera);
+  const sat = skyFx.pick(ray);
+  if (sat) { openSatCard(sat); return; }
   const pool = layer === 'weather' ? wxProxies : layer === 'cases' ? markers.children.filter(o => o.isSprite && o.visible) : [];
   const hit = ray.intersectObjects(pool, false)[0];
   if (hit) { tapOn({ ...hit.object.userData, at: hit.object.userData.at || toLatLon(hit.object.position) }); return; }
@@ -2336,6 +2424,15 @@ renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; 
 function hover(e) {
   mouse.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1);
   ray.setFromCamera(mouse, camera);
+  // The satellite floats above everything, so it answers first: its tooltip, its orbit and swath lit (sky.js).
+  const sat = skyFx.pick(ray); skyFx.setHover(sat);
+  renderer.domElement.style.cursor = sat ? 'pointer' : '';
+  if (sat) {
+    const i = skyFx.info(sat); highlight(null);
+    tip.innerHTML = `<strong>${i.title} · ${i.kind}</strong><br>${i.tip}<br><span style="color:#a9b4c8">${T('Toca para saber más')}</span>`;
+    tip.style.left = Math.min(e.clientX, innerWidth - 220) + 'px'; tip.style.top = Math.min(e.clientY, innerHeight - 120) + 'px'; tip.hidden = false;
+    return;
+  }
   const ground = surfaceHit(ray);
   let html = null;
   if (layer === 'cases') { const hit = ray.intersectObjects(markers.children.filter(o => o.isSprite && o.visible), false)[0]; if (hit) html = hit.object.userData.tip + `<br><span style="color:#a9b4c8">${T('Toca para acercarte')}</span>`; }
@@ -2361,8 +2458,7 @@ function frame() {
   placeSun();
   if (!REDUCED) uTime.value = t;
   if (!REDUCED) [lavaMat, PROP_MAT[1].lava.mat].forEach(m => { m.emissiveIntensity = 1.2 + 0.5 * Math.sin(t * 2.2); });
-  starMats.forEach(m => { m.uniforms.t.value = t; });
-  planet.rotation.y += dt * 0.05;
+  skyFx.update(dt, t);
   if ((wx.visible || lift.anim) && !REDUCED) wxTime.value = t;
   if (wx.visible && !REDUCED) wxAnim.forEach(f => f(dt, t));
   const cloudFade = cloudsWanted ? THREE.MathUtils.smoothstep(camera.position.length() - R, 0.3, 0.5) : 0;
@@ -2375,13 +2471,6 @@ function frame() {
   cp.copy(camera.position).normalize(); const camR = camera.position.length(), hzM = Math.min(1, (camR - R) / 2), hz = R / camR + 0.06 * hzM;
   if (markers.visible) markers.children.forEach(o => { if (o.isSprite) o.visible = (themeF === 'all' || o.userData.theme === themeF) && wn.copy(o.position).normalize().dot(cp) > hz; });
   caseLabels.forEach(({ el, n, theme }) => { const d = n.dot(cp); el.style.opacity = layer === 'cases' && (themeF === 'all' || theme === themeF) && d > hz + 0.05 * hzM ? Math.min(1, (d - hz - 0.05 * hzM) / (0.15 * hzM + 0.01)) : 0; });
-  if (sky.visible && !REDUCED) { nextComet -= dt; if (nextComet <= 0) { spawnComet(); nextComet = 5 + Math.random() * 6; } }
-  for (let i = comets.length - 1; i >= 0; i--) {
-    const c = comets[i]; c.life += dt; c.head.addScaledVector(c.vel, dt); c.trail.unshift(c.head.clone()); c.trail.length = 24;
-    const a = c.line.geometry.attributes.position; c.trail.forEach((p, k) => a.setXYZ(k, p.x, p.y, p.z)); a.needsUpdate = true;
-    c.line.material.opacity = Math.max(0, Math.min(1, c.life * 4, (c.max - c.life) * 3));
-    if (c.life > c.max) { scene.remove(c.line); c.line.geometry.dispose(); comets.splice(i, 1); }
-  }
   if (hoverQueued) { hover(hoverQueued); lastPointer = hoverQueued; hoverQueued = null; } else if (lastPointer && !tip.hidden && (frameN++ % 6 === 0)) hover(lastPointer);
   renderer.render(scene, camera); labels.render(scene, camera);
   requestAnimationFrame(frame);

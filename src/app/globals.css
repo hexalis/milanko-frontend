@@ -29,6 +29,12 @@
   --hexalis-brand-surface-sunken-dark: #0a0c0f;
   --hexalis-brand-text-primary-dark: #f5f7fa;
 
+  /*
+   * The neutral DS style draws shells flush (shape-shell 0), which left the rail and every
+   * section block square. The brand rounds them like the POC panels (--radius 22px).
+   */
+  --hexalis-style-shape-shell: var(--hexalis-style-shape-surface);
+
   /* Roles the DS has no token for. */
   --milanko-node: #c2410c;
 }
@@ -47,6 +53,420 @@
 @theme {
   /* The app shell (POC): side rail from 860px, mobile top bar and bottom tabbar below it. */
   --breakpoint-shell: 53.75rem;
+
+  /* Content arriving (a new page, a tab panel): a short rise and fade, never a hard cut. */
+  --animate-enter: enter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      translate: 0 8px;
+    }
+  }
+
+  /* A whole page fades only: a transform would re-anchor its fixed layers (the globe) mid-way. */
+  --animate-page: page 280ms ease-out;
+
+  @keyframes page {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/*
+ * Smooth changes across the portal (motion-reduced readers keep only quick fades, see base).
+ * - Theme: the switch cross-fades the whole page through a view transition (use-theme).
+ * - Language: while the server re-renders in the other language, the page dims, then comes back.
+ * - Rail: while it opens or folds, its content fades so labels do not pop as the width changes.
+ * - Disclosures (<details>) open and close with their height where the browser can animate it.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 360ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#content {
+  transition: opacity 240ms ease;
+}
+
+:root[data-lang-busy] #content,
+:root[data-lang-busy] #rail nav {
+  opacity: 0.45;
+}
+
+#rail nav,
+#rail > div {
+  transition: opacity 240ms ease;
+}
+
+:root.nav-anim #rail nav,
+:root.nav-anim #rail > div {
+  animation: rail-fade 400ms ease;
+}
+
+@keyframes rail-fade {
+  35% {
+    opacity: 0;
+  }
+}
+
+:root {
+  interpolate-size: allow-keywords;
+}
+
+/*
+ * The portal's dropdowns (shared/ui/field Select): a native <select>, so forms and keyboards keep
+ * working, drawn in the portal's own look where the browser supports customizable selects: a
+ * raised panel with the DS radius and shadow, roomy options, the chosen one tinted with a brand
+ * check, and a caret that turns as the list opens. Other browsers keep their native list.
+ */
+.field-select {
+  appearance: none;
+  padding-inline-end: 2.25rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.05rem) 55%,
+    calc(100% - 0.75rem) 55%;
+  background-size: 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+@supports (appearance: base-select) {
+  .field-select,
+  .field-select::picker(select) {
+    appearance: base-select;
+  }
+
+  /* A long option wraps inside the field instead of spilling out of a fixed height. */
+  .field-select {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    block-size: auto;
+    min-block-size: 2.75rem;
+    padding-block: 0.5rem;
+    padding-inline-end: 0.75rem;
+    line-height: 1.35;
+    text-align: start;
+    background-image: none;
+  }
+
+  .field-select::picker-icon {
+    content: "";
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    margin-inline-start: auto;
+    border-inline-end: 2px solid var(--color-icon-secondary);
+    border-block-end: 2px solid var(--color-icon-secondary);
+    rotate: 45deg;
+    translate: 0 -2px;
+    transition:
+      rotate 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      translate 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .field-select:open::picker-icon {
+    rotate: 225deg;
+    translate: 0 2px;
+  }
+
+  .field-select::picker(select) {
+    margin-block: 0.375rem;
+    padding: 0.375rem;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-surface-raised);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-dropdown);
+    opacity: 0;
+    translate: 0 -4px;
+    transition:
+      opacity 160ms ease,
+      translate 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      overlay 200ms allow-discrete,
+      display 200ms allow-discrete;
+  }
+
+  .field-select:open::picker(select) {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    .field-select:open::picker(select) {
+      opacity: 0;
+      translate: 0 -4px;
+    }
+  }
+
+  .field-select option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-block-size: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+  }
+
+  .field-select option:hover,
+  .field-select option:focus-visible {
+    background: var(--color-bg-hover);
+    outline: none;
+  }
+
+  .field-select option:checked {
+    background: var(--color-action-selected);
+    font-weight: 600;
+  }
+
+  .field-select option::checkmark {
+    order: 1;
+    margin-inline-start: auto;
+    color: var(--color-icon-brand);
+  }
+}
+
+details::details-content {
+  height: 0;
+  overflow: clip;
+  /* Room for the content's shadows, lips and focus rings, which the clip would cut off. */
+  overflow-clip-margin: 8px;
+  transition:
+    height 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    content-visibility 260ms allow-discrete;
+}
+
+details[open]::details-content {
+  height: auto;
+}
+
+/*
+ * Guided lesson, the reveal after a hunch: the reader's call comes in first, then the trend line
+ * draws itself from left to right, its band settles around it, and the record and the direct
+ * labels land last. It plays once, when the chart with the trend first mounts.
+ */
+.chart-reveal .chart-call {
+  animation: reveal-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chart-reveal .stroke-chart-trend {
+  animation: reveal-draw 1100ms cubic-bezier(0.65, 0, 0.35, 1) 250ms both;
+}
+
+.chart-reveal .fill-chart-band {
+  animation: reveal-fade 700ms ease-out 700ms both;
+}
+
+.chart-reveal svg g:has(> .stroke-trend-up),
+.chart-reveal .fill-chart-trend,
+.chart-reveal .fill-chart-1:is(text),
+.chart-reveal text.fill-text-tertiary.font-semibold {
+  animation: reveal-fade 500ms ease-out 1250ms both;
+}
+
+@keyframes reveal-draw {
+  from {
+    clip-path: inset(-10px 100% -10px 0);
+  }
+  to {
+    clip-path: inset(-10px 0 -10px 0);
+  }
+}
+
+@keyframes reveal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-reveal *,
+  .chart-reveal svg g {
+    animation: none !important;
+  }
+}
+
+/*
+ * Home sky (home-sky.tsx): over the painted night, a few stars breathe and, once a cycle, a meteor
+ * crosses along its own length. The home's drawings (the three words, the closing lines) draw
+ * themselves as they scroll into view where the browser ties animations to scrolling; elsewhere
+ * they simply show. Reduced motion keeps the still sky and the finished drawings.
+ */
+.sky-twinkle {
+  animation: sky-twinkle var(--t, 4s) ease-in-out var(--d, 0s) infinite;
+}
+
+.sky-meteor {
+  opacity: 0;
+  animation: sky-meteor 14s linear var(--d, 3s) infinite;
+}
+
+@keyframes sky-twinkle {
+  50% {
+    opacity: 0.2;
+    scale: 0.55;
+  }
+}
+
+/* A second of flight, then the rest of the cycle in the dark. */
+@keyframes sky-meteor {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  1.2% {
+    opacity: 1;
+  }
+  6.5%,
+  100% {
+    opacity: 0;
+    /* 240px along the streak, which leans 24° (cos and sin of it). */
+    translate: 219px 98px;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .draw-on-view {
+    stroke-dasharray: 1;
+    animation: draw-on-view linear both;
+    animation-timeline: view();
+    /* Finished once the drawing is wholly on screen, so it never stops half drawn at the page end. */
+    animation-range: entry 0% entry 100%;
+  }
+
+  .pop-on-view {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pop-on-view linear both;
+    animation-timeline: view();
+    animation-range: entry 80% entry 100%;
+  }
+}
+
+@keyframes draw-on-view {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pop-on-view {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-twinkle,
+  .sky-meteor,
+  .draw-on-view,
+  .pop-on-view {
+    animation: none;
+  }
+}
+
+/*
+ * Hexalis honeycomb (team page). Each cell carries --d, its distance from the lit cell: the comb
+ * assembles outward from it, then a soft wave of light leaves it every few seconds. The lit cell
+ * breathes, and the free seat's dashes keep walking around it, waiting for whoever joins.
+ * Colours are the Hexalis identity's (brand-600 #4064C6, brand-300 #7A9FEB).
+ */
+.hx-comb :is(.hx-cell, .hx-lit, .hx-seat) {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hx-in 900ms cubic-bezier(0.22, 1, 0.36, 1) var(--d) both;
+}
+
+.hx-comb .hx-cell path {
+  fill: #4064c6;
+  fill-opacity: 0;
+  stroke: #4064c6;
+  stroke-opacity: 0.3;
+  stroke-width: 5;
+  animation: hx-ripple 7s ease-in-out calc(var(--d) + 1.4s) infinite;
+}
+
+.hx-comb .hx-lit path {
+  fill: #4064c6;
+  fill-opacity: 0.55;
+  animation: hx-breathe 3.6s ease-in-out infinite;
+}
+
+.hx-comb .hx-seat path {
+  fill: #7a9feb;
+  fill-opacity: 0;
+  stroke: #7a9feb;
+  stroke-opacity: 0.75;
+  stroke-width: 5;
+  stroke-dasharray: 14 8;
+  stroke-linecap: round;
+  animation:
+    hx-march 2.4s linear infinite,
+    hx-wait 3.6s ease-in-out infinite;
+}
+
+@keyframes hx-in {
+  from {
+    opacity: 0;
+    scale: 0.55;
+  }
+}
+
+/* The wave: a short glow, then rest until the next one. */
+@keyframes hx-ripple {
+  0%,
+  16%,
+  100% {
+    fill-opacity: 0;
+    stroke-opacity: 0.3;
+  }
+  6% {
+    fill-opacity: 0.22;
+    stroke-opacity: 0.8;
+  }
+}
+
+@keyframes hx-breathe {
+  50% {
+    fill-opacity: 0.85;
+  }
+}
+
+/* Two dash periods (14 + 8, twice), so the loop has no seam. */
+@keyframes hx-march {
+  to {
+    stroke-dashoffset: -44;
+  }
+}
+
+@keyframes hx-wait {
+  50% {
+    fill-opacity: 0.1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-comb :is(.hx-cell, .hx-lit, .hx-seat),
+  .hx-comb path {
+    animation: none;
+  }
 }
 
 /*

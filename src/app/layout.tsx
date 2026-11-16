@@ -36,14 +36,18 @@ export const metadata: Metadata = {
  */
 async function CurrentShell() {
   const locale = await getLocale();
+  const environment = getServerEnv().appEnvironment;
+  // Production is what readers expect; only the other deployments wear a badge.
   return (
     <WorkspaceShell
       locale={locale}
       environment={
-        <EnvironmentBadge
-          environment={getServerEnv().appEnvironment}
-          label={getTranslator(locale).t("env.label")}
-        />
+        environment === "production" ? null : (
+          <EnvironmentBadge
+            environment={environment}
+            label={getTranslator(locale).t("env.label")}
+          />
+        )
       }
     />
   );

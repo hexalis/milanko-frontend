@@ -1,7 +1,7 @@
 "use client";
 
 import { Slider } from "@hexalis/design-system";
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Field, Select } from "@/shared/ui/field";
 import {
   DEFAULT_RARE,
@@ -11,7 +11,9 @@ import {
   rareChance,
   type RareSettings,
 } from "../domain/rare-lab";
+import { useLabDemo, type DemoMove } from "../hooks/use-lab-demo";
 import { labTranslator, type LabCopy } from "./lab-copy";
+import { DemoBar, DemoPointer } from "./lab-demo";
 import { RichText } from "./rich-text";
 
 /*
@@ -20,6 +22,24 @@ import { RichText } from "./rich-text";
  */
 
 const DAYS = Array.from({ length: 100 }, (_, day) => day);
+
+/** Sliders in DOM order, so the demo can find and move them. */
+const SLIDER_KEYS = ["variables", "years"] as const;
+
+/*
+ * The demo: checking every variable floods the board with false alarms; checking one leaves a
+ * few; then it settles back on three.
+ */
+const DEMO: readonly DemoMove[] = [
+  { slider: 0, to: 6, ms: 1100 },
+  { slider: 0, to: 1, ms: 1300 },
+  { slider: 0, to: 3, ms: 800 },
+];
+
+const DOT = {
+  on: "block aspect-square rounded-full bg-action-primary transition-[background-color,scale] duration-300 ease-out motion-reduce:transition-none",
+  off: "block aspect-square scale-[0.82] rounded-full bg-bg-surface-sunken transition-[background-color,scale] duration-300 ease-out motion-reduce:transition-none",
+} as const;
 
 type RareSliderProps = {
   label: string;
@@ -56,14 +76,38 @@ export function RareLab({ copy }: { copy: LabCopy }) {
   const update = (key: "variables" | "years") => (value: number) =>
     setSettings((current) => ({ ...current, [key]: value }));
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  // The demo reads where a slider stands now, between renders.
+  const live = useRef(settings);
+  useEffect(() => {
+    live.current = settings;
+  });
+  const read = useCallback((slider: number) => live.current[SLIDER_KEYS[slider] ?? "variables"], []);
+  const write = useCallback((slider: number, value: number) => {
+    const key = SLIDER_KEYS[slider] ?? "variables";
+    const { min, max } = RARE_LIMITS[key];
+    setSettings((current) => ({ ...current, [key]: Math.min(max, Math.max(min, Math.round(value))) }));
+  }, []);
+  const demo = useLabDemo(rootRef, DEMO, read, write);
+
   function handleBarChange(event: ChangeEvent<HTMLSelectElement>) {
     const bar = event.currentTarget.value;
     if (isRareBar(bar)) setSettings((current) => ({ ...current, bar }));
   }
 
   return (
-    <div className="expanded:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] grid gap-6">
+    <div
+      ref={rootRef}
+      className="expanded:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] relative grid gap-6"
+    >
+      {demo.cursor ? <DemoPointer cursor={demo.cursor} /> : null}
       <div className="flex flex-col gap-4">
+        <DemoBar
+          isTurn={demo.isTurn}
+          onReplay={demo.replay}
+          turn={t("method.demo.turn")}
+          replay={t("method.demo.replay")}
+        />
         <RareSlider
           label={t("method.rare.vars")}
           value={settings.variables}
@@ -89,11 +133,11 @@ export function RareLab({ copy }: { copy: LabCopy }) {
       <div className="flex min-w-0 flex-col gap-4">
         <div className="grid w-full max-w-sm grid-cols-10 gap-1.5" aria-hidden="true">
           {DAYS.map((day) => (
+            // A ripple: each dot follows a beat after the one before it.
             <i
               key={day}
-              className={`block aspect-square rounded-full ${
-                day < result.hits ? "bg-action-primary" : "bg-bg-surface-sunken"
-              }`}
+              className={day < result.hits ? DOT.on : DOT.off}
+              style={{ transitionDelay: `${Math.abs(day - result.hits) * 6}ms` }}
             />
           ))}
         </div>

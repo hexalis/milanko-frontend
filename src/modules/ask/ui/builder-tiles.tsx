@@ -2,7 +2,7 @@ import { Icon } from "@/shared/ui/icon";
 import type { BuilderSegment } from "../domain/builder";
 import type { BuilderChoice } from "../domain/builder-choices";
 import { TILE_MAX, type Family } from "../domain/builder-view";
-import { BuilderFold } from "./builder-fold";
+import { BuilderFold, CHOSEN_ROW } from "./builder-fold";
 import { BuilderSegmentSelect, BuilderTile } from "./builder-segment-select";
 
 /*
@@ -25,7 +25,7 @@ const FAMILY_TILE: Record<Family | "plain", string> = {
   vegetation: "bg-surface-tone-3 text-feedback-success-fg",
   ice: "bg-surface-tone-4 text-feedback-info-fg",
   earth: "bg-surface-tone-5 text-feedback-ai-fg",
-  plain: "text-text-primary",
+  plain: "bg-bg-surface-sunken text-icon-secondary",
 };
 
 const TILE = [
@@ -38,6 +38,9 @@ const TILE = [
   "has-checked:shadow-[inset_0_0_0_2px_var(--color-action-primary),0_3px_0_var(--color-action-primary-pressed)]",
   "has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-focus-ring",
 ].join(" ");
+
+const ROW_PILL =
+  "inline-flex min-h-9 flex-none items-center gap-1.5 rounded-full bg-bg-surface-sunken px-3.5 text-label-m font-semibold transition-colors duration-fast";
 
 function TileFace({ choice }: { choice: BuilderChoice }) {
   return (
@@ -105,12 +108,10 @@ export function BuilderChoices(props: BuilderChoicesProps) {
   if (!chosen) return <Tiles segment={segment} choices={choices} />;
   if (choices.length === 1) {
     return (
-      <div className="bg-bg-surface flex min-h-16 items-center gap-3 rounded-[18px] py-3 ps-3 pe-3.5 font-bold shadow-[inset_0_0_0_1px_var(--color-border-subtle)]">
+      <div className={CHOSEN_ROW}>
         <input type="hidden" name={segment} value={chosen.id} />
         <TileFace choice={chosen} />
-        <span className="text-label-s text-text-secondary font-semibold">
-          {t("ask.build.only")}
-        </span>
+        <span className={`${ROW_PILL} text-text-tertiary`}>{t("ask.build.only")}</span>
       </div>
     );
   }
@@ -122,7 +123,7 @@ export function BuilderChoices(props: BuilderChoicesProps) {
       summary={
         <>
           <TileFace choice={chosen} />
-          <span className="bg-bg-surface-sunken text-label-m group-hover/sum:bg-bg-hover inline-flex min-h-9 flex-none items-center gap-1.5 rounded-full px-3.5 font-semibold">
+          <span className={`${ROW_PILL} text-text-primary group-hover/sum:bg-bg-hover`}>
             {t("ask.build.change")}
             <span className="duration-fast transition-transform group-open/fold:rotate-180">
               <Icon name="caret-down" size="sm" />

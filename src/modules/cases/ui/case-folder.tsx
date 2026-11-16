@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { tv } from "tailwind-variants";
 import type { Translator } from "@/shared/lib/i18n";
 import { Icon } from "@/shared/ui/icon";
@@ -15,6 +16,7 @@ import {
   type EventFamily,
 } from "../domain/case-file";
 import type { CaseCatalog } from "../domain/catalog";
+import type { Strength } from "../domain/trend-stats";
 import {
   changeLabel,
   eventShort,
@@ -25,15 +27,17 @@ import {
   themeLabel,
   verdictLabel,
 } from "../domain/file-text";
-import { formatDate } from "../domain/format";
+import { formatDate, formatFigure, formatP } from "../domain/format";
 import { EvidenceMeter } from "./evidence-meter";
 import { Sparkline } from "./sparkline";
 import { VerdictStamp } from "./verdict-stamp";
 
 /*
  * A case file drawn as a folder (POC app.js folder(), DESIGN.md "case-folder"): a tab with the
- * catalog number cut from the back panel, and a front cover in the theme's tone. The POC's sheets
- * of paper rising on hover are left out; the folder only lifts, and not under reduced motion.
+ * catalog number cut from the back panel, sheets of paper behind a front cover in the theme's tone.
+ * On hover or focus the cover tips forward and the sheets rise out of the folder, one per level of
+ * evidence: 01 the series (with its chart), 02 the test, 03 the source. Touch screens have no
+ * hover, so there the sheets stay out; under reduced motion they snap instead of rising.
  */
 
 type FolderTone = "rose" | "tide" | "sage" | "ice" | "stone";
@@ -58,17 +62,13 @@ function folderTone(file: CaseFile): FolderTone {
 
 const folder = tv({
   slots: {
-    root: [
-      "group/folder relative isolate flex h-full flex-col pt-7",
-      "transition-transform duration-fast ease-standard",
-      "hover:-translate-y-1 focus-within:-translate-y-1",
-      "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0",
-    ].join(" "),
+    root: "group/folder relative isolate flex h-full flex-col pt-7",
     tab: "absolute top-0 left-0 h-7 rounded-t-[14px] px-4 font-mono text-[13px] leading-7 font-semibold text-text-primary",
     back: "flex flex-1 flex-col rounded-tr-[22px] rounded-b-[22px] px-1.5 pt-2.5 pb-2",
     cover: [
-      "flex flex-1 flex-col gap-3 rounded-[22px] p-5 text-text-primary",
-      "transition-shadow duration-fast ease-standard group-hover/folder:shadow-raised group-focus-within/folder:shadow-raised",
+      // The cover stays put while the sheets rise: sliding it down pushed its edge out past the
+      // folder's back, which read as a thick seam along the bottom.
+      "relative z-[2] flex flex-1 flex-col gap-3 rounded-[22px] p-5 text-text-primary",
     ].join(" "),
   },
   variants: {
@@ -106,6 +106,71 @@ const folder = tv({
     },
   },
 });
+
+/* One sheet per level of evidence (POC sheetsFor): weaker evidence carries fewer pages. */
+const SHEETS: Record<Strength, number> = { strong: 3, moderate: 2, weak: 1 };
+
+/*
+ * A sheet rests just above the cover's edge. Opening: a 60ms beat (a cursor crossing the shelf
+ * does not open every folder), then each sheet rises in turn, 24px apart so every header shows.
+ * Closing: the back sheets drop first, quicker, easing in.
+ */
+const SHEET = [
+  "absolute inset-0 flex flex-col gap-1 rounded-[14px] px-2.5 pt-1.5 pb-2",
+  "translate-y-[calc(-2px-var(--i)*2px)]",
+  "transition-[translate,rotate] duration-[180ms] ease-in delay-[calc((var(--n)-1-var(--i))*25ms)]",
+  "group-hover/folder:translate-y-[calc(-50px-var(--i)*24px)] group-hover/folder:rotate-(--r)",
+  "group-hover/folder:duration-[420ms] group-hover/folder:ease-[cubic-bezier(0.34,1.4,0.64,1)]",
+  "group-hover/folder:delay-[calc(60ms+var(--i)*40ms)]",
+  "group-focus-within/folder:translate-y-[calc(-50px-var(--i)*24px)] group-focus-within/folder:rotate-(--r)",
+  "[@media(hover:none)]:translate-y-[calc(-50px-var(--i)*24px)] [@media(hover:none)]:rotate-(--r)",
+].join(" ");
+
+/*
+ * Three kinds of paper, told apart with one quiet cue each so the stack stays calm in both themes:
+ *  01 the series on graph paper: a faint grid under the chart;
+ *  02 the test on a warm ruled pad: a hint of amber and soft lines below the heading;
+ *  03 the source on a cool index card: a hint of green, nothing else.
+ * Every sheet shares the raised surface, a hairline edge and a soft shadow; the folio's colour
+ * names the paper. Lines start under the header, so the folio and its figure stay clean.
+ */
+const PAPER_EDGE =
+  "border border-border-subtle shadow-[0_-1px_0_rgb(255_255_255/0.04)_inset,0_2px_8px_rgb(0_0_0/0.16)]";
+const PAPER = [
+  [
+    PAPER_EDGE,
+    "bg-bg-surface-raised",
+    "bg-[repeating-linear-gradient(color-mix(in_oklab,var(--color-border-subtle)_60%,transparent)_0_1px,transparent_1px_10px),repeating-linear-gradient(90deg,color-mix(in_oklab,var(--color-border-subtle)_60%,transparent)_0_1px,transparent_1px_10px)]",
+    "bg-size-[100%_100%] bg-position-[0_26px] bg-no-repeat",
+  ].join(" "),
+  [
+    PAPER_EDGE,
+    "[background-color:color-mix(in_oklab,var(--color-feedback-warning-bg)_30%,var(--color-bg-surface-raised))]",
+    "bg-[repeating-linear-gradient(transparent_0_11px,color-mix(in_oklab,var(--color-feedback-warning-border)_45%,transparent)_11px_12px)]",
+    "bg-size-[100%_100%] bg-position-[0_26px] bg-no-repeat",
+  ].join(" "),
+  [
+    PAPER_EDGE,
+    "[background-color:color-mix(in_oklab,var(--color-feedback-success-bg)_30%,var(--color-bg-surface-raised))]",
+  ].join(" "),
+] as const;
+
+/* The folio of each paper in its tone. */
+const PAPER_FOLIO = [
+  "text-feedback-info-fg",
+  "text-feedback-warning-fg",
+  "text-feedback-success-fg",
+] as const;
+
+/* A sheet that cannot confirm its finding is drawn with a dashed edge (POC folder--inconclusive). */
+const SHEET_INCONCLUSIVE = "outline-dashed outline-[1.5px] -outline-offset-[1.5px] outline-border-strong";
+
+/* The header and chart fade in once the sheet is out, and stay readable on touch screens. */
+const SHEET_FACE = [
+  "opacity-0 transition-opacity duration-fast",
+  "group-hover/folder:opacity-100 group-hover/folder:delay-[calc(160ms+var(--i)*40ms)]",
+  "group-focus-within/folder:opacity-100 [@media(hover:none)]:opacity-100",
+].join(" ");
 
 const TITLE_LINK = [
   "text-text-primary no-underline outline-none",
@@ -152,10 +217,86 @@ export function CaseFolder({
   const themeIcon = isEvent(file) ? `ev-${file.family}` : theme;
   const slots = folder({ tone: folderTone(file) });
   const Heading = HEADINGS[headingLevel];
+  const count = SHEETS[fileStrength(file)];
+  const sheetClass = verdictOf(file) === "inconclusive" ? `${SHEET} ${SHEET_INCONCLUSIVE}` : SHEET;
+  const pages = [
+    {
+      label: isEvent(file) ? (
+        <>
+          <span className="@max-[280px]:hidden">
+            {t("sheet.runup", { days: catalog.eventWindowDays })}
+          </span>
+          <span className="hidden @max-[280px]:inline">{t("sheet.runup.short")}</span>
+        </>
+      ) : (
+        t("sheet.series")
+      ),
+      value: isEvent(file) ? eventShort(file.lv, context) : changeLabel(file, context),
+    },
+    {
+      label: t("sheet.test"),
+      value: isEvent(file)
+        ? t("sheet.test.ev", { z: formatFigure(file.lv.z, 1, true), n: file.lv.years - 1 })
+        : `p ${formatP(file.t.p)}`,
+    },
+    {
+      label: t("sheet.source"),
+      value: isEvent(file)
+        ? "EONET · POWER"
+        : file.source === "modis"
+          ? "MODIS/Terra"
+          : "NASA POWER",
+    },
+  ].slice(0, count);
 
   return (
     <article className={slots.root()}>
       <span className={slots.tab()}>{file.catalog}</span>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-3.5 top-[26px] z-[1] h-24"
+      >
+        {pages.map((page, index) => (
+          <span
+            key={index}
+            className={`${sheetClass} ${PAPER[index] ?? PAPER[0]}`}
+            style={
+              {
+                "--i": index,
+                "--n": count,
+                "--r": `${((index % 2 ? 1 : -1) * (0.3 + index * 0.25)).toFixed(2)}deg`,
+                zIndex: count - index,
+              } as CSSProperties
+            }
+          >
+            <span
+              className={`${SHEET_FACE} border-border-subtle @container flex h-[22px] min-w-0 items-center gap-1.5 border-b pb-0.5`}
+            >
+              <b className={`text-label-s truncate ${PAPER_FOLIO[index] ?? PAPER_FOLIO[0]}`}>
+                0{index + 1} · {page.label}
+              </b>
+              <span className="text-label-s text-text-primary ms-auto whitespace-nowrap tabular-nums">
+                {page.value}
+              </span>
+              <span className="text-label-s text-text-tertiary border-border-subtle border-s ps-1.5 tabular-nums">
+                {index + 1}/{count}
+              </span>
+            </span>
+            {index === 0 ? (
+              <span className={`${SHEET_FACE} block h-[34px]`}>
+                <Sparkline
+                  id={`folder-${file.id}`}
+                  series={series}
+                  trend={isEvent(file) ? null : file.t}
+                  direction={direction}
+                  isLastMarked={isAnomaly}
+                  isFilled
+                />
+              </span>
+            ) : null}
+          </span>
+        ))}
+      </span>
       <div className={slots.back()}>
         <div className={slots.cover()}>
           <p className="text-label-m text-text-secondary flex items-center gap-1.5">
@@ -210,13 +351,6 @@ export function CaseFolder({
               <VerdictStamp verdict={verdictOf(file)} label={verdictLabel(file, context)} />
             </span>
           </div>
-          <Sparkline
-            id={`folder-${file.id}`}
-            series={series}
-            trend={isEvent(file) ? null : file.t}
-            direction={direction}
-            isLastMarked={isAnomaly}
-          />
         </div>
       </div>
     </article>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { LOCALES, type Locale } from "@/shared/lib/i18n";
 
 type LanguageSwitchProps = {
@@ -13,6 +13,11 @@ type LanguageSwitchProps = {
 /** EN/ES toggle. The server re-renders the page in the chosen language. */
 export function LanguageSwitch({ current, label, onSelect }: LanguageSwitchProps) {
   const [isPending, startTransition] = useTransition();
+
+  // While the server re-renders the page in the other language, the page dims (globals.css).
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-lang-busy", isPending);
+  }, [isPending]);
 
   function handleSelect(locale: Locale) {
     if (locale === current) return;

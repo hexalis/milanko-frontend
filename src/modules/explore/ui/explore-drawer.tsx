@@ -18,14 +18,27 @@ type ExploreDrawerProps = {
   onClose: () => void;
   /** How much of the frame the drawer covers, so the globe keeps the selection in the free space. */
   onInset: (side: "right" | "bottom", px: number) => void;
+  /**
+   * Held back while the globe is still loading: a link that opens a case renders its panel on the
+   * server, and it would otherwise sit over the loader. It stays in the page, hidden and inert,
+   * and slides in once the world has appeared.
+   */
+  isHeld?: boolean;
   children: ReactNode;
 };
+
+const PRESENCE = {
+  held: "pointer-events-none opacity-0 max-[859px]:translate-y-6 min-[860px]:translate-x-6",
+  shown:
+    "opacity-100 transition-[opacity,translate] delay-700 duration-500 ease-out motion-reduce:transition-none",
+} as const;
 
 export function ExploreDrawer({
   drawerRef,
   closeLabel,
   onClose,
   onInset,
+  isHeld = false,
   children,
 }: ExploreDrawerProps) {
   const report = useEffectEvent(() => {
@@ -54,7 +67,8 @@ export function ExploreDrawer({
     <aside
       ref={drawerRef}
       aria-labelledby={DRAWER_TITLE_ID}
-      className="border-border-subtle bg-bg-surface shadow-raised absolute inset-x-0 bottom-0 z-10 max-h-[60%] overflow-y-auto overscroll-contain rounded-t-[22px] border p-5 min-[860px]:inset-x-auto min-[860px]:top-3 min-[860px]:right-3 min-[860px]:bottom-3 min-[860px]:max-h-none min-[860px]:w-[400px] min-[860px]:rounded-[22px]"
+      inert={isHeld}
+      className={`${isHeld ? PRESENCE.held : PRESENCE.shown} border-border-subtle bg-bg-surface shadow-raised absolute inset-x-0 bottom-0 z-10 max-h-[60%] overflow-y-auto overscroll-contain rounded-t-[22px] border p-5 min-[860px]:inset-x-auto min-[860px]:top-3 min-[860px]:right-3 min-[860px]:bottom-3 min-[860px]:max-h-none min-[860px]:w-[400px] min-[860px]:rounded-[22px]`}
     >
       <button
         type="button"

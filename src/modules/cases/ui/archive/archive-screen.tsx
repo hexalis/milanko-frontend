@@ -197,7 +197,9 @@ type ShelfProps = {
   catalog: CaseCatalog;
 };
 
-const SHELF_GRID = "grid grid-cols-[repeat(auto-fill,minmax(min(290px,100%),1fr))] gap-x-5 gap-y-8";
+/* Rows leave room above each folder for its sheets to rise into (up to 72px). */
+const SHELF_GRID =
+  "grid grid-cols-[repeat(auto-fill,minmax(min(290px,100%),1fr))] gap-x-5 gap-y-20 pt-18";
 
 type NearShelfProps = Omit<ShelfProps, "state"> & { near: NearPlace };
 
