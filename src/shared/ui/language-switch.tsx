@@ -20,10 +20,7 @@ export function LanguageSwitch({ current, label, onSelect }: LanguageSwitchProps
   }
 
   return (
-    <fieldset
-      aria-busy={isPending}
-      className="bg-bg-canvas inline-flex rounded-sm border-0 p-1"
-    >
+    <fieldset aria-busy={isPending} className="bg-bg-canvas inline-flex rounded-sm border-0 p-1">
       <legend className="sr-only">{label}</legend>
       {LOCALES.map((locale) => (
         <button
