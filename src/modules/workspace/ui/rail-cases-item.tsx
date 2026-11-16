@@ -7,7 +7,7 @@ import { Icon } from "@/shared/ui/icon";
 import { countOpened } from "../domain/case-progress";
 import { CASES } from "../domain/sections";
 import { useCaseProgress } from "../hooks/use-case-progress";
-import { NavIcon, RAIL_ITEM, RailTip } from "./rail-parts";
+import { NavIcon, RAIL_GROUP_ITEM, RailTip } from "./rail-parts";
 import { ShellNavLink } from "./shell-nav-link";
 
 export type CaseKindLink = { href: string; icon: string; label: string; count: number };
@@ -44,8 +44,8 @@ export function RailCasesItem({
 
   return (
     <>
-      <div className="flex items-center gap-0.5">
-        <ShellNavLink href={CASES.href} className={`${RAIL_ITEM} min-h-14 flex-1`}>
+      <div className="rounded-control has-[>a:hover,>button:hover]:bg-bg-hover flex items-center gap-0.5">
+        <ShellNavLink href={CASES.href} className={`${RAIL_GROUP_ITEM} min-h-14 flex-1`}>
           <NavIcon icon={CASES.icon} hasActiveIcon={CASES.hasActiveIcon} />
           <span className="nav-collapsed:sr-only flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="truncate">{label}</span>
@@ -74,7 +74,7 @@ export function RailCasesItem({
           aria-controls={listId}
           aria-label={kindsLabel}
           onClick={() => setIsOpen((open) => !open)}
-          className="group/caret text-icon-secondary hover:bg-bg-hover hover:text-icon-primary focus-visible:focus-ring focus-visible:outline-focus-ring nav-collapsed:hidden grid size-9 shrink-0 cursor-pointer place-items-center rounded-md"
+          className="group/caret text-icon-secondary hover:text-icon-primary focus-visible:focus-ring focus-visible:outline-focus-ring nav-collapsed:hidden grid size-9 shrink-0 cursor-pointer place-items-center rounded-sm"
         >
           <span className="duration-fast flex transition-transform group-aria-expanded/caret:rotate-180 motion-reduce:transition-none">
             <Icon name="caret-down" />

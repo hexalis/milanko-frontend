@@ -5,8 +5,14 @@ import { Icon } from "@/shared/ui/icon";
  * icon, active bar and tooltip follow the item's hover, focus and aria-current.
  */
 
-export const RAIL_ITEM =
-  "group/item relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-label-m text-text-secondary no-underline transition-colors duration-fast motion-reduce:transition-none hover:bg-bg-hover hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:bg-action-selected aria-[current=page]:font-semibold aria-[current=page]:text-text-primary before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-action-primary before:opacity-0 aria-[current=page]:before:opacity-100 nav-collapsed:justify-center nav-collapsed:px-0";
+/** Every rail link and button: shape, type, colour, the current page bar and the collapsed layout. */
+const RAIL_ITEM_BASE =
+  "group/item relative flex min-h-10 items-center gap-3 rounded-control px-3 text-label-m font-semibold text-text-secondary no-underline transition-colors duration-fast motion-reduce:transition-none hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:text-text-primary before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-action-primary before:opacity-0 aria-[current=page]:before:opacity-100 nav-collapsed:justify-center nav-collapsed:px-0";
+
+export const RAIL_ITEM = `${RAIL_ITEM_BASE} hover:bg-bg-hover`;
+
+/** An item inside a group that paints the hover for all its controls at once (case files and its caret). */
+export const RAIL_GROUP_ITEM = RAIL_ITEM_BASE;
 
 /** Visible label of an item; screen-reader only on the collapsed rail, where its tooltip shows it. */
 export const RAIL_LABEL = "min-w-0 flex-1 truncate nav-collapsed:sr-only";

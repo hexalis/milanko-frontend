@@ -48,7 +48,7 @@ type WorkspaceRailProps = {
 };
 
 const ASK_CTA =
-  "group/item relative mb-2 flex min-h-13 items-center justify-center gap-2.5 rounded-xl bg-action-primary px-4 text-label-l text-text-on-primary no-underline shadow-control transition-colors duration-fast motion-reduce:transition-none hover:bg-action-primary-hover hover:shadow-control-hover active:bg-action-primary-pressed focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:ring-2 aria-[current=page]:ring-action-primary aria-[current=page]:ring-offset-2 aria-[current=page]:ring-offset-bg-surface nav-collapsed:mx-auto nav-collapsed:size-12 nav-collapsed:min-h-12 nav-collapsed:px-0";
+  "group/item relative mb-2 flex min-h-13 items-center justify-center gap-2.5 rounded-control bg-action-primary px-4 text-label-l font-semibold text-text-on-primary no-underline shadow-card transition-colors duration-fast motion-reduce:transition-none hover:bg-action-primary-hover hover:shadow-control-hover active:bg-action-primary-pressed focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:ring-2 aria-[current=page]:ring-action-primary aria-[current=page]:ring-offset-2 aria-[current=page]:ring-offset-bg-surface nav-collapsed:mx-auto nav-collapsed:size-12 nav-collapsed:min-h-12 nav-collapsed:px-0";
 
 function RailLink({ section, label }: { section: NavSection; label: string }) {
   return (
@@ -76,7 +76,7 @@ export function WorkspaceRail({
   return (
     <header
       id={RAIL_ID}
-      className="rounded-shell border-border-subtle bg-bg-surface shadow-card shell:flex in-[.nav-anim]:duration-base in-[.nav-anim]:ease-standard fixed inset-y-3 start-3 z-30 hidden w-(--rail-w) flex-col border px-3 pt-4 pb-3 in-[.nav-anim]:transition-[width] motion-reduce:transition-none"
+      className="bg-bg-surface shadow-dropdown shell:flex in-[.nav-anim]:duration-base in-[.nav-anim]:ease-standard fixed inset-y-3 start-3 z-30 hidden w-(--rail-w) flex-col rounded-lg px-3 pt-4.5 pb-3.5 in-[.nav-anim]:transition-[width] motion-reduce:transition-none"
     >
       <div className="nav-collapsed:flex-col nav-collapsed:gap-2 flex items-center justify-between gap-1.5 ps-1.5 pb-3">
         <Link
@@ -127,7 +127,7 @@ export function WorkspaceRail({
         />
         <RailLink section={EXPLORE} label={copy.label(EXPLORE.labelKey)} />
 
-        <hr className="border-border-subtle nav-collapsed:mx-3.5 mx-3 my-2" />
+        <hr className="border-border-default nav-collapsed:mx-3.5 mx-3 my-2" />
         {RAIL_LEARN.map((section) => (
           <RailLink key={section.href} section={section} label={copy.label(section.labelKey)} />
         ))}

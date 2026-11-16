@@ -13,8 +13,8 @@ type ThemeSwitchProps = {
 };
 
 const GROUP = {
-  rail: "rounded-control bg-bg-surface-sunken nav-collapsed:flex-col m-0 inline-flex min-w-0 gap-0.5 border-0 p-1",
-  bar: "rounded-control bg-bg-surface-sunken m-0 inline-flex min-w-0 gap-0.5 border-0 p-1",
+  rail: "bg-bg-canvas nav-collapsed:flex-col m-0 inline-flex min-w-0 gap-0.5 rounded-sm border-0 p-1",
+  bar: "bg-bg-canvas m-0 inline-flex min-w-0 gap-0.5 rounded-sm border-0 p-1",
 } as const;
 
 const ICONS: Readonly<Record<Theme, string>> = { light: "sun", dark: "moon" };
@@ -38,7 +38,7 @@ export function ThemeSwitch({ label, optionLabels, placement }: ThemeSwitchProps
           onClick={() => {
             setTheme(option); // pins the pick even when it matches what the device shows
           }}
-          className="text-icon-secondary hover:bg-bg-hover hover:text-icon-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-icon-inverse grid size-8 cursor-pointer place-items-center rounded-xs"
+          className="text-icon-secondary hover:bg-bg-hover hover:text-icon-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-pressed:bg-bg-inverse aria-pressed:text-icon-inverse grid h-8 w-10 cursor-pointer place-items-center rounded-xs"
         >
           <Icon name={ICONS[option]} />
         </button>
