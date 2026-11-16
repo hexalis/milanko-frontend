@@ -46,7 +46,7 @@ export function UseSection({
       <blockquote className="bg-bg-surface-sunken rounded-field font-reading text-body-m text-text-primary mt-2 p-3.5">
         {use.quote}
       </blockquote>
-      <div className="mt-3.5 flex flex-wrap gap-2">
+      <div data-tour="cf-copy" className="mt-3.5 flex flex-wrap gap-2">
         <CopyTextButton
           intent="primary"
           text={use.quote}

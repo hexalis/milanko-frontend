@@ -25,7 +25,7 @@ export function Table({ caption, head, children }: TableProps) {
   const captionId = useId();
   return (
     <ScrollRegion className={CONTAINER} labelledBy={captionId}>
-      <table className={TABLE}>
+      <table data-tour="data-table" className={TABLE}>
         <caption id={captionId} className="sr-only">
           {caption}
         </caption>

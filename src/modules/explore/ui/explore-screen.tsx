@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
   type RefObject,
 } from "react";
 import type { CaseSummary } from "@/modules/cases";
@@ -22,7 +23,12 @@ import {
   type ExploreQuery,
   type ExploreSelection,
 } from "../domain/explore-state";
-import type { GlobeMessage, GlobeTile } from "../domain/globe-messages";
+import {
+  GLOBE_CHROME,
+  type GlobeChrome,
+  type GlobeMessage,
+  type GlobeTile,
+} from "../domain/globe-messages";
 import { isSectorId, kmBetween, sectorOf, type SectorId } from "../domain/sectors";
 import { useGlobeCommands, useGlobeMessages } from "../hooks/use-globe-bridge";
 import { CasePanel } from "./case-panel";
@@ -48,9 +54,21 @@ type ExploreScreenProps = {
   defaultYear: number;
   /** What the link opened, rendered open on the server. */
   initial: ExploreSelection | null;
+  /** The page's tour button, floating on the globe. */
+  tour?: ReactNode;
 };
 
 const subscribeNothing = () => () => {};
+
+/** Where the tour button goes while the drawer is open (see the comment where it is drawn). */
+function tourButtonPlace(cover: { side: "right" | "bottom"; px: number } | null) {
+  if (!cover || cover.px <= 0) return undefined;
+  if (cover.side === "right") return { insetInlineEnd: cover.px + 24 };
+  return { top: "auto", bottom: cover.px + 12, insetInlineStart: 12, insetInlineEnd: "auto" };
+}
+
+/** How long a linked panel waits for the globe before it shows over whatever is there. */
+const GLOBE_WAIT_MS = 12_000;
 
 /**
  * The globe explorer (the POC's renderExplore): the 3D world in a frame, and a drawer for whatever
@@ -73,6 +91,11 @@ export function ExploreScreen(props: ExploreScreenProps) {
 
   const [selection, setSelection] = useState<ExploreSelection | null>(props.initial);
   const [tile, setTile] = useState<GlobeTile | null>(null);
+  // Where the globe's own controls sit, as it reports them: the tour's anchors over the frame.
+  const [chrome, setChrome] = useState<GlobeChrome>({});
+  // How far the drawer reaches into the frame, from the right (side panel) or the bottom (sheet):
+  // the tour button keeps clear of it.
+  const [cover, setCover] = useState<{ side: "right" | "bottom"; px: number } | null>(null);
   // A link to an event waits for its year's snapshot; the drawer opens once it is found.
   const [status, setStatus] = useState<string | null>(() =>
     query.open.type === "event" ? t("exp.events.loading") : null,
@@ -83,6 +106,14 @@ export function ExploreScreen(props: ExploreScreenProps) {
     () => true,
     () => false,
   );
+
+  // Whatever a link opened waits for the world to appear, so its panel never covers the loader.
+  // If the globe never answers (a blocked frame, a failed load), the panel shows anyway.
+  const [isGlobeReady, setGlobeReady] = useState(false);
+  useEffect(() => {
+    const fallback = window.setTimeout(() => setGlobeReady(true), GLOBE_WAIT_MS);
+    return () => window.clearTimeout(fallback);
+  }, []);
 
   const caseRegion = (id: string): SectorId | undefined => {
     const region = byId.get(id)?.region;
@@ -128,6 +159,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
     const hadFocus = drawerRef.current?.contains(document.activeElement) ?? false;
     setSelection(null);
     setTile(null);
+    setCover(null);
     writeUrl(null);
     send({ type: "closed" });
     if (!hadFocus) return;
@@ -142,9 +174,13 @@ export function ExploreScreen(props: ExploreScreenProps) {
   }
 
   function handleMessage(message: GlobeMessage) {
-    if (message.type === "select") {
+    if (message.type === "ready") {
+      setGlobeReady(true);
+    } else if (message.type === "select") {
       if (message.sel.type === "case" && !byId.has(message.sel.id)) return;
       select(toSelection(message.sel));
+    } else if (message.type === "chrome") {
+      setChrome(message.rects);
     } else if (message.type === "escape") {
       if (selection) close();
     } else if (message.type === "tile") {
@@ -214,10 +250,38 @@ export function ExploreScreen(props: ExploreScreenProps) {
     return () => document.removeEventListener("keydown", listen, true);
   }, []);
 
+  // On wide screens the globe runs under the floating rail; the frame keeps its picture and
+  // controls clear of it, so it hears the rail's right edge whenever the rail changes width.
+  useEffect(() => {
+    const rail = document.getElementById("rail");
+    if (!rail) return;
+    const tell = () => {
+      const box = rail.getBoundingClientRect();
+      send({ type: "rail", px: box.width ? Math.round(box.right) : 0 });
+    };
+    tell();
+    const observer = new ResizeObserver(tell);
+    observer.observe(rail);
+    // The globe's loader listens before the world is built, so it can centre beside the rail at
+    // once; the queue above only opens once the world says "ready".
+    const frame = frameRef.current;
+    const early = () => {
+      const box = rail.getBoundingClientRect();
+      const px = box.width ? Math.round(box.right) : 0;
+      frame?.contentWindow?.postMessage({ etd: 1, type: "rail", px }, "*");
+    };
+    frame?.addEventListener("load", early);
+    return () => {
+      observer.disconnect();
+      frame?.removeEventListener("load", early);
+    };
+  }, [send]);
+
   return (
     <section
       aria-label={props.viewerLabel}
-      className="bg-space relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] w-full overflow-hidden"
+      data-tour="exp-globe"
+      className="bg-space shell:fixed shell:inset-0 shell:z-10 shell:h-auto relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] w-full overflow-hidden"
     >
       <h1 className="sr-only">{props.heading}</h1>
       <iframe
@@ -230,6 +294,36 @@ export function ExploreScreen(props: ExploreScreenProps) {
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         className="absolute inset-0 size-full border-0"
       />
+      {/*
+       * The frame is sandboxed, so the tour cannot reach the globe's controls: these empty boxes
+       * sit exactly over them (the globe reports where), for the tour to point at.
+       */}
+      {GLOBE_CHROME.map((part) => {
+        const box = chrome[part];
+        return box ? (
+          <div
+            key={part}
+            aria-hidden="true"
+            data-tour={"exp-" + part}
+            className="pointer-events-none absolute"
+            style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+          />
+        ) : null;
+      })}
+      {/*
+       * The tour button sits under the globe's zoom, with its other controls: top right, at the
+       * globe's own offsets (24px wide, 12px on phones; the zoom ends at 146px or 246px down). It
+       * shows only its icon; the label unfolds on hover. A side panel pushes it left with the zoom;
+       * a bottom sheet would cover it, so it sits just above the sheet on the left, clear of the zoom.
+       */}
+      {props.tour ? (
+        <div
+          className="bg-bg-surface shadow-raised shell:end-6 shell:top-[10rem] absolute end-3 top-[16.25rem] z-[5] rounded-full motion-safe:transition-[inset-inline-end] motion-safe:duration-300"
+          style={tourButtonPlace(cover)}
+        >
+          {props.tour}
+        </div>
+      ) : null}
       {status ? (
         <output className="rounded-chip bg-bg-surface text-body-s text-text-primary shadow-raised absolute bottom-3 left-3 z-10 max-w-[min(24rem,calc(100%-1.5rem))] px-3 py-2">
           {status}
@@ -240,7 +334,11 @@ export function ExploreScreen(props: ExploreScreenProps) {
           drawerRef={drawerRef}
           closeLabel={t("drawer.close")}
           onClose={close}
-          onInset={(side, px) => send({ type: "inset", side, px })}
+          onInset={(side, px) => {
+            setCover({ side, px });
+            send({ type: "inset", side, px });
+          }}
+          isHeld={!isGlobeReady}
         >
           <SelectionPanel
             selection={selection}

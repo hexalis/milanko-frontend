@@ -35,6 +35,26 @@ describe("CaseFolder", () => {
     expect(container.querySelector("svg circle")).toBeNull();
   });
 
+  it("carries one rising sheet per level of evidence, numbered with its folio", () => {
+    const sheetsOf = (strength: "strong" | "moderate" | "weak") => {
+      const file = catalog.trends.find((trend) => trend.t.strength === strength);
+      if (!file) return null;
+      const { container, unmount } = render(
+        <CaseFolder file={file} translator={getTranslator("en")} catalog={catalog} />,
+      );
+      const folios = [...container.querySelectorAll('[aria-hidden="true"] b')].map(
+        (label) => label.textContent,
+      );
+      unmount();
+      return folios;
+    };
+    const all = ["01 · Series", "02 · Test", "03 · Source"];
+    expect(sheetsOf("strong")).toEqual(all);
+    // Moderate and weak files may be missing from the catalog; a missing one has nothing to show.
+    expect(sheetsOf("moderate") ?? all.slice(0, 2)).toEqual(all.slice(0, 2));
+    expect(sheetsOf("weak") ?? all.slice(0, 1)).toEqual(all.slice(0, 1));
+  });
+
   it("shows an anomaly file's run-up and marks the event year", () => {
     const event = catalog.events[0];
     if (!event) throw new Error("no anomaly files");

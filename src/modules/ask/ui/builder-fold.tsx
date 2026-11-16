@@ -18,9 +18,17 @@ type BuilderFoldProps = {
   children: ReactNode;
 };
 
+/*
+ * A made choice reads the same whether it can change or not: one row shape, one hairline edge,
+ * the choice's icon on its tile, and a pill at the end ("Change", or a quiet "Only option").
+ */
+export const CHOSEN_ROW =
+  "flex min-h-16 items-center gap-3 rounded-[18px] bg-bg-surface py-3 ps-3 pe-3.5 text-body-m font-bold text-text-primary shadow-[inset_0_0_0_1px_var(--color-border-default),0_1px_2px_rgb(0_0_0/0.04)]";
+
 const SUMMARY = [
-  "group/sum flex min-h-16 cursor-pointer list-none items-center gap-3 rounded-[18px] bg-bg-surface py-3 ps-3 pe-3.5",
-  "text-body-m font-bold text-text-primary shadow-[inset_0_0_0_2px_var(--color-action-primary)]",
+  CHOSEN_ROW,
+  "group/sum cursor-pointer list-none transition-shadow duration-fast",
+  "hover:shadow-[inset_0_0_0_1px_var(--color-action-primary)] group-open/fold:shadow-[inset_0_0_0_2px_var(--color-action-primary)]",
   "[&::-webkit-details-marker]:hidden focus-visible:focus-ring focus-visible:outline-focus-ring",
 ].join(" ");
 

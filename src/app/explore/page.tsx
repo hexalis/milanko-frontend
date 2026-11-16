@@ -6,6 +6,7 @@ import { pickExploreMessages } from "@/modules/explore/domain/explore-copy";
 import { initialSelection, parseExploreQuery } from "@/modules/explore/domain/explore-state";
 import { isSectorId } from "@/modules/explore/domain/sectors";
 import { ExploreScreen } from "@/modules/explore/ui/explore-screen";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { withBasePath } from "@/shared/lib/base-path";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
@@ -56,6 +57,7 @@ async function ExploreContent({ searchParams }: PageProps) {
         query={query}
         defaultYear={defaultYear}
         initial={initialSelection(query.open)}
+        tour={<PageTour id="explore" translator={translator} isCompact />}
       />
     </div>
   );
@@ -65,7 +67,7 @@ export default function ExplorePage({ searchParams }: PageProps) {
   return (
     <Suspense
       fallback={
-        <div className="bg-space grid h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] place-items-center p-4">
+        <div className="bg-space shell:fixed shell:inset-0 shell:z-10 shell:h-auto grid h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] place-items-center p-4">
           <LoadingPanel label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
         </div>
       }

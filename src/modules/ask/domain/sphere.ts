@@ -105,25 +105,59 @@ export function projectSphere(geometry: SphereGeometry): SphereMap {
   return map;
 }
 
-/** Paints the textured, lit disc into an RGBA buffer of the grid, turned by `turn` radians. */
+/**
+ * Paints the textured, lit disc into an RGBA buffer of the grid, turned by `turn` radians.
+ * `smooth` blends the four nearest texels: four times the reads, so it is for a sphere painted
+ * once and magnified far past the texture (the horizon), not for one that turns every frame.
+ */
 export function paintSphere(
   map: SphereMap,
   texture: Texture,
   turn: number,
   out: Uint8ClampedArray,
+  smooth = false,
 ) {
   const { width: w, height: h, data } = texture;
   for (let i = 0; i < map.count; i++) {
     let u = (map.lon[i] + turn) / TWO_PI + 0.5;
     u -= Math.floor(u);
-    const tx = Math.min(w - 1, Math.trunc(u * w));
-    const ty = Math.min(h - 1, Math.trunc((0.5 - map.lat[i] / Math.PI) * h));
-    const k = (ty * w + tx) * 4;
+    const v = 0.5 - map.lat[i] / Math.PI;
     const s = map.shade[i];
     const o = map.at[i];
-    out[o] = data[k] * s;
-    out[o + 1] = data[k + 1] * s;
-    out[o + 2] = Math.min(255, data[k + 2] * s + (1 - s) * 18);
+    let red: number;
+    let green: number;
+    let blue: number;
+    if (smooth) {
+      const fx = u * w - 0.5;
+      const fy = Math.min(h - 1, Math.max(0, v * h - 0.5));
+      const x0 = Math.floor(fx);
+      const y0 = Math.floor(fy);
+      const ax = fx - x0;
+      const ay = fy - y0;
+      const xa = (x0 + w) % w;
+      const xb = (xa + 1) % w;
+      const yb = Math.min(h - 1, y0 + 1);
+      const k00 = (y0 * w + xa) * 4;
+      const k10 = (y0 * w + xb) * 4;
+      const k01 = (yb * w + xa) * 4;
+      const k11 = (yb * w + xb) * 4;
+      const mix = (c: number) => {
+        const top = data[k00 + c] + (data[k10 + c] - data[k00 + c]) * ax;
+        const bottom = data[k01 + c] + (data[k11 + c] - data[k01 + c]) * ax;
+        return top + (bottom - top) * ay;
+      };
+      red = mix(0);
+      green = mix(1);
+      blue = mix(2);
+    } else {
+      const k = (Math.min(h - 1, Math.trunc(v * h)) * w + Math.min(w - 1, Math.trunc(u * w))) * 4;
+      red = data[k];
+      green = data[k + 1];
+      blue = data[k + 2];
+    }
+    out[o] = red * s;
+    out[o + 1] = green * s;
+    out[o + 2] = Math.min(255, blue * s + (1 - s) * 18);
     out[o + 3] = 255;
   }
 }

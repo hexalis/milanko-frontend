@@ -9,6 +9,7 @@ import { defaultDepth } from "@/modules/ask/domain/guided";
 import { CompareScreen } from "@/modules/ask/ui/compare-screen";
 import { getCaseCatalog } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import type { SearchParams } from "@/shared/lib/search-params";
@@ -39,6 +40,7 @@ async function CompareContent({ searchParams }: PageProps) {
         rules={rules}
         translator={getTranslator(locale)}
         catalog={catalog}
+        tour={<PageTour id="compare" translator={getTranslator(locale)} />}
       />
     </div>
   );

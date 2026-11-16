@@ -5,6 +5,7 @@ import { DEPTH_COOKIE, withRememberedDepth } from "@/modules/ask/domain/ask-stat
 import { getCaseCatalog } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
 import { AskPickScreen } from "@/modules/ask/ui/ask-pick-screen";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import type { SearchParams } from "@/shared/lib/search-params";
@@ -18,12 +19,14 @@ type PageProps = { searchParams: Promise<SearchParams> };
 async function AskPickContent({ searchParams }: PageProps) {
   const [query, locale, jar] = await Promise.all([searchParams, getLocale(), cookies()]);
   const params = withRememberedDepth(query, jar.get(DEPTH_COOKIE)?.value);
+  const translator = getTranslator(locale);
   return (
     <div lang={locale}>
       <AskPickScreen
         params={params}
-        translator={getTranslator(locale)}
+        translator={translator}
         catalog={getCaseCatalog()}
+        tour={<PageTour id="ask" translator={translator} />}
       />
     </div>
   );

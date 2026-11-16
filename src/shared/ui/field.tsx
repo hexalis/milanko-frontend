@@ -26,8 +26,9 @@ export function TextInput(props: ComponentProps<"input">) {
   return <input className={CONTROL} {...props} />;
 }
 
+/** Styled as the portal's own dropdown where the browser allows it (see .field-select in globals.css). */
 export function Select(props: ComponentProps<"select">) {
-  return <select className={CONTROL} {...props} />;
+  return <select className={`field-select ${CONTROL}`} {...props} />;
 }
 
 type FilterBarProps = { children: ReactNode };
@@ -35,7 +36,10 @@ type FilterBarProps = { children: ReactNode };
 /** Responsive row of filters and actions at the top of a data page. */
 export function FilterBar({ children }: FilterBarProps) {
   return (
-    <div className="rounded-card border-border-subtle bg-bg-surface shadow-card medium:grid-cols-2 expanded:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] grid grid-cols-1 items-end gap-3 border p-4">
+    <div
+      data-tour="data-filters"
+      className="rounded-card border-border-subtle bg-bg-surface shadow-card medium:grid-cols-2 expanded:grid-cols-[repeat(auto-fit,minmax(150px,1fr))] grid grid-cols-1 items-end gap-3 border p-4"
+    >
       {children}
     </div>
   );

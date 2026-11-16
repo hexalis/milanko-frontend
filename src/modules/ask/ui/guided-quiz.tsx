@@ -38,6 +38,18 @@ const TILE = [
   "has-focus-visible:outline-3 has-focus-visible:outline-offset-3 has-focus-visible:outline-focus-ring",
 ].join(" ");
 
+/*
+ * Once answered, the tiles fold into one row of chips: the choice stays readable, and the result
+ * it unlocks moves up into view instead of below a wall of tiles.
+ */
+const TILE_DONE = [
+  "group/tile relative flex items-center gap-2 rounded-full border-2 border-transparent bg-bg-surface py-1.5 ps-1.5 pe-4",
+  "text-label-m font-semibold text-text-primary shadow-card",
+  "has-checked:border-action-primary has-checked:bg-action-selected",
+  "has-disabled:opacity-45",
+  "motion-safe:transition-[opacity] motion-safe:duration-300",
+].join(" ");
+
 const GRID: Record<2 | 3, string> = {
   2: "grid grid-cols-1 gap-3 medium:grid-cols-2",
   3: "grid grid-cols-1 gap-3 medium:grid-cols-3",
@@ -50,12 +62,15 @@ export function GuidedQuiz({ action, name, legend, options, picked, keep }: Guid
       {Object.entries(keep).map(([key, value]) =>
         value ? <input key={key} type="hidden" name={key} value={value} /> : null,
       )}
-      <fieldset className="m-0 min-w-0 border-0 p-0">
+      <fieldset data-tour="lesson-quiz" className="m-0 min-w-0 border-0 p-0">
         <legend className="sr-only">{legend}</legend>
-        <div className={GRID[options.length === 2 ? 2 : 3]}>
+        <div className={isAnswered ? "flex flex-wrap gap-2" : GRID[options.length === 2 ? 2 : 3]}>
           {options.map((option, index) => (
             // Keyed by the answer too: a back or forward that changes it remounts the radio.
-            <label key={`${option.value}:${picked ?? ""}`} className={TILE}>
+            <label
+              key={`${option.value}:${picked ?? ""}`}
+              className={isAnswered ? TILE_DONE : TILE}
+            >
               <input
                 type="radio"
                 name={name}
@@ -65,13 +80,21 @@ export function GuidedQuiz({ action, name, legend, options, picked, keep }: Guid
                 disabled={isAnswered && option.value !== picked}
                 className="sr-only"
               />
-              <span className="bg-bg-surface-sunken grid size-9 flex-none place-items-center rounded-xl text-[22px]">
+              <span
+                className={
+                  isAnswered
+                    ? "bg-bg-surface-sunken grid size-8 flex-none place-items-center rounded-full text-[18px]"
+                    : "bg-bg-surface-sunken grid size-9 flex-none place-items-center rounded-xl text-[22px]"
+                }
+              >
                 <Icon name={option.icon} />
               </span>
               <span>{option.label}</span>
-              <span className="text-action-primary invisible absolute end-3 top-3 text-[20px] group-has-checked/tile:visible">
-                <Icon name="check" />
-              </span>
+              {isAnswered ? null : (
+                <span className="text-action-primary invisible absolute end-3 top-3 text-[20px] group-has-checked/tile:visible">
+                  <Icon name="check" />
+                </span>
+              )}
             </label>
           ))}
         </div>
@@ -80,13 +103,59 @@ export function GuidedQuiz({ action, name, legend, options, picked, keep }: Guid
   );
 }
 
-/** The record as a sheet of paper: the points alone, or with the trend and its band. */
+/** The reader's answer set against what the line does, on the chart itself. */
+export type ChartCall = {
+  yoursLabel: string;
+  yours: string;
+  yoursIcon: string;
+  lineLabel: string;
+  line: string;
+  /** Whether the answer agrees with the test. */
+  isMatch: boolean;
+};
+
+const CALL_CHIP = {
+  match: "bg-surface-tone-3 text-text-primary",
+  other: "bg-surface-tone-4 text-text-primary",
+} as const;
+
+function CallStrip({ call, direction }: { call: ChartCall; direction: string }) {
+  return (
+    <p className="chart-call text-label-m flex flex-wrap items-center gap-2">
+      <span
+        className={`${call.isMatch ? CALL_CHIP.match : CALL_CHIP.other} inline-flex items-center gap-1.5 rounded-full py-1 ps-1.5 pe-3`}
+      >
+        <span className="bg-bg-surface grid size-6 place-items-center rounded-full text-[15px]">
+          <Icon name={call.yoursIcon} />
+        </span>
+        <span className="text-text-secondary font-normal">{call.yoursLabel}:</span>
+        <strong>{call.yours}</strong>
+      </span>
+      <span className="text-text-tertiary flex" aria-hidden="true">
+        <Icon name="arrow-right" />
+      </span>
+      <span className="bg-bg-surface-sunken inline-flex items-center gap-1.5 rounded-full py-1 ps-1.5 pe-3">
+        <span className="bg-bg-surface text-chart-trend grid size-6 place-items-center rounded-full text-[15px]">
+          <Icon name={direction} />
+        </span>
+        <span className="text-text-secondary font-normal">{call.lineLabel}:</span>
+        <strong className="tabular-nums">{call.line}</strong>
+      </span>
+    </p>
+  );
+}
+
+/**
+ * The record as a sheet of paper: the points alone, or with the trend and its band. With a call,
+ * the trend draws itself in beside the reader's answer, so the answer and the line read together.
+ */
 export function GuidedChart({
   view,
   translator,
   catalog,
   withTrend,
-}: StepProps & { withTrend: boolean }) {
+  call,
+}: StepProps & { withTrend: boolean; call?: ChartCall }) {
   const { t, locale } = translator;
   const { file, direction } = view;
   const context = { translator, catalog };
@@ -103,7 +172,11 @@ export function GuidedChart({
     n: file.series.length,
   });
   return (
-    <div className="rounded-card bg-bg-surface shadow-raised medium:px-5 medium:pt-5 flex flex-col gap-3 px-3 pt-3 pb-4">
+    <div
+      data-tour="lesson-chart"
+      className={`${call ? "chart-reveal " : ""}rounded-card bg-bg-surface shadow-raised medium:px-5 medium:pt-5 flex flex-col gap-3 px-3 pt-3 pb-4`}
+    >
+      {call ? <CallStrip call={call} direction={direction} /> : null}
       <ChartHead subtitle={subtitle} />
       {withTrend ? (
         <SeriesChart

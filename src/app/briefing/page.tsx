@@ -4,6 +4,7 @@ import { getCaseCatalog } from "@/modules/cases/domain/catalog";
 import { getEventAudit } from "@/modules/cases/domain/event-audit";
 import { BriefingScreen } from "@/modules/cases/ui/briefing/briefing-screen";
 import { getTranslator } from "@/modules/copy";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import { LoadingPanel } from "@/shared/ui/notice";
@@ -17,6 +18,7 @@ async function BriefingContent() {
     <div lang={locale}>
       <BriefingScreen
         translator={getTranslator(locale)}
+        tour={<PageTour id="briefing" translator={getTranslator(locale)} />}
         catalog={getCaseCatalog()}
         audit={getEventAudit()}
       />

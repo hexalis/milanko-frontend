@@ -17,6 +17,7 @@ export function WorkspaceTabbar({ label, labels }: WorkspaceTabbarProps) {
   return (
     <nav
       aria-label={label}
+      data-tour="shell-tabbar"
       className="border-border-subtle bg-bg-surface shadow-dropdown shell:hidden fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 rounded-[1.75rem] border p-1.5"
     >
       <ul className="grid grid-cols-5 gap-1">

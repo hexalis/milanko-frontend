@@ -74,7 +74,7 @@ function Steps({ state, context, themes }: StepsProps) {
   const isComparison = state.type === "comparison";
   return (
     <div className="flex min-w-0 flex-col gap-6.5">
-      <BuilderStep n={1} label={t("ask.build.theme")} status={status.theme}>
+      <BuilderStep n={1} label={t("ask.build.theme")} status={status.theme} tour="ask-theme">
         <BuilderChoices
           segment="theme"
           label={t("ask.build.theme")}
@@ -87,6 +87,7 @@ function Steps({ state, context, themes }: StepsProps) {
         label={t("ask.build.verb")}
         status={status.verb}
         lockText={t("ask.build.lock.verb")}
+        tour="ask-verb"
       >
         <BuilderChoices
           segment="verb"
@@ -100,6 +101,7 @@ function Steps({ state, context, themes }: StepsProps) {
         label={t(isComparison ? "ask.build.places" : "ask.build.where")}
         status={status.place}
         lockText={t("ask.build.lock.where")}
+        tour="ask-place"
       >
         <PlaceStep state={state} context={context} />
       </BuilderStep>
@@ -110,7 +112,10 @@ function Steps({ state, context, themes }: StepsProps) {
 function Examples({ examples, context }: Pick<QuestionBuilderProps, "examples" | "context">) {
   const { t } = context.translator;
   return (
-    <div className="border-border-subtle flex flex-col items-center gap-2.5 border-t pt-4">
+    <div
+      data-tour="ask-examples"
+      className="border-border-subtle flex flex-col items-center gap-2.5 border-t pt-4"
+    >
       <p className="text-label-l text-text-secondary m-0 flex items-center gap-2 font-semibold">
         <span className="text-text-brand">
           <Icon name="sparkle" />

@@ -28,13 +28,15 @@ type BuilderStepProps = {
   status: StepStatus;
   /** What to do first, shown while the step is locked. */
   lockText?: string;
+  /** Anchor of this step in the page's tour (`data-tour`). */
+  tour?: string;
   children: ReactNode;
 };
 
-export function BuilderStep({ n, label, status, lockText, children }: BuilderStepProps) {
+export function BuilderStep({ n, label, status, lockText, tour, children }: BuilderStepProps) {
   const { legend, badge } = step({ status });
   return (
-    <fieldset className="m-0 min-w-0 border-0 p-0">
+    <fieldset data-tour={tour} className="m-0 min-w-0 border-0 p-0">
       <legend className={legend()}>
         <span className={badge()} aria-hidden="true">
           {status === "done" ? <Icon name="check" /> : n}

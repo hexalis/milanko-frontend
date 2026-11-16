@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { getCaseCatalog } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
 import { MethodScreen } from "@/modules/method/ui/method-screen";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import { LoadingPanel } from "@/shared/ui/notice";
@@ -14,7 +15,11 @@ async function MethodContent() {
   const locale = await getLocale();
   return (
     <div lang={locale}>
-      <MethodScreen catalog={getCaseCatalog()} translator={getTranslator(locale)} />
+      <MethodScreen
+        catalog={getCaseCatalog()}
+        translator={getTranslator(locale)}
+        tour={<PageTour id="method" translator={getTranslator(locale)} />}
+      />
     </div>
   );
 }

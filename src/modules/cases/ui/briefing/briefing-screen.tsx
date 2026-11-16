@@ -20,14 +20,23 @@ import { CaseFolder } from "../case-folder";
 import { FalseSuspect } from "./false-suspect";
 import { FeaturedCase } from "./featured-case";
 import { OppositePairs } from "./opposite-pairs";
+import { ReadAFile } from "./read-a-file";
 
 /*
- * The Briefing, front page of the case files (POC app.js renderBriefing L618-780). DESIGN.md
- * rhythm: desk hero → steps → night block (opposite-trend pairs) → false suspect → shelves of
- * the latest folders → theme block (featured case) → desk CTA.
+ * The Briefing, front page of the case files (POC app.js renderBriefing L618-780), told as one
+ * story a child, a curious reader and a scientist can all follow: the question (hero and ledger)
+ * → how to read a case file (its three sheets, in plain words and for scientists) → the latest
+ * folders → two lessons (opposite-trend pairs, the false suspect) → the featured case → where to
+ * go next (steps and the closing CTA).
  */
 
-type BriefingScreenProps = { translator: Translator; catalog: CaseCatalog; audit: EventAudit };
+type BriefingScreenProps = {
+  translator: Translator;
+  catalog: CaseCatalog;
+  audit: EventAudit;
+  /** The page's tour button, beside the title. */
+  tour?: ReactNode;
+};
 
 const CARD_LINK = [
   "flex h-full rounded-card bg-bg-surface text-text-primary shadow-card no-underline",
@@ -35,18 +44,20 @@ const CARD_LINK = [
   "motion-reduce:hover:translate-y-0 focus-visible:focus-ring focus-visible:outline-focus-ring",
 ].join(" ");
 
+/* Each count is a card (POC .ledger--kinds): the figure leads, the label says what it counts. */
 const LEDGER_LINK = [
-  "flex flex-col gap-0.5 rounded-card px-4 py-1 text-text-secondary no-underline",
-  "transition-colors duration-fast hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring",
+  "flex h-full flex-col gap-2 rounded-surface bg-bg-surface px-5 py-4 text-text-secondary no-underline shadow-card",
+  "transition-[box-shadow,translate] duration-fast hover:-translate-y-0.5 hover:shadow-dropdown motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+  "focus-visible:focus-ring focus-visible:outline-focus-ring",
 ].join(" ");
 
 type LedgerItem = { href: string; icon: string; label: string; count: LedgerCount };
 
 function Ledger({ items, of }: { items: LedgerItem[]; of: string }) {
   return (
-    <ul className="medium:grid-cols-3 divide-border-subtle medium:divide-x medium:divide-y-0 grid max-w-[880px] divide-y">
+    <ul data-tour="brief-ledger" className="medium:grid-cols-3 grid gap-4 pt-2">
       {items.map((item) => (
-        <li key={item.href} className="min-w-0 py-2">
+        <li key={item.href} className="min-w-0">
           <Link href={item.href} className={LEDGER_LINK}>
             <span className="text-body-m tabular-nums">
               <strong className="text-display-s font-display text-text-brand me-1">
@@ -54,8 +65,10 @@ function Ledger({ items, of }: { items: LedgerItem[]; of: string }) {
               </strong>{" "}
               {of} {item.count.total}
             </span>
-            <span className="text-body-m flex items-center gap-1.5">
-              <Icon name={item.icon} />
+            <span className="text-body-m text-text-primary flex items-start gap-2 font-semibold">
+              <span className="text-icon-brand mt-0.5 shrink-0">
+                <Icon name={item.icon} />
+              </span>
               {item.label}
             </span>
           </Link>
@@ -69,7 +82,7 @@ type Step = { href: string; icon: string; title: string; description: string };
 
 function Steps({ title, steps }: { title: string; steps: Step[] }) {
   return (
-    <section aria-labelledby="steps-title">
+    <section aria-labelledby="steps-title" data-tour="brief-steps">
       <h2 id="steps-title" className="sr-only">
         {title}
       </h2>
@@ -100,12 +113,14 @@ type ShelfProps = {
   files: CaseFile[];
   translator: Translator;
   catalog: CaseCatalog;
+  /** Anchor of this shelf in the page's tour (`data-tour`). */
+  tour?: string;
 };
 
 /* Deferred: the POC's "read" mark on folders already opened (localStorage etd-read). */
-function Shelf({ id, title, lead, more, files, translator, catalog }: ShelfProps) {
+function Shelf({ id, title, lead, more, files, translator, catalog, tour }: ShelfProps) {
   return (
-    <section aria-labelledby={id} className="flex flex-col gap-5">
+    <section aria-labelledby={id} data-tour={tour} className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h2 id={id} className="text-heading-h2 font-display text-text-primary">
@@ -118,7 +133,8 @@ function Shelf({ id, title, lead, more, files, translator, catalog }: ShelfProps
           <Icon name="arrow-right" />
         </Link>
       </div>
-      <div className="medium:grid-cols-2 expanded:grid-cols-3 grid gap-6">
+      {/* Room above each folder for its sheets to rise into. */}
+      <div className="medium:grid-cols-2 expanded:grid-cols-3 grid gap-x-6 gap-y-20 pt-14">
         {files.map((file) => (
           <CaseFolder key={file.id} file={file} translator={translator} catalog={catalog} />
         ))}
@@ -136,6 +152,7 @@ function ClosingCta({
   return (
     <section
       aria-labelledby="cta-title"
+      data-tour="brief-cta"
       className="rounded-shell bg-bg-surface shadow-card medium:flex-row medium:items-center medium:p-9 flex flex-col justify-between gap-6 p-6"
     >
       <div className="flex flex-col gap-1">
@@ -150,7 +167,7 @@ function ClosingCta({
   );
 }
 
-export function BriefingScreen({ translator, catalog, audit }: BriefingScreenProps) {
+export function BriefingScreen({ translator, catalog, audit, tour }: BriefingScreenProps) {
   const { t } = translator;
   const ledger = briefingLedger(catalog, audit);
   const pairs = oppositePairs(catalog.trends);
@@ -160,9 +177,12 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
   return (
     <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto flex w-full flex-col gap-12 px-4 pt-8 pb-16">
       <header className="flex max-w-[900px] flex-col gap-4">
-        <h1 className="text-display-s font-display text-text-primary text-balance">
-          {t("brief.title")}
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <h1 className="text-display-s font-display text-text-primary text-balance">
+            {t("brief.title")}
+          </h1>
+          {tour}
+        </div>
         <p className="text-body-l font-reading text-text-secondary max-w-[60ch]">
           {t("brief.lead", { n: catalog.all.length, years: longestRecord(catalog.trends) })}
         </p>
@@ -192,47 +212,13 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
         />
       </header>
 
-      <Steps
-        title={t("brief.steps.title")}
-        steps={[
-          {
-            href: "/cases",
-            icon: "cases-on",
-            title: t("brief.step1.t"),
-            description: t("brief.step1.d"),
-          },
-          {
-            href: "/explore",
-            icon: "explore-on",
-            title: t("brief.step2.t"),
-            description: t("brief.step2.d"),
-          },
-          {
-            href: "/method",
-            icon: "method-on",
-            title: t("brief.step3.t"),
-            description: t("brief.step3.d"),
-          },
-        ]}
-      />
+      <ReadAFile translator={translator} />
 
       {/* Deferred: the live "Today in EONET" day card (POC dayFile/fillDayFile L2110-2169) reads the EONET API. */}
 
-      {pairs.length ? (
-        <OppositePairs pairs={pairs} translator={translator} catalog={catalog} />
-      ) : null}
-
-      {suspect ? (
-        <FalseSuspect
-          suspect={suspect}
-          audit={audit}
-          realTrends={ledger.audit.hits}
-          translator={translator}
-        />
-      ) : null}
-
       <Shelf
         id="latest-title"
+        tour="brief-shelf"
         title={t("brief.cases.title")}
         lead={t("brief.cases.lead")}
         more={{
@@ -257,7 +243,44 @@ export function BriefingScreen({ translator, catalog, audit }: BriefingScreenPro
         catalog={catalog}
       />
 
+      {pairs.length ? (
+        <OppositePairs pairs={pairs} translator={translator} catalog={catalog} />
+      ) : null}
+
+      {suspect ? (
+        <FalseSuspect
+          suspect={suspect}
+          audit={audit}
+          realTrends={ledger.audit.hits}
+          translator={translator}
+        />
+      ) : null}
+
       {featured ? <FeaturedCase file={featured} translator={translator} catalog={catalog} /> : null}
+
+      <Steps
+        title={t("brief.steps.title")}
+        steps={[
+          {
+            href: "/cases",
+            icon: "cases-on",
+            title: t("brief.step1.t"),
+            description: t("brief.step1.d"),
+          },
+          {
+            href: "/explore",
+            icon: "explore-on",
+            title: t("brief.step2.t"),
+            description: t("brief.step2.d"),
+          },
+          {
+            href: "/method",
+            icon: "method-on",
+            title: t("brief.step3.t"),
+            description: t("brief.step3.d"),
+          },
+        ]}
+      />
 
       {/* Deferred: the POC's place search (Open-Meteo geocoding, then a live file); this CTA opens Case Files. */}
       <ClosingCta

@@ -51,7 +51,10 @@ export function ScreenLook({ view, translator, catalog }: StepProps) {
       <StepLead>
         {question.published ? t(`ask.place.why.${question.id}`) : t("ask.place.why", { place })}
       </StepLead>
-      <ul className="rounded-card bg-bg-surface shadow-card medium:px-5 max-w-[640px] border border-[color-mix(in_srgb,var(--color-text-primary)_8%,transparent)] px-3.5 py-0.5">
+      <ul
+        data-tour="look-facts"
+        className="rounded-card bg-bg-surface shadow-card medium:px-5 max-w-[640px] border border-[color-mix(in_srgb,var(--color-text-primary)_8%,transparent)] px-3.5 py-0.5"
+      >
         <Fact
           icon="map-pin"
           label={t("prop.place")}
@@ -92,7 +95,10 @@ export function ScreenLook({ view, translator, catalog }: StepProps) {
        * Deferred (POC orbitBlock): the place seen from orbit (NASA GIBS true colour) beside the
        * facts. GIBS is not ported yet, so the note on the grid cell stands alone under the card.
        */}
-      <p className="text-body-s text-text-secondary grid max-w-[640px] grid-cols-[1.25rem_minmax(0,1fr)] gap-2.5 px-1">
+      <p
+        data-tour="look-cell"
+        className="text-body-s text-text-secondary grid max-w-[640px] grid-cols-[1.25rem_minmax(0,1fr)] gap-2.5 px-1"
+      >
         <span className="text-text-brand mt-0.5">
           <Icon name="info-on" />
         </span>

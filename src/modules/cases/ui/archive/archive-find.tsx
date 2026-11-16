@@ -24,7 +24,7 @@ type ArchiveFindProps = {
 export function ArchiveFind({ state, translator, isSearchFocused }: ArchiveFindProps) {
   const { t } = translator;
   return (
-    <search className="medium:flex-row flex flex-col gap-2.5">
+    <search data-tour="arch-search" className="medium:flex-row flex flex-col gap-2.5">
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">{t("arch.search.label")}</span>
         <span className="text-icon-secondary pointer-events-none absolute inset-y-0 start-3.5 flex items-center">

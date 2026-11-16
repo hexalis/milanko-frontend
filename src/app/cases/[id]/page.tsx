@@ -6,6 +6,7 @@ import { findCaseFile, getCaseCatalog } from "@/modules/cases/domain/catalog";
 import { getEventAudit } from "@/modules/cases/domain/event-audit";
 import { caseFileIds, findReading, hasCaseFile } from "@/modules/cases/domain/reading";
 import { CaseFileView } from "@/modules/cases/ui/dossier/case-file-view";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 import { CaseVisitRecorder } from "@/modules/workspace/ui/case-visit-recorder";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE, type Locale } from "@/shared/lib/i18n";
@@ -39,7 +40,11 @@ async function CaseFileContent({ id }: { id: string }) {
   if (!reading) notFound();
   return (
     <div lang={locale}>
-      <CaseFileView reading={reading} translator={context.translator} />
+      <CaseFileView
+        reading={reading}
+        translator={context.translator}
+        tour={<PageTour id="case" translator={context.translator} />}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { TrendReadout } from "@/modules/cases";
 import { askPath } from "../domain/ask-state";
 import { ScienceList, StepLead, type StepProps } from "./guided-parts";
 import { GuidedChart, GuidedQuiz } from "./guided-quiz";
+import { RevealScroll } from "./reveal-scroll";
 import { testRows } from "./test-rows";
 
 /*
@@ -29,10 +30,17 @@ export function ScreenCheck(props: StepProps) {
         ]}
       />
       {reading ? (
-        <section aria-label={t("ask.flow.check")} className="flex flex-col gap-3">
-          <TrendReadout file={file} translator={translator} />
-          {depth === "science" ? <ScienceList rows={testRows(file, translator)} /> : null}
-        </section>
+        // The test's readout comes into view as soon as the reader has answered.
+        <RevealScroll>
+          <section
+            aria-label={t("ask.flow.check")}
+            data-tour="check-readout"
+            className="flex flex-col gap-3 motion-safe:transition-[opacity,translate] motion-safe:duration-500 motion-safe:starting:translate-y-3 motion-safe:starting:opacity-0"
+          >
+            <TrendReadout file={file} translator={translator} />
+            {depth === "science" ? <ScienceList rows={testRows(file, translator)} /> : null}
+          </section>
+        </RevealScroll>
       ) : null}
     </>
   );

@@ -100,7 +100,7 @@ function Dock(props: GuidedScreenProps) {
   );
 }
 
-export function GuidedScreen(props: GuidedScreenProps) {
+export function GuidedScreen({ tour, ...props }: GuidedScreenProps & { tour?: ReactNode }) {
   const { view, translator } = props;
   const { t } = translator;
   const { question, file, screen, depth, hunch, reading } = view;
@@ -120,7 +120,10 @@ export function GuidedScreen(props: GuidedScreenProps) {
         aria-labelledby="ask-title"
         className="flex flex-1 flex-col gap-[18px] motion-safe:transition-[opacity,translate] motion-safe:duration-300 motion-safe:starting:translate-x-4 motion-safe:starting:opacity-0"
       >
-        <p className="text-text-brand text-[14px] font-semibold">{t(`ask.flow.${screen}`)}</p>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <p className="text-text-brand text-[14px] font-semibold">{t(`ask.flow.${screen}`)}</p>
+          {tour}
+        </div>
         <h1
           id="ask-title"
           className="font-display text-text-primary text-[clamp(28px,3.4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance"

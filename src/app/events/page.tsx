@@ -17,6 +17,8 @@ import {
 } from "@/shared/lib/search-params";
 import { LoadingPanel } from "@/shared/ui/notice";
 import { PageShell } from "@/shared/ui/page-shell";
+import { getTranslator } from "@/modules/copy";
+import { PageTour } from "@/modules/tour/ui/page-tour";
 
 export const metadata: Metadata = { title: "Archivo de eventos" };
 
@@ -53,6 +55,7 @@ export default function EventsPage({ searchParams }: PageProps) {
   return (
     <PageShell
       lang="es"
+      aside={<PageTour id="data" translator={getTranslator("es")} />}
       kicker="Earth Trend Detective · EONET persistido"
       title="Archivo de eventos"
     >

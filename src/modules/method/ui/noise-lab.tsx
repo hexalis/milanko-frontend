@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Slider } from "@hexalis/design-system";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EvidenceMeter,
   formatFigure,
@@ -11,6 +11,7 @@ import {
   VerdictStamp,
 } from "@/modules/cases";
 import { Icon } from "@/shared/ui/icon";
+import { useLabDemo, type DemoMove } from "../hooks/use-lab-demo";
 import {
   DEFAULT_PLANET,
   INITIAL_SEED,
@@ -21,6 +22,7 @@ import {
   type PlanetSettings,
 } from "../domain/noise-lab";
 import { labTranslator, type LabCopy } from "./lab-copy";
+import { DemoBar, DemoPointer } from "./lab-demo";
 
 /*
  * "Try it: make your own planet" (POC renderMethod, L2700-2766): the reader sets a real trend, the
@@ -35,6 +37,29 @@ type NoiseLabProps = {
 };
 
 const TREND_DIGITS = 2;
+
+/** Sliders in DOM order, so the demo can find and move them. */
+const SLIDER_KEYS = [
+  "trend",
+  "noise",
+  "years",
+] as const satisfies readonly (keyof PlanetSettings)[];
+
+/*
+ * The demo: a strong real trend is found at once; then the year-to-year noise rises until the
+ * same trend drowns and the test says it cannot tell; then the noise settles again.
+ */
+const DEMO: readonly DemoMove[] = [
+  { slider: 0, to: 0.85, ms: 1100 },
+  { slider: 1, to: 1.9, ms: 1400 },
+  { slider: 1, to: 0.6, ms: 900 },
+];
+
+const snap = (key: keyof PlanetSettings, value: number) => {
+  const { min, max, step } = PLANET_LIMITS[key];
+  const stepped = Math.round((value - min) / step) * step + min;
+  return Math.min(max, Math.max(min, Number(stepped.toFixed(4))));
+};
 
 type LabSliderProps = {
   label: string;
@@ -80,9 +105,32 @@ export function NoiseLab({ copy, lastYear }: NoiseLabProps) {
   const update = (key: keyof PlanetSettings) => (value: number) =>
     setSettings((current) => ({ ...current, [key]: value }));
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  // The demo reads where a slider stands now, between renders.
+  const live = useRef(settings);
+  useEffect(() => {
+    live.current = settings;
+  });
+  const read = useCallback((slider: number) => live.current[SLIDER_KEYS[slider] ?? "trend"], []);
+  const write = useCallback((slider: number, value: number) => {
+    const key = SLIDER_KEYS[slider] ?? "trend";
+    setSettings((current) => ({ ...current, [key]: snap(key, value) }));
+  }, []);
+  const demo = useLabDemo(rootRef, DEMO, read, write);
+
   return (
-    <div className="expanded:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] grid gap-6">
+    <div
+      ref={rootRef}
+      className="expanded:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] relative grid gap-6"
+    >
+      {demo.cursor ? <DemoPointer cursor={demo.cursor} /> : null}
       <div className="flex flex-col gap-4">
+        <DemoBar
+          isTurn={demo.isTurn}
+          onReplay={demo.replay}
+          turn={t("method.demo.turn")}
+          replay={t("method.demo.replay")}
+        />
         <LabSlider
           label={t("method.play.trend")}
           output={`${formatFigure(settings.trend, TREND_DIGITS, true)} ${perDecade}`}
