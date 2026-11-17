@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
+import { withBasePath } from "@/shared/lib/base-path";
 
 /*
  * The link of a case folder. A plain click opens the folder on the way to the file
@@ -9,6 +10,8 @@ import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
  * flies, in a layer above the page, to the middle of the screen, while the page fades behind it. The file is requested during the
  * flight, so its wait hides behind the animation; once it is on screen the layer fades and the
  * file deals the same sheets onto its first screen.
+ * While the pages are up, a line under them says the file is on its way ("Opening the case
+ * file…"), and the page under them does not scroll (no scroll bar beside them).
  * The flight lives outside React (on <body>) because the shelf unmounts under it. It moves only
  * transform and opacity, so it stays smooth while the next page renders.
  * A click with a modifier (new tab, new window) or a reader with reduced motion gets the ordinary
@@ -18,11 +21,17 @@ import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 /* The page is covered and the pages are out of the folder by then; the file loads behind them. */
 const NAVIGATE_MS = 240;
 /* If the file has not replaced the shelf by then, the folder is put back. */
-const RESET_MS = 4000;
+const RESET_MS = 8000;
 
-type FolderLinkProps = { href: string; className: string; children: ReactNode };
+type FolderLinkProps = {
+  href: string;
+  className: string;
+  /** Said under the pages while a slow file is still on its way. */
+  waitLabel: string;
+  children: ReactNode;
+};
 
-export function FolderLink({ href, className, children }: FolderLinkProps) {
+export function FolderLink({ href, className, waitLabel, children }: FolderLinkProps) {
   const opened = useRef<HTMLElement | null>(null);
   const isPassing = useRef(false);
   const timers = useRef<number[]>([]);
@@ -51,7 +60,7 @@ export function FolderLink({ href, className, children }: FolderLinkProps) {
     if (!folder || !stack) return;
     event.preventDefault();
     if (opened.current) return;
-    fly(folder, stack, href);
+    fly(folder, stack, href, waitLabel);
     folder.dataset.opening = "";
     opened.current = folder;
     timers.current.push(
@@ -81,10 +90,15 @@ function close(folder: HTMLElement | null) {
 const FLIGHT_MS = 720;
 const LEAVE_MS = 280;
 /* The flight gives up waiting for a file that never arrives. */
-const GIVE_UP_MS = 4000;
+const GIVE_UP_MS = 8000;
 const CHECK_MS = 50;
+/* The waiting line under the pages; folder-open.css shows it as they settle. */
+const WAIT =
+  "bg-bg-surface text-text-primary shadow-raised text-label-m fixed inset-x-0 bottom-[calc(2rem+env(safe-area-inset-bottom,0px))] z-[101] mx-auto flex w-fit items-center gap-2.5 rounded-full px-4 py-2.5 font-semibold";
 /* Holds the file's own opening (case-glance.css) until the flight has left. */
 const FLIGHT = "folderFlight";
+/* Keeps the page under the pages still until the layer is gone (folder-open.css). */
+const LOCK = "flightLock";
 
 /*
  * Where the pages land (folder-open.css): side by side, a gap apart, when all of them fit at a
@@ -121,7 +135,7 @@ function landing(stack: HTMLElement) {
  * Copies the folder's pages into a layer over the page, with a copy of its cover in front so they
  * rise from behind it, and sends them to the middle of the screen.
  */
-function fly(folder: HTMLElement, stack: HTMLElement, href: string) {
+function fly(folder: HTMLElement, stack: HTMLElement, href: string, waitLabel: string) {
   const { box, height, zoom, step, rise, turn } = landing(stack);
 
   const layer = document.createElement("div");
@@ -161,15 +175,26 @@ function fly(folder: HTMLElement, stack: HTMLElement, href: string) {
     renameIds(front);
     layer.append(front);
   }
-  document.body.append(layer);
+  // The layer is inert, so out of the accessibility tree: the waiting line sits beside it.
+  const wait = document.createElement("p");
+  wait.dataset.flightWait = "";
+  wait.setAttribute("role", "status");
+  wait.className = WAIT;
+  const spinner = document.createElement("span");
+  spinner.dataset.flightSpinner = "";
+  spinner.setAttribute("aria-hidden", "true");
+  wait.append(spinner, waitLabel);
+
+  document.body.append(layer, wait);
   document.documentElement.dataset[FLIGHT] = "";
+  document.documentElement.dataset[LOCK] = "";
 
   const started = performance.now();
   const check = window.setInterval(() => {
     const elapsed = performance.now() - started;
     if ((elapsed >= FLIGHT_MS && hasArrived(href)) || elapsed >= GIVE_UP_MS) {
       window.clearInterval(check);
-      land(layer);
+      land(layer, wait);
     }
   }, CHECK_MS);
 }
@@ -185,19 +210,27 @@ function place(element: HTMLElement, left: number, top: number, width: number, h
   });
 }
 
-/** The file is on screen (a file seen before may still be kept, hidden, for the back button). */
+/**
+ * The file is on screen (a file seen before may still be kept, hidden, for the back button). The
+ * address carries the app's base path (/app in production), which the link's href does not.
+ */
 function hasArrived(href: string) {
-  if (window.location.pathname !== href) return false;
+  if (window.location.pathname !== withBasePath(href)) return false;
   return Array.from(document.querySelectorAll<HTMLElement>(".cg")).some(
     (glance) => glance.offsetParent !== null,
   );
 }
 
 /** The layer fades, and the file deals its sheets where the flight leaves them. */
-function land(layer: HTMLElement) {
+function land(layer: HTMLElement, wait: HTMLElement) {
   delete document.documentElement.dataset[FLIGHT];
   layer.dataset.leaving = "";
-  window.setTimeout(() => layer.remove(), LEAVE_MS);
+  wait.dataset.leaving = "";
+  window.setTimeout(() => {
+    layer.remove();
+    wait.remove();
+    delete document.documentElement.dataset[LOCK];
+  }, LEAVE_MS);
 }
 
 /* The copied sparkline must not point at the gradients of the original, kept hidden on the shelf. */

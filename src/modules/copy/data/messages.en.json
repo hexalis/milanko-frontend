@@ -609,6 +609,7 @@
   "cf.glance.sheets": "The file's sheets",
   "cf.glance.sheets.d": "Each sheet is one more piece of backing: the series, the test and the source. Less evidence, fewer sheets.",
   "cf.glance.sheets.n": "{n} of 3",
+  "cf.opening": "Opening the case file…",
   "cf.glance.what": "What is measured",
   "cf.glance.where": "Where",
   "cf.glance.zoom": "From orbit, {date}",

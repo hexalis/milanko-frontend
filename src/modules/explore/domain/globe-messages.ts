@@ -126,7 +126,9 @@ export type FrameCommand =
   /** The data layer on one variable (NASA's code). */
   | { type: "layer"; layer: "data"; variable: string }
   /** Hide (or show) the globe's own controls: only the planet and its sky. */
-  | { type: "immersive"; on: boolean };
+  | { type: "immersive"; on: boolean }
+  /** Asks a globe that is already built to say "ready" again (the queue lost track of it). */
+  | { type: "hello" };
 
 type Unknown = Record<string, unknown>;
 
@@ -349,6 +351,13 @@ export function createCommandQueue() {
       const queued = pending;
       pending = [];
       queued.forEach(target);
+    },
+    /**
+     * The frame may be another one now (reloaded, or rebuilt while its page was hidden): hold the
+     * commands again until it says it is ready, instead of posting them to a window that is gone.
+     */
+    reset() {
+      post = null;
     },
   };
 }

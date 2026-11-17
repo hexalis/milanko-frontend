@@ -228,7 +228,11 @@ export function CaseFolder({
             {themeLabel(theme, context)}
           </p>
           <Heading className="text-heading-h4 font-display text-balance">
-            <FolderLink href={`/cases/${file.id}`} className={TITLE_LINK}>
+            <FolderLink
+              href={`/cases/${file.id}`}
+              className={TITLE_LINK}
+              waitLabel={t("cf.opening")}
+            >
               {fileTitle(file, context)}
             </FolderLink>
           </Heading>

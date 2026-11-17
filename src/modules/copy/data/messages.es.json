@@ -609,6 +609,7 @@
   "cf.glance.sheets": "Hojas del expediente",
   "cf.glance.sheets.d": "Cada hoja es un respaldo más: la serie, la prueba y la fuente. Menos evidencia, menos hojas.",
   "cf.glance.sheets.n": "{n} de 3",
+  "cf.opening": "Abriendo el expediente…",
   "cf.glance.what": "Qué se mide",
   "cf.glance.where": "Dónde",
   "cf.glance.zoom": "Desde órbita, {date}",

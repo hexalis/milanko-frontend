@@ -224,6 +224,18 @@ describe("isFromFrame", () => {
 });
 
 describe("createCommandQueue", () => {
+  it("holds commands again after a reset, until the next ready", () => {
+    const stale = vi.fn<(command: FrameCommand) => void>();
+    const fresh = vi.fn<(command: FrameCommand) => void>();
+    const queue = createCommandQueue();
+    queue.ready(stale);
+    queue.reset();
+    queue.send({ type: "rail", px: 280 });
+    expect(stale).not.toHaveBeenCalled();
+    queue.ready(fresh);
+    expect(fresh.mock.calls.map(([command]) => command)).toEqual([{ type: "rail", px: 280 }]);
+  });
+
   it("holds commands until ready, then sends them in order and passes later ones through", () => {
     const post = vi.fn<(command: FrameCommand) => void>();
     const queue = createCommandQueue();
