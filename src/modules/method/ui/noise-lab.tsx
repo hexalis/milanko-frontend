@@ -71,7 +71,7 @@ type LabSliderProps = {
   onChange: (value: number) => void;
 };
 
-function LabSlider({ label, output, value, limits, format, onChange }: LabSliderProps) {
+export function LabSlider({ label, output, value, limits, format, onChange }: LabSliderProps) {
   return (
     <Slider
       value={value}

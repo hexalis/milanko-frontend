@@ -134,7 +134,10 @@ function ArchiveResults({ search, catalog, translator }: ArchiveResultsProps) {
       ) : search.place === "not-found" ? (
         <NearMessage kind="not-found" text={search.text} translator={translator} />
       ) : null}
-      <div data-tour="arch-filters" className="flex flex-wrap items-center justify-between gap-3">
+      <div
+        data-tour="arch-filters"
+        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
+      >
         <ActiveFilters
           state={state}
           shown={hits.length}
@@ -162,7 +165,8 @@ function SortSelect({ sort, translator }: { sort: ArchiveState["sort"]; translat
   const { t } = translator;
   return (
     <label className="text-label-s text-text-secondary flex items-center gap-2">
-      <span className="shrink-0">{t("arch.sort")}</span>
+      {/* On a phone the count and the order share one line: the word goes to screen readers. */}
+      <span className="max-medium:sr-only shrink-0">{t("arch.sort")}</span>
       <AutoSubmitSelect name="sort" urlValue={sort}>
         {ARCHIVE_SORTS.map((option) => (
           <option key={option} value={option}>
@@ -202,9 +206,22 @@ type ShelfProps = {
   catalog: CaseCatalog;
 };
 
-/* Rows leave room above each folder for its sheets to rise into (up to 72px). */
+/*
+ * Folders come in one after another as the archive appears (or as a filter brings new ones): a
+ * short rise and fade, 45ms apart, the first dozen staggered and the rest with the twelfth.
+ */
+const FOLDER_IN = "motion-safe:animate-[enter_420ms_cubic-bezier(0.22,1,0.36,1)_backwards]";
+
+function folderDelay(index: number) {
+  return { animationDelay: `${120 + Math.min(index, 11) * 45}ms` };
+}
+
+/*
+ * Rows leave room above each folder for its sheets to rise into (up to 72px) where a pointer can
+ * hover; on touch screens the folders stay shut, so they sit closer.
+ */
 const SHELF_GRID =
-  "grid grid-cols-[repeat(auto-fill,minmax(min(290px,100%),1fr))] gap-x-5 gap-y-20 pt-18";
+  "grid grid-cols-[repeat(auto-fill,minmax(min(290px,100%),1fr))] gap-x-5 gap-y-20 pt-18 [@media(hover:none)]:gap-y-6 [@media(hover:none)]:pt-2";
 
 type NearShelfProps = Omit<ShelfProps, "state"> & { near: NearPlace };
 
@@ -212,7 +229,12 @@ function NearShelf({ files, near, translator, catalog }: NearShelfProps) {
   return (
     <ul className={SHELF_GRID}>
       {files.map((file, index) => (
-        <li key={file.id} data-tour={index === 0 ? "arch-card" : undefined}>
+        <li
+          key={file.id}
+          data-tour={index === 0 ? "arch-card" : undefined}
+          className={FOLDER_IN}
+          style={folderDelay(index)}
+        >
           <CaseFolder
             file={file}
             translator={translator}
@@ -253,7 +275,12 @@ function Shelf({ files, state, translator, catalog }: ShelfProps) {
           </header>
           <ul className={SHELF_GRID}>
             {group.files.map((file, index) => (
-              <li key={file.id} data-tour={index === 0 ? "arch-card" : undefined}>
+              <li
+                key={file.id}
+                data-tour={index === 0 ? "arch-card" : undefined}
+                className={FOLDER_IN}
+                style={folderDelay(index)}
+              >
                 <CaseFolder
                   file={file}
                   translator={translator}

@@ -6,15 +6,12 @@ import { Icon } from "@/shared/ui/icon";
 import { PageShell } from "@/shared/ui/page-shell";
 import { ExternalLink, TextLink } from "@/shared/ui/text-link";
 import { methodFacts } from "../domain/method-facts";
-import { NOISE_LAB_KEYS, pickLabCopy, RARE_LAB_KEYS } from "./lab-copy";
-import { LabTabs } from "./lab-tabs";
-import { NoiseLab } from "./noise-lab";
+import { LabBanner } from "./lab-banner";
 import { ProcessSteps } from "./process-steps";
-import { RareLab } from "./rare-lab";
 
 /*
  * How we know (POC renderMethod, app.js L2592-2797), told short: the key figures, the five steps
- * as one pipeline (a step at a time), the lab with a demo that shows the sliders at work, then the
+ * as one pipeline (a step at a time), a banner to the playground (where the experiments live), then the
  * details folded into cards (two more tests, sources, limits, glossary) and a short close
  * (thanks and AI). The team has its own page.
  */
@@ -269,41 +266,6 @@ function Deep({ catalog, translator: { t } }: { catalog: CaseCatalog; translator
   );
 }
 
-function Lab({ translator, lastYear }: { translator: Translator; lastYear: number }) {
-  const { t } = translator;
-  return (
-    <section
-      aria-labelledby="method-lab"
-      data-tour="method-lab"
-      className={`${SURFACE} grid gap-5`}
-    >
-      <header className="grid gap-1">
-        <SectionHeading id="method-lab">{t("method.lab.title")}</SectionHeading>
-        <p className="text-body-m text-text-secondary max-w-[65ch]">{t("method.lab.lead")}</p>
-      </header>
-      <LabTabs
-        label={t("method.lab.title")}
-        tabs={[
-          {
-            id: "trend",
-            icon: "chart",
-            label: t("method.lab.trend"),
-            lead: t("method.play.lead"),
-            panel: <NoiseLab copy={pickLabCopy(translator, NOISE_LAB_KEYS)} lastYear={lastYear} />,
-          },
-          {
-            id: "rare",
-            icon: "dice",
-            label: t("method.lab.rare"),
-            lead: t("method.rare.lead"),
-            panel: <RareLab copy={pickLabCopy(translator, RARE_LAB_KEYS)} />,
-          },
-        ]}
-      />
-    </section>
-  );
-}
-
 function Thanks({ translator: { t } }: { translator: Translator }) {
   const newTabHint = t("link.newTab");
   return (
@@ -383,7 +345,6 @@ type MethodScreenProps = {
 
 export function MethodScreen({ catalog, translator, tour }: MethodScreenProps) {
   const { t } = translator;
-  const lastYear = methodFacts(catalog, getEventAudit().events).lastYear;
   return (
     <PageShell
       kicker={t("method.eyebrow")}
@@ -394,7 +355,7 @@ export function MethodScreen({ catalog, translator, tour }: MethodScreenProps) {
       <Facts catalog={catalog} translator={translator} />
       <div className="grid min-w-0 gap-12">
         <Process translator={translator} />
-        <Lab translator={translator} lastYear={lastYear} />
+        <LabBanner translator={translator} />
         <Deep catalog={catalog} translator={translator} />
         <Thanks translator={translator} />
         <NextCard translator={translator} />

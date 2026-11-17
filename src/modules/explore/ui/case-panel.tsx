@@ -1,9 +1,8 @@
-import Link from "next/link";
 import type { Ref } from "react";
 import { EvidenceMeter, Sparkline, VerdictStamp, type CaseSummary } from "@/modules/cases";
 import { Icon } from "@/shared/ui/icon";
 import type { ExploreT } from "../domain/explore-copy";
-import { Actions, DIRECTION_TEXT, PanelHead, PRIMARY_LINK, SECONDARY_BUTTON } from "./drawer-parts";
+import { Actions, CaseFileLink, DIRECTION_TEXT, PanelHead, SECONDARY_BUTTON } from "./drawer-parts";
 
 type CasePanelProps = {
   file: CaseSummary;
@@ -53,10 +52,7 @@ export function CasePanel({ file, t, titleRef, onSector }: CasePanelProps) {
       />
       <p className="text-body-m text-text-primary">{file.summary}</p>
       <Actions>
-        <Link href={`/cases/${file.id}`} className={PRIMARY_LINK}>
-          {t("drawer.view")}
-          <Icon name="arrow-right" />
-        </Link>
+        <CaseFileLink href={`/cases/${file.id}`}>{t("drawer.view")}</CaseFileLink>
         <button type="button" className={SECONDARY_BUTTON} onClick={() => onSector(file.region)}>
           <Icon name="map-pin" />
           {t(`reg.${file.region}`)}

@@ -34,7 +34,11 @@ import { useGlobeCommands, useGlobeMessages } from "../hooks/use-globe-bridge";
 import { CasePanel } from "./case-panel";
 import { EventPanel } from "./event-panel";
 import { ExploreDrawer } from "./explore-drawer";
+import { GlobeLoading } from "./globe-loading";
 import { PointPanel } from "./point-panel";
+import { RegionPanel } from "./region-panel";
+import { SatellitePanel } from "./satellite-panel";
+import { SkyPanel } from "./sky-panel";
 import { SectorPanel } from "./sector-panel";
 
 type ExploreScreenProps = {
@@ -60,15 +64,32 @@ type ExploreScreenProps = {
 
 const subscribeNothing = () => () => {};
 
-/** Where the tour button goes while the drawer is open (see the comment where it is drawn). */
-function tourButtonPlace(cover: { side: "right" | "bottom"; px: number } | null) {
-  if (!cover || cover.px <= 0) return undefined;
-  if (cover.side === "right") return { insetInlineEnd: cover.px + 24 };
-  return { top: "auto", bottom: cover.px + 12, insetInlineStart: 12, insetInlineEnd: "auto" };
+/** How long, once the frame has loaded, a linked panel waits for the globe before it shows anyway. */
+const GLOBE_WAIT_MS = 20_000;
+/** Room between the globe's zoom and the tour button under it (the globe's own gap between controls). */
+const TOUR_GAP_PX = 12;
+
+/**
+ * The frame's place: under the shell on phones and beside the floating rail on wide screens; in
+ * contemplation it covers the whole window, rail and bars included, so only the planet shows.
+ */
+const STAGE = {
+  shell:
+    "shell:fixed shell:inset-0 shell:z-10 shell:h-auto relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem]",
+  immersive: "fixed inset-0 z-50 h-dvh",
+} as const;
+
+/** Where the floating rail ends on the left, in px (0 on phones, where there is none). */
+function railRight(): number {
+  const rail = document.getElementById("rail");
+  if (!rail) return 0;
+  const box = rail.getBoundingClientRect();
+  return box.width ? Math.round(box.right) : 0;
 }
 
-/** How long a linked panel waits for the globe before it shows over whatever is there. */
-const GLOBE_WAIT_MS = 12_000;
+const isTypingTarget = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
 
 /**
  * The globe explorer (the POC's renderExplore): the 3D world in a frame, and a drawer for whatever
@@ -90,12 +111,12 @@ export function ExploreScreen(props: ExploreScreenProps) {
   const hasReaderActed = useRef(false);
 
   const [selection, setSelection] = useState<ExploreSelection | null>(props.initial);
+  // Contemplation: the interface hides and the globe takes the whole window (H, or the eye button).
+  const [isImmersive, setImmersive] = useState(false);
+  const immersiveRef = useRef(false);
   const [tile, setTile] = useState<GlobeTile | null>(null);
   // Where the globe's own controls sit, as it reports them: the tour's anchors over the frame.
   const [chrome, setChrome] = useState<GlobeChrome>({});
-  // How far the drawer reaches into the frame, from the right (side panel) or the bottom (sheet):
-  // the tour button keeps clear of it.
-  const [cover, setCover] = useState<{ side: "right" | "bottom"; px: number } | null>(null);
   // A link to an event waits for its year's snapshot; the drawer opens once it is found.
   const [status, setStatus] = useState<string | null>(() =>
     query.open.type === "event" ? t("exp.events.loading") : null,
@@ -106,14 +127,22 @@ export function ExploreScreen(props: ExploreScreenProps) {
     () => true,
     () => false,
   );
+  // The rail's right edge when the frame starts, in its address: its loader centres beside the rail
+  // from its first paint, where the portal's still (GlobeLoading) stands. Read once, so the address
+  // never changes (a new one would reload the globe); later changes reach it as "rail" messages.
+  const [railAtStart] = useState(() => (typeof document === "undefined" ? 0 : railRight()));
+  // The frame has loaded, its own loader painted under the still, which then fades out.
+  const [isFrameLoaded, setFrameLoaded] = useState(false);
 
-  // Whatever a link opened waits for the world to appear, so its panel never covers the loader.
-  // If the globe never answers (a blocked frame, a failed load), the panel shows anyway.
+  // Whatever a link opened (its panel, the tour button, a status line) waits for the world to
+  // appear, so nothing floats over the loader. If the globe never answers once its frame has loaded
+  // (a failed load), the panel shows anyway.
   const [isGlobeReady, setGlobeReady] = useState(false);
   useEffect(() => {
+    if (!isFrameLoaded) return;
     const fallback = window.setTimeout(() => setGlobeReady(true), GLOBE_WAIT_MS);
     return () => window.clearTimeout(fallback);
-  }, []);
+  }, [isFrameLoaded]);
 
   const caseRegion = (id: string): SectorId | undefined => {
     const region = byId.get(id)?.region;
@@ -159,7 +188,6 @@ export function ExploreScreen(props: ExploreScreenProps) {
     const hadFocus = drawerRef.current?.contains(document.activeElement) ?? false;
     setSelection(null);
     setTile(null);
-    setCover(null);
     writeUrl(null);
     send({ type: "closed" });
     if (!hadFocus) return;
@@ -173,8 +201,26 @@ export function ExploreScreen(props: ExploreScreenProps) {
     send({ type: "focus" });
   }
 
+  function applyImmersive(on: boolean, { fromGlobe = false } = {}) {
+    if (immersiveRef.current === on) return;
+    immersiveRef.current = on;
+    setImmersive(on);
+    if (on && selection) close();
+    if (!fromGlobe) send({ type: "immersive", on });
+    // Without the rail over its left edge, the globe centres on the whole window.
+    send({ type: "rail", px: on ? 0 : railRight() });
+    if (on && !fromGlobe) frameRef.current?.focus({ preventScroll: true });
+  }
+
+  function showData(variable: string) {
+    close();
+    send({ type: "layer", layer: "data", variable });
+  }
+
   function handleMessage(message: GlobeMessage) {
-    if (message.type === "ready") {
+    if (message.type === "immersive") {
+      applyImmersive(message.on, { fromGlobe: true });
+    } else if (message.type === "shown") {
       setGlobeReady(true);
     } else if (message.type === "select") {
       if (message.sel.type === "case" && !byId.has(message.sel.id)) return;
@@ -241,11 +287,20 @@ export function ExploreScreen(props: ExploreScreenProps) {
     titleRef.current?.focus({ preventScroll: true });
   }, [selection]);
 
-  const onEscape = useEffectEvent((event: KeyboardEvent) => {
-    if (event.key === "Escape" && selection) close();
+  const onKey = useEffectEvent((event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      if (immersiveRef.current) applyImmersive(false);
+      else if (selection) close();
+      return;
+    }
+    const isH = event.key === "h" || event.key === "H";
+    if (!isH || event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target))
+      return;
+    event.preventDefault();
+    applyImmersive(!immersiveRef.current);
   });
   useEffect(() => {
-    const listen = (event: KeyboardEvent) => onEscape(event);
+    const listen = (event: KeyboardEvent) => onKey(event);
     document.addEventListener("keydown", listen, true);
     return () => document.removeEventListener("keydown", listen, true);
   }, []);
@@ -255,10 +310,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
   useEffect(() => {
     const rail = document.getElementById("rail");
     if (!rail) return;
-    const tell = () => {
-      const box = rail.getBoundingClientRect();
-      send({ type: "rail", px: box.width ? Math.round(box.right) : 0 });
-    };
+    const tell = () => send({ type: "rail", px: immersiveRef.current ? 0 : railRight() });
     tell();
     const observer = new ResizeObserver(tell);
     observer.observe(rail);
@@ -281,12 +333,14 @@ export function ExploreScreen(props: ExploreScreenProps) {
     <section
       aria-label={props.viewerLabel}
       data-tour="exp-globe"
-      className="bg-space shell:fixed shell:inset-0 shell:z-10 shell:h-auto relative h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] w-full overflow-hidden"
+      data-fills-window=""
+      className={`bg-space w-full overflow-hidden ${isImmersive ? STAGE.immersive : STAGE.shell}`}
     >
       <h1 className="sr-only">{props.heading}</h1>
       <iframe
         ref={frameRef}
-        src={isHydrated ? props.frameSrc : undefined}
+        src={isHydrated ? `${props.frameSrc}#rail=${railAtStart}` : undefined}
+        onLoad={() => setFrameLoaded(true)}
         title={props.frameTitle}
         // Scripts run with an opaque origin: the POC page cannot reach this page's DOM or cookies.
         // Its fetches are cross-origin, so next.config.mjs sends CORS headers for /globe/*.
@@ -294,6 +348,11 @@ export function ExploreScreen(props: ExploreScreenProps) {
         sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
         className="absolute inset-0 size-full border-0"
       />
+      {isGlobeReady ? null : (
+        <GlobeLoading
+          className={`absolute inset-0 z-[1] transition-opacity duration-500 ease-out motion-reduce:transition-none ${isFrameLoaded ? "pointer-events-none opacity-0" : ""}`}
+        />
+      )}
       {/*
        * The frame is sandboxed, so the tour cannot reach the globe's controls: these empty boxes
        * sit exactly over them (the globe reports where), for the tour to point at.
@@ -311,20 +370,29 @@ export function ExploreScreen(props: ExploreScreenProps) {
         ) : null;
       })}
       {/*
-       * The tour button sits under the globe's zoom, with its other controls: top right, at the
-       * globe's own offsets (24px wide, 12px on phones; the zoom ends at 146px or 246px down). It
-       * shows only its icon; the label unfolds on hover. A side panel pushes it left with the zoom;
-       * a bottom sheet would cover it, so it sits just above the sheet on the left, clear of the zoom.
+       * The tour button sits under the globe's zoom, with its other controls: right-aligned with
+       * the zoom, TOUR_GAP_PX below it, wherever the globe reports it (the zoom grows when the globe
+       * adds a control). Until then, at the globe's own offsets (24px wide, 12px on phones). It
+       * shows only its icon; the label unfolds on hover. While a panel is open it steps back, with the
+       * globe's search, regions and layers: the panel and its main action lead.
        */}
-      {props.tour ? (
+      {props.tour && isGlobeReady && !isImmersive && !selection ? (
         <div
-          className="bg-bg-surface shadow-raised shell:end-6 shell:top-[10rem] absolute end-3 top-[16.25rem] z-[5] rounded-full motion-safe:transition-[inset-inline-end] motion-safe:duration-300"
-          style={tourButtonPlace(cover)}
+          className={`bg-bg-surface shadow-raised absolute z-[5] rounded-full ${chrome.zoom ? "" : "shell:end-6 shell:top-[12.25rem] end-3 top-[18.75rem]"}`}
+          style={
+            chrome.zoom
+              ? {
+                  left: chrome.zoom.left + chrome.zoom.width,
+                  top: chrome.zoom.top + chrome.zoom.height + TOUR_GAP_PX,
+                  translate: "-100% 0",
+                }
+              : undefined
+          }
         >
           {props.tour}
         </div>
       ) : null}
-      {status ? (
+      {status && isGlobeReady ? (
         <output className="rounded-chip bg-bg-surface text-body-s text-text-primary shadow-raised absolute bottom-3 left-3 z-10 max-w-[min(24rem,calc(100%-1.5rem))] px-3 py-2">
           {status}
         </output>
@@ -334,10 +402,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
           drawerRef={drawerRef}
           closeLabel={t("drawer.close")}
           onClose={close}
-          onInset={(side, px) => {
-            setCover({ side, px });
-            send({ type: "inset", side, px });
-          }}
+          onInset={(side, px) => send({ type: "inset", side, px })}
           isHeld={!isGlobeReady}
         >
           <SelectionPanel
@@ -350,6 +415,7 @@ export function ExploreScreen(props: ExploreScreenProps) {
             t={t}
             titleRef={titleRef}
             onSelect={select}
+            onShowData={showData}
           />
         </ExploreDrawer>
       ) : null}
@@ -367,9 +433,11 @@ type SelectionPanelProps = {
   t: ReturnType<typeof exploreTranslator>;
   titleRef: RefObject<HTMLHeadingElement | null>;
   onSelect: (next: ExploreSelection) => void;
+  /** Closes the drawer and shows one variable on the globe's data layer. */
+  onShowData: (variable: string) => void;
 };
 
-function SelectionPanel({ selection, files, onSelect, ...rest }: SelectionPanelProps) {
+function SelectionPanel({ selection, files, onSelect, onShowData, ...rest }: SelectionPanelProps) {
   const { t, titleRef, locale } = rest;
   const onSector = (id: string) => {
     if (isSectorId(id)) onSelect({ type: "sector", id });
@@ -423,6 +491,32 @@ function SelectionPanel({ selection, files, onSelect, ...rest }: SelectionPanelP
           t={t}
           titleRef={titleRef}
           onSector={onSector}
+        />
+      );
+    case "satellite":
+      return (
+        <SatellitePanel t={t} titleRef={titleRef} onShowGreenness={() => onShowData("NDVI")} />
+      );
+    case "sky":
+      return (
+        <SkyPanel
+          key={selection.id}
+          id={selection.id}
+          apollo={selection.apollo}
+          t={t}
+          titleRef={titleRef}
+        />
+      );
+    case "region":
+      return (
+        <RegionPanel
+          key={`${selection.code}-${selection.reading.variable}-${selection.reading.date}`}
+          code={selection.code}
+          place={selection.place}
+          reading={selection.reading}
+          locale={locale}
+          t={t}
+          titleRef={titleRef}
         />
       );
   }

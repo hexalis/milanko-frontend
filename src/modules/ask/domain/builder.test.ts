@@ -6,6 +6,7 @@ import {
   builderExamples,
   builderState,
   builderTypes,
+  MINE,
   staleSegments,
   whereOptions,
 } from "./builder";
@@ -44,13 +45,60 @@ describe("builderState: theme → verb → place, invalid pieces dropped", () =>
     expect(state.where).toBeUndefined();
   });
 
-  it("auto-selects the only verb and the only place", () => {
+  it("auto-selects the only verb, and offers the reader's own place beside a reviewed one", () => {
     expect(builderState({ theme: "events" }, rules, catalog).type).toBe("catalog");
     expect(builderState({ theme: "rain" }, rules, catalog).type).toBeUndefined();
-    const state = builderState({ theme: "rain", verb: "trend" }, rules, catalog);
-    expect(state.types).toEqual(["trend", "anomaly"]);
-    expect(state.where?.id).toBe("murray-rain");
+    const open = builderState({ theme: "rain", verb: "trend" }, rules, catalog);
+    expect(open.types).toEqual(["trend", "anomaly"]);
+    expect(open.wheres.map((option) => option.id)).toEqual(["murray-rain", MINE]);
+    expect(open.where).toBeUndefined();
+    const state = builderState(
+      { theme: "rain", verb: "trend", where: "murray-rain" },
+      rules,
+      catalog,
+    );
     expect(state.go).toEqual({ href: "/ask/rainfall?s=look&depth=simple", kind: "guided" });
+  });
+
+  it("opens the reader's own place only once it has been found", () => {
+    const searching = builderState({ theme: "rain", verb: "trend", where: MINE }, rules, catalog);
+    expect(searching.where?.id).toBe(MINE);
+    expect(searching.go).toBeUndefined();
+    expect(searching.point).toBeUndefined();
+    const found = builderState(
+      {
+        theme: "rain",
+        verb: "trend",
+        where: MINE,
+        lat: "12.927",
+        lon: "-85.919",
+        name: "Matagalpa",
+      },
+      rules,
+      catalog,
+    );
+    expect(found.point).toEqual({ lat: 12.93, lon: -85.92, name: "Matagalpa" });
+    expect(found.where?.subject).toEqual({ type: "point", name: "Matagalpa" });
+    expect(found.go).toEqual({
+      href: "/place?lat=12.93&lon=-85.92&name=Matagalpa&var=PRECTOTCORR",
+      kind: "place",
+    });
+    // A point left in the URL means nothing once another place is chosen.
+    const reviewed = builderState(
+      { theme: "rain", verb: "trend", where: "murray-rain", lat: "1", lon: "2" },
+      rules,
+      catalog,
+    );
+    expect(reviewed.point).toBeUndefined();
+  });
+
+  it("offers no own place where a variable cannot be read live", () => {
+    const anomaly = builderState({ theme: "weather", verb: "anomaly" }, rules, catalog);
+    expect(anomaly.wheres.some((option) => option.id === MINE)).toBe(false);
+  });
+
+  it("offers a comparison only between two reviewed places", () => {
+    expect(builderTypes(rules, "rain")).toEqual(["trend", "anomaly"]);
   });
 
   it("offers comparison when the theme is comparable and drops a verb the theme lacks", () => {
@@ -75,7 +123,11 @@ describe("builderState: theme → verb → place, invalid pieces dropped", () =>
 
   it("keeps the depth from the URL and falls back to simple", () => {
     expect(
-      builderState({ theme: "rain", verb: "trend", depth: "science" }, rules, catalog).go?.href,
+      builderState(
+        { theme: "rain", verb: "trend", where: "murray-rain", depth: "science" },
+        rules,
+        catalog,
+      ).go?.href,
     ).toBe("/ask/rainfall?s=look&depth=science");
     expect(builderState({ depth: "deep" }, rules, catalog).depth).toBe("simple");
   });
@@ -154,8 +206,9 @@ describe("whereOptions", () => {
       type: "trend",
       depth: "guided",
     });
-    expect(trend.map((option) => option.id)).toEqual(["svalbard-warming"]);
+    expect(trend.map((option) => option.id)).toEqual(["svalbard-warming", MINE]);
     expect(trend[0]?.href).toBe("/ask/warmer?s=look&depth=guided");
+    expect(trend[1]).toMatchObject({ kind: "place", href: "" });
     const pairs = whereOptions(rules, catalog, {
       theme: "temperature",
       type: "comparison",
@@ -197,7 +250,11 @@ describe("builderExamples", () => {
   });
 
   it("marks the example that matches the question being built", () => {
-    const state = builderState({ theme: "rain", verb: "trend" }, rules, catalog);
+    const state = builderState(
+      { theme: "rain", verb: "trend", where: "murray-rain" },
+      rules,
+      catalog,
+    );
     const shown = builderExamples(examples, { state, rules, cases: catalog, path: "/" });
     expect(shown.filter((example) => example.isActive).map((example) => example.where)).toEqual([
       "murray-rain",
@@ -220,10 +277,11 @@ describe("builderExamples", () => {
 });
 
 describe("helpers", () => {
-  it("resets the later segments like the POC", () => {
-    expect(staleSegments("theme")).toEqual(["verb", "where", "a", "b"]);
-    expect(staleSegments("verb")).toEqual(["where", "a", "b"]);
-    expect(staleSegments("where")).toEqual([]);
+  it("resets the later segments like the POC, the reader's own place included", () => {
+    expect(staleSegments("theme")).toEqual(["verb", "where", "a", "b", "lat", "lon", "name"]);
+    expect(staleSegments("verb")).toEqual(["where", "a", "b", "lat", "lon", "name"]);
+    expect(staleSegments("where")).toEqual(["lat", "lon", "name"]);
+    expect(staleSegments("a")).toEqual([]);
   });
 
   it("builds comparison links", () => {

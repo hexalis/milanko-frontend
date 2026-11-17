@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { CSSProperties } from "react";
 import { tv } from "tailwind-variants";
 import type { Translator } from "@/shared/lib/i18n";
@@ -15,8 +14,8 @@ import {
   type Direction,
   type EventFamily,
 } from "../domain/case-file";
+import { fileSheets } from "../domain/case-glance";
 import type { CaseCatalog } from "../domain/catalog";
-import type { Strength } from "../domain/trend-stats";
 import {
   changeLabel,
   eventShort,
@@ -27,17 +26,23 @@ import {
   themeLabel,
   verdictLabel,
 } from "../domain/file-text";
-import { formatDate, formatFigure, formatP } from "../domain/format";
+import { formatDate } from "../domain/format";
+import { PaperSheet } from "./case-paper";
 import { EvidenceMeter } from "./evidence-meter";
 import { Sparkline } from "./sparkline";
+import { FolderLink } from "./folder-link";
 import { VerdictStamp } from "./verdict-stamp";
 
 /*
  * A case file drawn as a folder (POC app.js folder(), DESIGN.md "case-folder"): a tab with the
  * catalog number cut from the back panel, sheets of paper behind a front cover in the theme's tone.
- * On hover or focus the cover tips forward and the sheets rise out of the folder, one per level of
- * evidence: 01 the series (with its chart), 02 the test, 03 the source. Touch screens have no
- * hover, so there the sheets stay out; under reduced motion they snap instead of rising.
+ * On hover or focus the sheets rise out of the folder, one page per level of evidence, each on its
+ * own paper (PaperSheet): 01 the series on graph paper, 02 the test on a ruled pad, 03 the source
+ * on an index card. Touch screens have no hover: there the folders stay shut (a shelf of open
+ * folders was a long scroll of paper), and a tap lets the sheets out on the way to the file. Under
+ * reduced motion they snap instead of rising.
+ * Clicking it lets the sheets out and brings them to the middle of the screen on the way to the
+ * file (FolderLink, folder-open.css).
  */
 
 type FolderTone = "rose" | "tide" | "sage" | "ice" | "stone";
@@ -107,70 +112,20 @@ const folder = tv({
   },
 });
 
-/* One sheet per level of evidence (POC sheetsFor): weaker evidence carries fewer pages. */
-const SHEETS: Record<Strength, number> = { strong: 3, moderate: 2, weak: 1 };
-
 /*
- * A sheet rests just above the cover's edge. Opening: a 60ms beat (a cursor crossing the shelf
- * does not open every folder), then each sheet rises in turn, 24px apart so every header shows.
- * Closing: the back sheets drop first, quicker, easing in.
+ * A sheet is a whole page (PaperSheet) standing in the folder behind the cover, so only its head
+ * shows above the cover's edge. Opening: a 60ms beat (a cursor crossing the shelf does not open
+ * every folder), then each page rises in turn, 24px apart so every folio shows. Closing: the back
+ * pages drop first, quicker, easing in.
  */
 const SHEET = [
-  "absolute inset-0 flex flex-col gap-1 rounded-[14px] px-2.5 pt-1.5 pb-2",
+  "pp-shadow absolute inset-x-0 top-0 mx-auto block aspect-[10/13] w-full max-w-[340px]",
   "translate-y-[calc(-2px-var(--i)*2px)]",
   "transition-[translate,rotate] duration-[180ms] ease-in delay-[calc((var(--n)-1-var(--i))*25ms)]",
   "group-hover/folder:translate-y-[calc(-50px-var(--i)*24px)] group-hover/folder:rotate-(--r)",
   "group-hover/folder:duration-[420ms] group-hover/folder:ease-[cubic-bezier(0.34,1.4,0.64,1)]",
   "group-hover/folder:delay-[calc(60ms+var(--i)*40ms)]",
   "group-focus-within/folder:translate-y-[calc(-50px-var(--i)*24px)] group-focus-within/folder:rotate-(--r)",
-  "[@media(hover:none)]:translate-y-[calc(-50px-var(--i)*24px)] [@media(hover:none)]:rotate-(--r)",
-].join(" ");
-
-/*
- * Three kinds of paper, told apart with one quiet cue each so the stack stays calm in both themes:
- *  01 the series on graph paper: a faint grid under the chart;
- *  02 the test on a warm ruled pad: a hint of amber and soft lines below the heading;
- *  03 the source on a cool index card: a hint of green, nothing else.
- * Every sheet shares the raised surface, a hairline edge and a soft shadow; the folio's colour
- * names the paper. Lines start under the header, so the folio and its figure stay clean.
- */
-const PAPER_EDGE =
-  "border border-border-subtle shadow-[0_-1px_0_rgb(255_255_255/0.04)_inset,0_2px_8px_rgb(0_0_0/0.16)]";
-const PAPER = [
-  [
-    PAPER_EDGE,
-    "bg-bg-surface-raised",
-    "bg-[repeating-linear-gradient(color-mix(in_oklab,var(--color-border-subtle)_60%,transparent)_0_1px,transparent_1px_10px),repeating-linear-gradient(90deg,color-mix(in_oklab,var(--color-border-subtle)_60%,transparent)_0_1px,transparent_1px_10px)]",
-    "bg-size-[100%_100%] bg-position-[0_26px] bg-no-repeat",
-  ].join(" "),
-  [
-    PAPER_EDGE,
-    "[background-color:color-mix(in_oklab,var(--color-feedback-warning-bg)_30%,var(--color-bg-surface-raised))]",
-    "bg-[repeating-linear-gradient(transparent_0_11px,color-mix(in_oklab,var(--color-feedback-warning-border)_45%,transparent)_11px_12px)]",
-    "bg-size-[100%_100%] bg-position-[0_26px] bg-no-repeat",
-  ].join(" "),
-  [
-    PAPER_EDGE,
-    "[background-color:color-mix(in_oklab,var(--color-feedback-success-bg)_30%,var(--color-bg-surface-raised))]",
-  ].join(" "),
-] as const;
-
-/* The folio of each paper in its tone. */
-const PAPER_FOLIO = [
-  "text-feedback-info-fg",
-  "text-feedback-warning-fg",
-  "text-feedback-success-fg",
-] as const;
-
-/* A sheet that cannot confirm its finding is drawn with a dashed edge (POC folder--inconclusive). */
-const SHEET_INCONCLUSIVE =
-  "outline-dashed outline-[1.5px] -outline-offset-[1.5px] outline-border-strong";
-
-/* The header and chart fade in once the sheet is out, and stay readable on touch screens. */
-const SHEET_FACE = [
-  "opacity-0 transition-opacity duration-fast",
-  "group-hover/folder:opacity-100 group-hover/folder:delay-[calc(160ms+var(--i)*40ms)]",
-  "group-focus-within/folder:opacity-100 [@media(hover:none)]:opacity-100",
 ].join(" ");
 
 const TITLE_LINK = [
@@ -218,96 +173,64 @@ export function CaseFolder({
   const themeIcon = isEvent(file) ? `ev-${file.family}` : theme;
   const slots = folder({ tone: folderTone(file) });
   const Heading = HEADINGS[headingLevel];
-  const count = SHEETS[fileStrength(file)];
-  const sheetClass = verdictOf(file) === "inconclusive" ? `${SHEET} ${SHEET_INCONCLUSIVE}` : SHEET;
-  const pages = [
-    {
-      label: isEvent(file) ? (
-        <>
-          <span className="@max-[280px]:hidden">
-            {t("sheet.runup", { days: catalog.eventWindowDays })}
-          </span>
-          <span className="hidden @max-[280px]:inline">{t("sheet.runup.short")}</span>
-        </>
-      ) : (
-        t("sheet.series")
-      ),
-      value: isEvent(file) ? eventShort(file.lv, context) : changeLabel(file, context),
-    },
-    {
-      label: t("sheet.test"),
-      value: isEvent(file)
-        ? t("sheet.test.ev", { z: formatFigure(file.lv.z, 1, true), n: file.lv.years - 1 })
-        : `p ${formatP(file.t.p)}`,
-    },
-    {
-      label: t("sheet.source"),
-      value: isEvent(file)
-        ? "EONET · POWER"
-        : file.source === "modis"
-          ? "MODIS/Terra"
-          : "NASA POWER",
-    },
-  ].slice(0, count);
+  const pages = fileSheets(file, translator, catalog);
+  const isInconclusive = verdictOf(file) === "inconclusive";
 
   return (
-    <article className={slots.root()}>
+    <article data-folder className={slots.root()}>
       <span className={slots.tab()}>{file.catalog}</span>
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-3.5 top-[26px] z-[1] h-24"
+        data-sheets
+        className="pp-tray pointer-events-none absolute inset-x-3.5 top-[26px] bottom-2 z-[1]"
       >
         {pages.map((page, index) => (
           <span
-            key={index}
-            className={`${sheetClass} ${PAPER[index] ?? PAPER[0]}`}
+            key={page.label}
+            data-sheet
+            className={SHEET}
             style={
               {
                 "--i": index,
-                "--n": count,
+                "--n": pages.length,
                 "--r": `${((index % 2 ? 1 : -1) * (0.3 + index * 0.25)).toFixed(2)}deg`,
-                zIndex: count - index,
+                zIndex: pages.length - index,
               } as CSSProperties
             }
           >
-            <span
-              className={`${SHEET_FACE} border-border-subtle @container flex h-[22px] min-w-0 items-center gap-1.5 border-b pb-0.5`}
-            >
-              <b className={`text-label-s truncate ${PAPER_FOLIO[index] ?? PAPER_FOLIO[0]}`}>
-                0{index + 1} · {page.label}
-              </b>
-              <span className="text-label-s text-text-primary ms-auto whitespace-nowrap tabular-nums">
-                {page.value}
-              </span>
-              <span className="text-label-s text-text-tertiary border-border-subtle border-s ps-1.5 tabular-nums">
-                {index + 1}/{count}
-              </span>
-            </span>
-            {index === 0 ? (
-              <span className={`${SHEET_FACE} block h-[34px]`}>
-                <Sparkline
-                  id={`folder-${file.id}`}
-                  series={series}
-                  trend={isEvent(file) ? null : file.t}
-                  direction={direction}
-                  isLastMarked={isAnomaly}
-                  isFilled
-                />
-              </span>
-            ) : null}
+            <PaperSheet
+              sheet={page}
+              index={index}
+              count={pages.length}
+              code={file.catalog}
+              isInconclusive={isInconclusive}
+              translator={translator}
+              chart={
+                index === 0 ? (
+                  <Sparkline
+                    id={`folder-${file.id}`}
+                    series={series}
+                    trend={isEvent(file) ? null : file.t}
+                    direction={direction}
+                    isLastMarked={isAnomaly}
+                    isFilled
+                  />
+                ) : null
+              }
+            />
           </span>
         ))}
       </span>
       <div className={slots.back()}>
-        <div className={slots.cover()}>
+        <div data-folder-cover className={slots.cover()}>
           <p className="text-label-m text-text-secondary flex items-center gap-1.5">
             <Icon name={themeIcon} />
             {themeLabel(theme, context)}
           </p>
           <Heading className="text-heading-h4 font-display text-balance">
-            <Link href={`/cases/${file.id}`} className={TITLE_LINK}>
+            <FolderLink href={`/cases/${file.id}`} className={TITLE_LINK}>
               {fileTitle(file, context)}
-            </Link>
+            </FolderLink>
           </Heading>
           <p className="text-body-s text-text-secondary flex items-center gap-1.5">
             <Icon name="map-pin" />

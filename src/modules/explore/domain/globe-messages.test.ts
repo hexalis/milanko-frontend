@@ -27,8 +27,9 @@ describe("parseGlobeMessage", () => {
     expect(parseGlobeMessage({ etd: 1, type: "unknown" })).toBeNull();
   });
 
-  it("reads ready and escape", () => {
+  it("reads ready, shown and escape", () => {
     expect(parseGlobeMessage({ etd: 1, type: "ready" })).toEqual({ type: "ready" });
+    expect(parseGlobeMessage({ etd: 1, type: "shown" })).toEqual({ type: "shown" });
     expect(parseGlobeMessage({ etd: 1, type: "escape" })).toEqual({ type: "escape" });
   });
 
@@ -51,6 +52,90 @@ describe("parseGlobeMessage", () => {
       type: "chrome",
       rects: {},
     });
+  });
+
+  it("reads the satellite, and only a satellite the globe draws", () => {
+    expect(
+      parseGlobeMessage({ etd: 1, type: "select", sel: { type: "satellite", id: "terra" } }),
+    ).toEqual({ type: "select", sel: { type: "satellite", id: "terra" } });
+    expect(
+      parseGlobeMessage({ etd: 1, type: "select", sel: { type: "satellite", id: "aqua" } }),
+    ).toBeNull();
+  });
+
+  it("reads the Moon and the constellations, with Apollo 11 only for the Moon", () => {
+    const sky = (sel: Record<string, unknown>) =>
+      parseGlobeMessage({ etd: 1, type: "select", sel: { type: "sky", ...sel } });
+    expect(sky({ id: "moon", apollo: true })).toEqual({
+      type: "select",
+      sel: { type: "sky", id: "moon", apollo: true },
+    });
+    expect(sky({ id: "orion", apollo: true })).toEqual({
+      type: "select",
+      sel: { type: "sky", id: "orion", apollo: false },
+    });
+    expect(sky({ id: "moon", apollo: "yes" })).toMatchObject({ sel: { apollo: false } });
+    expect(sky({ id: "andromeda" })).toBeNull();
+  });
+
+  it("reads a data region with its reading, dropping what does not fit", () => {
+    const reading = {
+      variable: "T2M",
+      label: "Air temperature",
+      source: "NASA POWER",
+      unit: "°C",
+      date: "2026-11-15T00:00:00",
+      period: "month",
+      value: 31.4,
+      anomaly: 2.1,
+      z: 2.4,
+      baseline: "29.3",
+    };
+    expect(
+      parseGlobeMessage({
+        etd: 1,
+        type: "select",
+        sel: { type: "region", code: 14, place: "africa", lat: 18.2, lon: 4.5, reading },
+      }),
+    ).toEqual({
+      type: "select",
+      sel: {
+        type: "region",
+        code: 14,
+        place: "africa",
+        lat: 18.2,
+        lon: 4.5,
+        reading: { ...reading, date: "2026-11-15", baseline: null },
+      },
+    });
+    const unknownPlace = parseGlobeMessage({
+      etd: 1,
+      type: "select",
+      sel: { type: "region", code: 3, place: "mars", lat: 200, lon: 0, reading },
+    });
+    expect(unknownPlace).toMatchObject({ sel: { place: null, lat: null, lon: null } });
+    expect(
+      parseGlobeMessage({
+        etd: 1,
+        type: "select",
+        sel: { type: "region", code: 1.5, reading },
+      }),
+    ).toBeNull();
+    expect(
+      parseGlobeMessage({
+        etd: 1,
+        type: "select",
+        sel: { type: "region", code: 3, reading: { ...reading, variable: "<script>" } },
+      }),
+    ).toBeNull();
+  });
+
+  it("reads the interface being hidden or shown", () => {
+    expect(parseGlobeMessage({ etd: 1, type: "immersive", on: true })).toEqual({
+      type: "immersive",
+      on: true,
+    });
+    expect(parseGlobeMessage({ etd: 1, type: "immersive", on: "yes" })).toBeNull();
   });
 
   it("reads each kind of selection", () => {

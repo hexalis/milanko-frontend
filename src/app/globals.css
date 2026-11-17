@@ -4,6 +4,18 @@
 /* Guided tours: driver.js renders its popover outside React, so its styles are global. */
 @import "driver.js/dist/driver.css";
 @import "../modules/tour/ui/tour.css";
+/* The globe's loader planet, shared with the globe page itself (explore's GlobeLoading stands in for it). */
+@import "../../public/globe/world3d/loader-orb.css";
+/* The case files' loader: a folder that takes in sheets and fans them out as cards. */
+@import "../modules/cases/ui/archive/archive-loading.css";
+/* A case folder opening on its way to the file: its sheets fly to the middle of the screen. */
+@import "../modules/cases/ui/folder-open.css";
+/* The sheets of a case file drawn as paper: graph paper, a ruled pad, an index card. */
+@import "../modules/cases/ui/case-paper.css";
+/* A case file opening: the sheets dealt by evidence, the pin, the stamp (CaseGlance). */
+@import "../modules/cases/ui/dossier/case-glance.css";
+/* The banner to the data playground and the little lab that plays on it. */
+@import "../modules/method/ui/lab-banner.css";
 @source "../../node_modules/@hexalis/components/dist";
 
 /*
@@ -496,6 +508,18 @@ details[open]::details-content {
     --shell-top: 3.5rem;
     --shell-bottom: 5.5rem;
   }
+
+  /*
+   * A guided investigation ([data-lesson]) takes the whole phone: no tab bar, and its own
+   * back / next bar sits at the bottom where the tab bar was.
+   */
+  :root:has([data-lesson]) {
+    --shell-bottom: 0px;
+  }
+
+  :root:has([data-lesson]) [data-tour="shell-tabbar"] {
+    display: none;
+  }
 }
 
 @layer base {
@@ -555,5 +579,58 @@ details[open]::details-content {
     :is(button, a)[aria-disabled="true"] {
       color: GrayText;
     }
+  }
+}
+
+/*
+ * The app's own scrollbar for panels that scroll inside the page (the globe's drawer): a slim
+ * pill on a clear track, kept off the rounded corners. It rests faint, firms up while the pointer
+ * is over the panel and takes the brand colour while it is held or dragged. Chromium and Safari
+ * draw it with the ::-webkit-scrollbar parts; Firefox gets the same colours on its thin bar
+ * (setting scrollbar-color would make Chromium drop the custom parts, hence the @supports).
+ */
+@utility scrollbar-milanko {
+  --scrollbar-thumb: var(--color-border-default);
+
+  &:hover {
+    --scrollbar-thumb: var(--color-border-strong);
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 22px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    min-height: 48px;
+    border: 4px solid transparent;
+    border-radius: 999px;
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    border-width: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    border-width: 3px;
+    background-color: var(--color-action-primary);
+  }
+
+  &::-webkit-scrollbar-corner,
+  &::-webkit-scrollbar-button {
+    display: none;
+    background: transparent;
   }
 }

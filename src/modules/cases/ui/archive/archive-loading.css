@@ -1,0 +1,202 @@
+/*
+ * The case files' loader (ArchiveLoading): a folder in the archive's own colours takes in three sheets, one after
+ * another, then fans them out as three cards, and starts over. A bar below keeps its own pace, as on the globe's
+ * loader. Everything moves by transform and opacity only, so it stays smooth while the page is being built.
+ * At rest (no motion) the three cards stand fanned out above the folder.
+ */
+.fl {
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+  animation: enter 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.fl-folder {
+  position: relative;
+  display: block;
+  width: 168px;
+  height: 132px;
+  animation: fl-float 4.2s ease-in-out infinite;
+}
+
+.fl-tab,
+.fl-back,
+.fl-cover {
+  position: absolute;
+  background: var(--color-surface-tone-2-edge);
+}
+
+.fl-tab {
+  top: 0;
+  left: 0;
+  width: 62px;
+  height: 18px;
+  border-radius: 10px 10px 0 0;
+}
+
+.fl-back {
+  inset: 16px 0 0;
+  border-radius: 0 20px 20px 20px;
+}
+
+.fl-sheet {
+  position: absolute;
+  top: 26px;
+  left: 22px;
+  right: 22px;
+  height: 72px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 12px 12px 0;
+  border-radius: 10px;
+  border: 1px solid var(--fc);
+  background: var(--fs);
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 0.5),
+    0 2px 6px rgb(0 0 0 / 0.18);
+  transform: translate(var(--fx), -64px) rotate(var(--fr));
+  animation: fl-sheet 3.2s cubic-bezier(0.34, 1.2, 0.64, 1) calc(var(--i) * 180ms) infinite;
+}
+
+.fl-sheet i {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--fc);
+}
+
+.fl-sheet i:first-child {
+  width: 70%;
+}
+
+.fl-sheet i:last-child {
+  width: 45%;
+}
+
+.fl-cover {
+  inset: auto 0 0;
+  height: 76px;
+  border-radius: 20px;
+  background: var(--color-surface-tone-2);
+  box-shadow:
+    inset 0 3px 0 rgb(255 255 255 / 0.7),
+    0 5px 0 var(--color-surface-tone-2-edge);
+  transform-origin: bottom center;
+  animation: fl-cover 3.2s ease-in-out infinite;
+}
+
+.fl-bar {
+  position: relative;
+  display: block;
+  width: 168px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-border-subtle);
+}
+
+.fl-bar i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-action-primary);
+  transform-origin: left center;
+  transform: scaleX(0.03);
+  animation: fl-trickle 24s linear 120ms forwards;
+}
+
+.fl-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.45), transparent);
+  animation: fl-sheen 1.8s ease-in-out infinite;
+}
+
+/* Drop in, rest in the folder, fan out above it as a card, settle back, fade before the next drop. */
+@keyframes fl-sheet {
+  0% {
+    transform: translate(0, -96px);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  20%,
+  46% {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  62%,
+  82% {
+    transform: translate(var(--fx), -64px) rotate(var(--fr));
+    opacity: 1;
+  }
+  94% {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) rotate(0);
+    opacity: 0;
+  }
+}
+
+/* The cover gives a little as the sheets land and as they leave. */
+@keyframes fl-cover {
+  0%,
+  14%,
+  30%,
+  48%,
+  60%,
+  100% {
+    transform: none;
+  }
+  22% {
+    transform: scaleY(0.95);
+  }
+  54% {
+    transform: scaleY(0.96);
+  }
+}
+
+@keyframes fl-float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes fl-trickle {
+  0% {
+    transform: scaleX(0.03);
+  }
+  6% {
+    transform: scaleX(0.28);
+  }
+  16% {
+    transform: scaleX(0.47);
+  }
+  32% {
+    transform: scaleX(0.64);
+  }
+  55% {
+    transform: scaleX(0.78);
+  }
+  80% {
+    transform: scaleX(0.87);
+  }
+  100% {
+    transform: scaleX(0.92);
+  }
+}
+
+@keyframes fl-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(240%);
+  }
+}

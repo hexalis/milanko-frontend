@@ -27,6 +27,7 @@ describe("builder choices", () => {
     expect(choices.find((choice) => choice.id === "rain")).toEqual({
       id: "rain",
       label: "rainfall",
+      short: "Rainfall",
       icon: "rain",
       family: "water",
       isChosen: true,
@@ -34,6 +35,7 @@ describe("builder choices", () => {
     expect(choices.find((choice) => choice.id === "events")).toMatchObject({
       label: "natural disasters",
       hint: "fires, storms, floods…",
+      short: "Disasters",
       family: "earth",
       isChosen: false,
     });

@@ -27,9 +27,20 @@ const COMPACT_LABEL = [
   "group-data-focus-visible/button:max-w-60 group-data-focus-visible/button:ps-1.5 group-data-focus-visible/button:opacity-100",
 ].join(" ");
 
+/*
+ * Floating (every page but the globe): a small pill in the bottom corner, out of the page's flow,
+ * so the page opens on its own content. With the rail (shell) it reads "How does this page work?";
+ * on a phone it sits above the tab bar as a round icon whose label unfolds on keyboard focus.
+ */
+const FLOATING = [
+  "fixed end-4 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-20 min-h-11 min-w-11 gap-0 rounded-full px-3 shadow-dropdown print:hidden",
+  "shell:end-6 shell:bottom-6",
+].join(" ");
+const FLOATING_LABEL = `${COMPACT_LABEL} shell:max-w-60 shell:ps-1.5 shell:opacity-100`;
+
 type TourButtonProps = {
   steps: TourStep[];
-  /** Icon only, the label unfolding on hover or keyboard focus (over the globe). */
+  /** Icon only, the label unfolding on hover or keyboard focus (over the globe, in a lesson). */
   isCompact?: boolean;
   /** Shown alone while none of the steps is on screen yet (the globe still loading). */
   wait?: TourStep;
@@ -93,7 +104,7 @@ export function TourButton({ steps, isCompact = false, wait, labels }: TourButto
         size="s"
         isPending={isStarting}
         onPress={handlePress}
-        className="gap-0 px-2"
+        className="min-h-[46px] min-w-[46px] justify-center gap-0 rounded-full px-2.5"
       >
         <Icon name="info" size="lg" />
         <span className={COMPACT_LABEL}>{labels.open}</span>
@@ -102,9 +113,16 @@ export function TourButton({ steps, isCompact = false, wait, labels }: TourButto
   }
 
   return (
-    <Button id={id} intent="ghost" size="s" isPending={isStarting} onPress={handlePress}>
-      <Icon name="info" />
-      {labels.open}
+    <Button
+      id={id}
+      intent="secondary"
+      size="s"
+      isPending={isStarting}
+      onPress={handlePress}
+      className={FLOATING}
+    >
+      <Icon name="info" size="lg" />
+      <span className={FLOATING_LABEL}>{labels.open}</span>
     </Button>
   );
 }

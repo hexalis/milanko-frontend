@@ -1,4 +1,5 @@
 import { period, relativeChange, trendDirection, type TrendCase } from "./case-file";
+import { fileGlance } from "./case-glance";
 import { nextFile, pairFile } from "./case-links";
 import {
   capFirst,
@@ -217,16 +218,21 @@ function think({ file, ctx, isUp, unit }: TrendFacts): CaseReading["use"]["think
   ];
 }
 
-function related({ file, ctx }: TrendFacts): CaseReading["use"]["related"] {
+function globeLink({ file, ctx }: TrendFacts): CaseReading["glance"]["globe"] {
+  return {
+    href: `/explore?case=${file.id}&region=${file.region}`,
+    icon: "explore",
+    label: ctx.translator.t("case.globe"),
+  };
+}
+
+function related(facts: TrendFacts): CaseReading["use"]["related"] {
+  const { file, ctx } = facts;
   const { t } = ctx.translator;
   const pair = pairFile(file, ctx.catalog);
   const region = t(`reg.${file.region}`);
   return [
-    {
-      href: `/explore?case=${file.id}&region=${file.region}`,
-      icon: "explore",
-      label: t("case.globe"),
-    },
+    globeLink(facts),
     ...(pair
       ? [
           {
@@ -281,6 +287,7 @@ export function trendReading(file: TrendCase, ctx: ReadingContext): CaseReading 
       },
       { icon: "satellite", text: t(`cf.chip.src.${file.source}`) },
     ],
+    glance: fileGlance(file, ctx, globeLink(facts)),
     answer: answer(facts),
     chart: chart(facts),
     sure: sure(facts),

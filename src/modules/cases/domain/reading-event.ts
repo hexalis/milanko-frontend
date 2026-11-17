@@ -1,4 +1,5 @@
 import { EVENT_UNITS, rankCount, type EventFile, type EventVariable } from "./case-file";
+import { fileGlance } from "./case-glance";
 import { nextFile } from "./case-links";
 import {
   capFirst,
@@ -208,7 +209,7 @@ function data({ file, ctx, window, sourceName }: EventFacts): CaseReading["data"
 }
 
 function use(facts: EventFacts): CaseReading["use"] {
-  const { file, ctx, days, window, year, keys, sentence, sourceName } = facts;
+  const { file, ctx, days, window, keys, sentence, sourceName } = facts;
   const { t } = ctx.translator;
   const region = t(`reg.${file.region}`);
   return {
@@ -242,14 +243,18 @@ function use(facts: EventFacts): CaseReading["use"] {
       { q: t("ev.tq3"), a: t("ev.tq3.a") },
     ],
     related: [
-      {
-        href: `/explore?case=${file.id}&region=${file.region}&events=${file.category}&year=${year}`,
-        icon: "explore",
-        label: t("case.globe"),
-      },
+      globeLink(file, ctx),
       { href: `/cases?region=${file.region}`, icon: "cases", label: t("case.sector", { region }) },
     ],
     isShareable: true,
+  };
+}
+
+function globeLink(file: EventFile, ctx: ReadingContext): CaseReading["glance"]["globe"] {
+  return {
+    href: `/explore?case=${file.id}&region=${file.region}&events=${file.category}&year=${eventYear(file)}`,
+    icon: "explore",
+    label: ctx.translator.t("case.globe"),
   };
 }
 
@@ -286,6 +291,7 @@ export function eventReading(file: EventFile, ctx: ReadingContext): CaseReading 
       { icon: "calendar", text: t("cf.chip.first", { date: formatDate(file.date, locale) }) },
       { icon: "satellite", text: "NASA EONET · NASA POWER" },
     ],
+    glance: fileGlance(file, ctx, globeLink(file, ctx)),
     answer: answer(facts),
     chart: chart(facts),
     sure: sure(facts),

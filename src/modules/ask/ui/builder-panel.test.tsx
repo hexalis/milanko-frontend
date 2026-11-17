@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getCaseCatalog, getEventAudit } from "@/modules/cases";
 import { getTranslator } from "@/modules/copy";
@@ -51,20 +51,46 @@ describe("QuestionBuilder", () => {
     );
   });
 
-  it("folds a chosen step behind Change and shows a single place as the only option", () => {
+  it("folds a chosen step behind Change and offers the reader's own place beside a reviewed one", () => {
     renderBuilder({ theme: "temperature", verb: "trend", depth: "guided" });
     const theme = step(/About what/);
     expect(within(theme).getByText("Change", { exact: false })).toBeInTheDocument();
     expect(within(theme).getByRole("radio", { name: /Air temperature/i })).toBeChecked();
-    expect(within(step(/Where or when/)).getByText("Only option")).toBeVisible();
-    expect(document.querySelector('input[type="hidden"][name="where"]')).toHaveValue(
-      "svalbard-warming",
-    );
+    const where = step(/Where or when/);
+    expect(within(where).getByRole("radio", { name: /Svalbard/ })).not.toBeChecked();
+    expect(within(where).getByRole("radio", { name: /My own place/ })).not.toBeChecked();
+    expect(screen.queryByRole("link", { name: /Investigate/ })).toBeNull();
     expect(document.querySelector('input[type="hidden"][name="depth"]')).toHaveValue("guided");
   });
 
+  it("searches the reader's own place, and opens it once found", () => {
+    renderBuilder({ theme: "temperature", verb: "trend", where: "mine" });
+    expect(screen.getByRole("searchbox", { name: /Type a city/ })).toBeVisible();
+    expect(screen.queryByRole("link", { name: /Investigate/ })).toBeNull();
+    cleanup();
+    renderBuilder({
+      theme: "temperature",
+      verb: "trend",
+      where: "mine",
+      lat: "12.93",
+      lon: "-85.92",
+      name: "Matagalpa, Nicaragua",
+    });
+    expect(screen.getByRole("searchbox")).toHaveValue("Matagalpa, Nicaragua");
+    expect(screen.getByRole("link", { name: /Investigate/ })).toHaveAttribute(
+      "href",
+      "/place?lat=12.93&lon=-85.92&name=Matagalpa%2C+Nicaragua",
+    );
+    expect(document.querySelector('input[type="hidden"][name="lat"]')).toHaveValue("12.93");
+  });
+
   it("links the finished question, says what it shows and marks its example", () => {
-    renderBuilder({ theme: "temperature", verb: "trend", depth: "guided" });
+    renderBuilder({
+      theme: "temperature",
+      verb: "trend",
+      where: "svalbard-warming",
+      depth: "guided",
+    });
     const go = screen.getByRole("link", { name: /Investigate/ });
     expect(go).toHaveAttribute("href", "/ask/warmer?s=look&depth=guided");
     expect(screen.getByText("Opens the guided investigation, step by step.")).toBeInTheDocument();

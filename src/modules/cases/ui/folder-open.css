@@ -1,0 +1,124 @@
+/*
+ * A case folder opening on its way to the file. FolderLink copies the clicked folder's pages
+ * (PaperSheet) and its cover into a layer on <body> ([data-flight]) and sets where the pages go:
+ * --fo-x/--fo-y (to the middle of the screen), --fo-s (their size there) and how they lie:
+ * --fo-step, --fo-rise and --fo-turn (side by side, or stacked when the screen is narrow).
+ * About 720 ms:
+ *   0–220 ms    the page fades behind a single scrim, and the pages rise out of the folder from
+ *               behind its cover, which fades away; the file is requested;
+ *   220–720 ms  the pages travel to the middle of the screen and grow, settling side by side
+ *               (or stacked), each one whole and readable;
+ *   then        once the file is on screen the layer fades (280 ms) and the file deals the same
+ *               pages onto its glance (case-glance.css), its opening held until then.
+ * Only transform and opacity move, so the flight runs off the main thread while the file renders;
+ * the one exception is the folder's edge letting go of the pages' feet, a single step at 220 ms.
+ * FolderLink skips all of it under reduced motion.
+ */
+
+/* The folder clicked: its pages have gone into the flight. */
+[data-folder][data-opening] {
+  pointer-events: none;
+}
+
+[data-folder][data-opening] [data-sheets] {
+  visibility: hidden;
+}
+
+[data-flight] {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+[data-flight][data-leaving] {
+  animation: fo-leave 280ms ease-in forwards;
+}
+
+@keyframes fo-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+[data-flight-scrim] {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-canvas, Canvas);
+  opacity: 0;
+  animation: fo-scrim 200ms ease-out forwards;
+}
+
+@keyframes fo-scrim {
+  to {
+    opacity: 0.94;
+  }
+}
+
+/* The cover, in front of the pages as they rise, then gone. */
+[data-flight-cover] {
+  animation: fo-fade 300ms ease-out 80ms forwards;
+}
+
+@keyframes fo-fade {
+  to {
+    opacity: 0;
+    translate: 0 12px;
+    scale: 0.97;
+  }
+}
+
+/*
+ * The pages together: rise with them, then fly to the middle and grow. Until they are out of
+ * the folder its bottom edge hides their feet (the folder clips them the same way on the shelf).
+ */
+[data-flight-hand] {
+  clip-path: polygon(-60% -100vh, 160% -100vh, 160% var(--fo-clip), -60% var(--fo-clip));
+  animation:
+    fo-zoom 720ms cubic-bezier(0.65, 0, 0.35, 1) forwards,
+    fo-unclip 440ms linear forwards;
+}
+
+@keyframes fo-zoom {
+  30% {
+    translate: 0 0;
+    scale: 1;
+  }
+  to {
+    translate: var(--fo-x) var(--fo-y);
+    scale: var(--fo-s);
+  }
+}
+
+/* Not interpolable: the clip lets go halfway through, at 220 ms. */
+@keyframes fo-unclip {
+  to {
+    clip-path: none;
+  }
+}
+
+/*
+ * Each page: out of the folder, a little fanned; then into its place, centred on the others,
+ * --fo-step apart, --fo-rise higher and --fo-turn more turned than the one before it.
+ */
+[data-flight-hand] [data-sheet] {
+  animation: fo-sheet 720ms cubic-bezier(0.34, 1.2, 0.64, 1) calc(var(--i) * 30ms) forwards;
+}
+
+@keyframes fo-sheet {
+  30% {
+    translate: 0 calc(-45% - var(--i) * 16px);
+    rotate: calc(var(--r) * 3);
+  }
+  to {
+    translate: calc((var(--i) - (var(--n) - 1) / 2) * var(--fo-step))
+      calc((var(--i) - (var(--n) - 1) / 2) * var(--fo-rise));
+    rotate: calc((var(--i) - (var(--n) - 1) / 2) * var(--fo-turn));
+  }
+}
+
+/* The file waits, on its first frame, for the flight to leave. */
+html[data-folder-flight] .cg,
+html[data-folder-flight] .cg * {
+  animation-play-state: paused;
+}

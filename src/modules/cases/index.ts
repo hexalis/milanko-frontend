@@ -18,6 +18,7 @@ export {
 export { ARCHIVE_FOCUS_HREF, ARCHIVE_SEARCH_ID } from "./domain/archive";
 export { getCaseSummaries, type CaseSummary } from "./domain/case-summary";
 export { getCaseCatalog, type CaseCatalog } from "./domain/catalog";
+export { caseFilePath } from "./domain/case-reading";
 export { getEventAudit } from "./domain/event-audit";
 export { eventTitle } from "./domain/event-title";
 export {

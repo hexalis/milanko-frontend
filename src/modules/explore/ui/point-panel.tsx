@@ -106,6 +106,7 @@ export function PointPanel({
           t("reg.ocean")
         )}
       </p>
+      {tile ? <TileEvents tile={tile} locale={locale} t={t} /> : null}
       <Actions>
         <Link href="/regions" className={PRIMARY_LINK}>
           <Icon name="chart" />
@@ -113,7 +114,6 @@ export function PointPanel({
           <Icon name="arrow-right" />
         </Link>
       </Actions>
-      {tile ? <TileEvents tile={tile} locale={locale} t={t} /> : null}
     </div>
   );
 }

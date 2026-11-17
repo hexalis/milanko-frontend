@@ -11,7 +11,13 @@ export type ExploreSelection =
   | { type: "sector"; id: SectorId }
   | { type: "case"; id: string }
   | { type: "point"; lat: number; lon: number; sector: SectorId | null }
-  | { type: "event"; ev: GlobeEvent; sector: SectorId | null };
+  | { type: "event"; ev: GlobeEvent; sector: SectorId | null }
+  /** Tapped in the sky; the globe already highlights it, so nothing flies. */
+  | Extract<GlobeSelection, { type: "satellite" }>
+  /** The Moon or a constellation, tapped in the sky; nothing flies either. */
+  | Extract<GlobeSelection, { type: "sky" }>
+  /** A region of the data layer, with what the layer shows there. Not kept in the URL. */
+  | Extract<GlobeSelection, { type: "region" }>;
 
 /** What a link asks the explorer to open when it loads. */
 export type ExploreRequest =
@@ -172,5 +178,12 @@ export function flyCommand(
       const { cat, id, date, title, lat, lon } = sel.ev;
       return { type: "fly", kind: "event", lat, lon, ev: { cat, id, date, title, lat, lon } };
     }
+    case "region":
+      return sel.lat !== null && sel.lon !== null
+        ? { type: "fly", kind: "region", lat: sel.lat, lon: sel.lon }
+        : null;
+    case "satellite":
+    case "sky":
+      return null;
   }
 }

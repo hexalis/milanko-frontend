@@ -161,6 +161,30 @@ describe("flyCommand", () => {
     expect(flyCommand({ type: "case", id: "x" }, caseAt)).toBeNull();
   });
 
+  it("flies to a data region's centre when known, and never for the satellite", () => {
+    const reading = {
+      variable: "T2M",
+      label: "Air temperature",
+      source: "NASA POWER",
+      unit: "°C",
+      date: "2026-11-15",
+      period: "day" as const,
+      value: 31.4,
+      anomaly: 2.1,
+      z: 2.4,
+      baseline: 29.3,
+    };
+    const region = { type: "region", code: 14, place: "africa", reading } as const;
+    expect(flyCommand({ ...region, lat: 18.2, lon: 4.5 }, caseAt)).toEqual({
+      type: "fly",
+      kind: "region",
+      lat: 18.2,
+      lon: 4.5,
+    });
+    expect(flyCommand({ ...region, lat: null, lon: null }, caseAt)).toBeNull();
+    expect(flyCommand({ type: "satellite", id: "terra" }, caseAt)).toBeNull();
+  });
+
   it("hands the globe what it needs to animate an event's tile", () => {
     expect(flyCommand({ type: "event", ev: EVENT, sector: null }, caseAt)).toEqual({
       type: "fly",

@@ -54,18 +54,16 @@ describe("MethodScreen", () => {
     ).toBeVisible();
   });
 
-  it("holds both labs behind tabs, the sources, the folded glossary and the credits", () => {
+  it("leads to the playground from a banner, then the sources, the folded glossary and the credits", () => {
     render(<MethodScreen catalog={catalog} translator={getTranslator("en")} />);
 
-    const lab = screen.getByRole("region", { name: "Try it yourself" });
-    const tabs = within(lab).getAllByRole("tab");
-    expect(tabs).toHaveLength(2);
-    expect(tabs[0]).toHaveAttribute("aria-selected", "true");
-    // The trend lab shows first; the peak-or-record lab waits behind its tab.
-    expect(within(lab).getAllByRole("slider")).toHaveLength(3);
-    fireEvent.click(tabs[1] as HTMLElement);
-    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
-    expect(within(lab).getAllByRole("slider")).toHaveLength(2);
+    const banner = screen.getByRole("region", { name: "Play with the data" });
+    expect(within(banner).getByRole("link", { name: /Open the playground/ })).toHaveAttribute(
+      "href",
+      "/method/playground",
+    );
+    expect(within(banner).getByText("Peak or record?")).toBeVisible();
+    expect(within(banner).queryAllByRole("slider")).toHaveLength(0);
 
     expect(screen.getByRole("link", { name: /NASA EONET v3/ })).toHaveAttribute("target", "_blank");
     expect(screen.getByText("Mann-Kendall test").closest("details")).not.toHaveAttribute("open");

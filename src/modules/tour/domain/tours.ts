@@ -38,7 +38,7 @@ export const TOURS = {
   cases: ["arch-search", "arch-topics", "arch-filters", "arch-card", "arch-audit"],
   // The globe runs in a sandboxed frame: it reports where its controls sit and the page lays empty
   // anchors over them (exp-search, exp-zoom…). The side panel joins once something is open.
-  explore: ["exp-zoom", "exp-search", "exp-regions", "exp-layers", "exp-drawer"],
+  explore: ["exp-zoom", "exp-search", "exp-layers", "exp-drawer"],
   briefing: [
     "brief-ledger",
     "brief-steps",
@@ -56,7 +56,9 @@ export const TOURS = {
     "method-limits",
   ],
   compare: ["cmp-sides", "cmp-verdict", "cmp-joined", "cmp-cannot", "cmp-nav"],
-  // Regions, rankings, events and coverage share their parts (filters, figures, table).
+  // The region record (/regions): its own parts, the table being one fold away there.
+  region: ["rx-filters", "rx-summary", "rx-figures", "rx-tabs"],
+  // Rankings, events and coverage share their parts (filters, figures, table).
   data: ["data-filters", "data-stats", "data-table"],
 } as const satisfies Record<string, readonly string[]>;
 

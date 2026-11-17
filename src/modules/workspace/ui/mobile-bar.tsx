@@ -16,7 +16,8 @@ export function MobileBar({ children }: MobileBarProps) {
         className="text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring flex items-center gap-2 rounded-md no-underline"
       >
         <MilankoMark size={28} />
-        <span className="flex text-[1.1rem]">
+        {/* Under 360px the switches need the room: the mark alone stands for the name. */}
+        <span className="flex text-[1.1rem] max-[22.5rem]:hidden">
           <MilankoWordmark />
         </span>
         <span className="sr-only">Milanko</span>

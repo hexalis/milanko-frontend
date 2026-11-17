@@ -16,15 +16,15 @@ import { HomeKey } from "./home-key";
 
 type HomeScreenProps = {
   translator: Translator;
-  /** The page's tour button, above the cover. */
+  /** The page's tour button: it floats in a corner, so the cover opens the page. */
   tour?: ReactNode;
 };
 
 export function HomeScreen({ translator, tour }: HomeScreenProps) {
   const { t } = translator;
   return (
-    <main className="group/home max-w-content-max medium:px-6 medium:pt-6 expanded:px-12 @container/home mx-auto flex w-full flex-col px-4 pb-12">
-      {tour ? <div className="flex justify-end pt-2 pb-3">{tour}</div> : null}
+    <main className="group/home max-w-content-max medium:px-6 medium:pt-6 expanded:px-12 @container/home mx-auto flex w-full flex-col px-4 pt-3 pb-12">
+      {tour}
       <HomeHero translator={translator} />
       <HomeDoors translator={translator} />
       <HomeKey translator={translator} />

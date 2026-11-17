@@ -1,4 +1,5 @@
 import { isSectorId, type SectorId } from "./sectors";
+import { isSkyId, type SkyId } from "./sky";
 
 /*
  * The protocol between the explorer page and the embedded 3D globe (public/globe/world3d, the POC's
@@ -23,11 +24,49 @@ export type GlobeEvent = {
   unit: string;
 };
 
+/** What the data layer shows in one region on one day, as the globe painted it. */
+export type RegionReading = {
+  /** NASA's code ("T2M"). */
+  variable: string;
+  /** The variable in words, in the reader's language ("Air temperature"). */
+  label: string;
+  source: string;
+  /** Ready to show ("°C"); empty when the variable has none. */
+  unit: string;
+  date: string;
+  /** A day's value, or a month's mean against that month's normal (the layer's anomaly view). */
+  period: "day" | "month";
+  value: number | null;
+  /** Difference from the baseline (normal for that date). */
+  anomaly: number | null;
+  z: number | null;
+  baseline: number | null;
+};
+
+/** Where a data region sits: one of the portal's sectors, the open ocean, or not known yet. */
+export type RegionPlace = SectorId | "ocean" | null;
+
+const SATELLITE_IDS = ["terra"] as const;
+type SatelliteId = (typeof SATELLITE_IDS)[number];
+
 export type GlobeSelection =
   | { type: "case"; id: string }
   | { type: "sector"; id: SectorId }
   | { type: "point"; lat: number; lon: number }
-  | { type: "event"; ev: GlobeEvent };
+  | { type: "event"; ev: GlobeEvent }
+  | { type: "satellite"; id: SatelliteId }
+  /** The Moon or a constellation; `apollo` once the reader has found the Apollo 11 mark (three taps). */
+  | { type: "sky"; id: SkyId; apollo: boolean }
+  | {
+      type: "region";
+      /** The data region's code (0–161 on the current grid). */
+      code: number;
+      place: RegionPlace;
+      /** Its centre, when the globe knows it. */
+      lat: number | null;
+      lon: number | null;
+      reading: RegionReading;
+    };
 
 export type TilePeriod =
   | { kind: "live" }
@@ -47,7 +86,7 @@ export type GlobeTile = {
 };
 
 /** The globe's own controls, which the page's guided tour points at. */
-export const GLOBE_CHROME = ["search", "regions", "zoom", "layers"] as const;
+export const GLOBE_CHROME = ["search", "zoom", "layers"] as const;
 type GlobeChromePart = (typeof GLOBE_CHROME)[number];
 
 /** Where a control sits in the frame, in CSS pixels. */
@@ -57,12 +96,16 @@ export type GlobeChrome = Partial<Record<GlobeChromePart, ChromeRect>>;
 
 export type GlobeMessage =
   | { type: "ready" }
+  /** The loader has made way and the world is showing: the page's own layers may come in. */
+  | { type: "shown" }
   | { type: "chrome"; rects: GlobeChrome }
   | { type: "escape" }
   | { type: "select"; sel: GlobeSelection }
+  /** The reader hid or showed the interface from inside the globe. */
+  | { type: "immersive"; on: boolean }
   | ({ type: "tile" } & GlobeTile);
 
-type FlyKind = "sector" | "point" | "event" | "case";
+type FlyKind = "sector" | "point" | "event" | "case" | "region";
 
 /** What the page tells the globe. `etd: 1` is added when it is posted. */
 export type FrameCommand =
@@ -79,7 +122,11 @@ export type FrameCommand =
   | { type: "rail"; px: number }
   | { type: "closed" }
   | { type: "focus" }
-  | { type: "layer"; layer: "cases" | "events"; cat?: string; year?: number };
+  | { type: "layer"; layer: "cases" | "events"; cat?: string; year?: number }
+  /** The data layer on one variable (NASA's code). */
+  | { type: "layer"; layer: "data"; variable: string }
+  /** Hide (or show) the globe's own controls: only the planet and its sky. */
+  | { type: "immersive"; on: boolean };
 
 type Unknown = Record<string, unknown>;
 
@@ -98,6 +145,53 @@ const text = (value: unknown): string =>
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}/;
 const ID = /^[\w.:-]{1,120}$/;
+const VARIABLE = /^[A-Za-z0-9_]{1,40}$/;
+const MAX_REGION_CODE = 9999;
+const MAX_UNIT = 24;
+
+const finiteOrNull = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+function parsePlace(value: unknown): RegionPlace {
+  if (value === "ocean") return "ocean";
+  return isSectorId(value) ? value : null;
+}
+
+function parseReading(value: unknown): RegionReading | null {
+  if (!isRecord(value)) return null;
+  const { variable, date } = value;
+  if (typeof variable !== "string" || !VARIABLE.test(variable)) return null;
+  if (typeof date !== "string" || !ISO_DAY.test(date)) return null;
+  return {
+    variable,
+    label: text(value.label) || variable,
+    source: text(value.source),
+    unit: text(value.unit).slice(0, MAX_UNIT),
+    date: date.slice(0, 10),
+    period: value.period === "month" ? "month" : "day",
+    value: finiteOrNull(value.value),
+    anomaly: finiteOrNull(value.anomaly),
+    z: finiteOrNull(value.z),
+    baseline: finiteOrNull(value.baseline),
+  };
+}
+
+function parseRegion(value: Unknown): GlobeSelection | null {
+  const { code, lat, lon } = value;
+  if (typeof code !== "number" || !Number.isInteger(code) || code < 0 || code > MAX_REGION_CODE)
+    return null;
+  const reading = parseReading(value.reading);
+  if (!reading) return null;
+  const hasCentre = isLatitude(lat) && isLongitude(lon);
+  return {
+    type: "region",
+    code,
+    place: parsePlace(value.place),
+    lat: hasCentre ? lat : null,
+    lon: hasCentre ? lon : null,
+    reading,
+  };
+}
 
 export function parseGlobeEvent(value: unknown): GlobeEvent | null {
   if (!isRecord(value)) return null;
@@ -136,6 +230,16 @@ function parseSelection(value: unknown): GlobeSelection | null {
       const ev = parseGlobeEvent(value.ev);
       return ev ? { type: "event", ev } : null;
     }
+    case "satellite":
+      return (SATELLITE_IDS as readonly unknown[]).includes(value.id)
+        ? { type: "satellite", id: value.id as SatelliteId }
+        : null;
+    case "sky":
+      return isSkyId(value.id)
+        ? { type: "sky", id: value.id, apollo: value.id === "moon" && value.apollo === true }
+        : null;
+    case "region":
+      return parseRegion(value);
     default:
       return null;
   }
@@ -194,6 +298,8 @@ export function parseGlobeMessage(data: unknown): GlobeMessage | null {
   switch (data.type) {
     case "ready":
       return { type: "ready" };
+    case "shown":
+      return { type: "shown" };
     case "escape":
       return { type: "escape" };
     case "chrome":
@@ -202,6 +308,8 @@ export function parseGlobeMessage(data: unknown): GlobeMessage | null {
       const sel = parseSelection(data.sel);
       return sel ? { type: "select", sel } : null;
     }
+    case "immersive":
+      return typeof data.on === "boolean" ? { type: "immersive", on: data.on } : null;
     case "tile": {
       const tile = parseTile(data);
       return tile ? { type: "tile", ...tile } : null;

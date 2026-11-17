@@ -1,9 +1,12 @@
+import type { Translator } from "@/shared/lib/i18n";
 import { ScrollRegion } from "@/shared/ui/scroll-region";
 import { zColor, type CalendarLayout } from "../domain/analysis";
 
 type AnomalyCalendarProps = {
   layout: CalendarLayout;
+  /** The variable in words, for the chart's accessible name. */
   variable: string;
+  translator: Translator;
 };
 
 const PAD = { left: 38, top: 20, right: 8, bottom: 8 };
@@ -11,7 +14,6 @@ const CELL_WIDTH = 2.4;
 const ROW_HEIGHT = 15;
 const DAYS_IN_YEAR = 366;
 const MONTH_STARTS = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-const MONTH_INITIALS = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 const MAX_LABELED_YEARS = 15;
 const LEGEND = [-3, -2, -1, 0, 1, 2, 3];
 
@@ -19,7 +21,9 @@ const LEGEND = [-3, -2, -1, 0, 1, 2, 3];
  * One row per year, one cell per day, colored by z against the daily climatology.
  * Cells are merged into one path per color so a 20-year record stays a light SVG.
  */
-export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
+export function AnomalyCalendar({ layout, variable, translator }: AnomalyCalendarProps) {
+  const { t } = translator;
+  const monthInitials = t("rx.cal.months").split(",");
   const yearCount = layout.lastYear - layout.firstYear + 1;
   const width = PAD.left + DAYS_IN_YEAR * CELL_WIDTH + PAD.right;
   const height = PAD.top + yearCount * ROW_HEIGHT + PAD.bottom;
@@ -34,7 +38,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
       )
       .join("");
 
-  const title = `Calendario de anomalías de ${variable}, ${layout.firstYear} a ${layout.lastYear}, ${layout.dayCount} días`;
+  const title = t("rx.cal.aria", { variable, from: layout.firstYear, to: layout.lastYear });
   // Wider than a phone: the frame scrolls, and is focusable while it does.
   return (
     <>
@@ -65,7 +69,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
               y={PAD.top - 6}
               className="fill-text-tertiary"
             >
-              {MONTH_INITIALS[index]}
+              {monthInitials[index]}
             </text>
           ))}
           {layout.buckets.map((bucket) => (
@@ -74,12 +78,8 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
         </svg>
       </ScrollRegion>
       <div className="text-text-tertiary mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-semibold">
-        <span>
-          Cada celda es un día; el color es z respecto de la climatología diaria. Sin celda = sin
-          dato.
-        </span>
-        <span className="flex items-center gap-1" aria-hidden="true">
-          z −3
+        <span className="flex items-center gap-1.5">
+          {t("rx.cal.low")}
           {LEGEND.map((z) => (
             <span
               key={z}
@@ -87,7 +87,7 @@ export function AnomalyCalendar({ layout, variable }: AnomalyCalendarProps) {
               style={{ background: zColor(z) }}
             />
           ))}
-          +3
+          {t("rx.cal.high")}
         </span>
       </div>
     </>

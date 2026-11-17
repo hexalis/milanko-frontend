@@ -54,7 +54,7 @@ type WorkspaceRailProps = {
  * the halo widens and the arrow leans in. Collapsed, only the disc stays.
  */
 const ASK_CTA =
-  "group/item relative mb-2 flex min-h-13 items-center gap-3 overflow-hidden rounded-full border border-border-selected bg-[linear-gradient(100deg,var(--color-action-selected),var(--color-bg-surface)_85%)] ps-1.5 pe-4 text-label-l font-semibold text-text-primary no-underline shadow-card transition-[border-color,box-shadow] duration-base motion-reduce:transition-none hover:border-action-primary hover:shadow-raised focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:border-action-primary before:pointer-events-none before:absolute before:inset-0 before:-translate-x-full before:bg-[linear-gradient(110deg,transparent_35%,rgb(255_255_255/0.28)_50%,transparent_65%)] before:transition-transform before:duration-700 hover:before:translate-x-full motion-reduce:before:hidden nav-collapsed:mx-auto nav-collapsed:size-12 nav-collapsed:min-h-12 nav-collapsed:justify-center nav-collapsed:overflow-visible nav-collapsed:border-0 nav-collapsed:bg-none nav-collapsed:p-0 nav-collapsed:shadow-none nav-collapsed:before:hidden";
+  "group/item relative mb-2 flex min-h-13 items-center gap-3 overflow-hidden rounded-full border border-border-selected bg-[linear-gradient(100deg,var(--color-action-selected),var(--color-bg-surface)_85%)] ps-1.5 pe-4 text-label-m font-semibold text-text-primary no-underline shadow-card transition-[border-color,box-shadow] duration-base motion-reduce:transition-none hover:border-action-primary hover:shadow-raised focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:border-action-primary before:pointer-events-none before:absolute before:inset-0 before:-translate-x-full before:bg-[linear-gradient(110deg,transparent_35%,rgb(255_255_255/0.28)_50%,transparent_65%)] before:transition-transform before:duration-700 hover:before:translate-x-full motion-reduce:before:hidden nav-collapsed:mx-auto nav-collapsed:size-12 nav-collapsed:min-h-12 nav-collapsed:justify-center nav-collapsed:overflow-visible nav-collapsed:border-0 nav-collapsed:bg-none nav-collapsed:p-0 nav-collapsed:shadow-none nav-collapsed:before:hidden";
 
 const ASK_DISC =
   "relative grid size-10 shrink-0 place-items-center rounded-full bg-action-primary text-xl text-text-on-primary shadow-card ring-4 ring-action-primary/15 transition-[box-shadow,background-color,scale] duration-base group-hover/item:scale-105 group-hover/item:bg-action-primary-hover group-hover/item:ring-6 group-hover/item:ring-action-primary/20 motion-reduce:transition-none";
@@ -125,7 +125,7 @@ export function WorkspaceRail({
           <span className={ASK_DISC}>
             <Icon name={ASK.icon} />
           </span>
-          <span className="nav-collapsed:sr-only relative min-w-0 flex-1 truncate">
+          <span className="nav-collapsed:sr-only relative min-w-0 flex-1 leading-tight text-pretty">
             {copy.label(ASK.labelKey)}
           </span>
           <span className={ASK_ARROW}>

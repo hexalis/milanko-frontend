@@ -86,6 +86,7 @@ function Dock(props: GuidedScreenProps) {
     <LessonDock
       label={t("ask.steps.aria")}
       sheet={quizSheet(props)}
+      whyLabel={t("ask.sheet.why")}
       back={{
         href: prev ? askHref(question.id, { ...state, screen: prev }) : "/ask",
         label: t("ask.back"),
@@ -105,7 +106,12 @@ export function GuidedScreen({ tour, ...props }: GuidedScreenProps & { tour?: Re
   const { t } = translator;
   const { question, file, screen, depth, hunch, reading } = view;
   return (
-    <main className="group/lesson medium:px-6 expanded:px-12 mx-auto flex min-h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] w-full max-w-[980px] flex-col gap-7 overflow-x-clip px-4">
+    <main
+      data-lesson=""
+      // The lesson fills the window: no data footer under its bar (WorkspaceFooter).
+      data-fills-window=""
+      className="group/lesson medium:px-6 expanded:px-12 mx-auto flex min-h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] w-full max-w-[980px] flex-col gap-7 overflow-x-clip px-4"
+    >
       <LessonTop
         id={question.id}
         screen={screen}

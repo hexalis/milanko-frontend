@@ -21,9 +21,19 @@ export function DataSection({ reading, translator }: SectionProps) {
   const { chart } = reading;
   return (
     <ReadingSection id="cf-data" title={t("cf.s.data")}>
-      <Plain>{chart.plain}</Plain>
+      <div className="expanded:flex-row expanded:items-start expanded:justify-between flex flex-col gap-4">
+        <Plain>{chart.plain}</Plain>
+        <a
+          href={withBasePath(chart.csvHref)}
+          download
+          className={`${buttonLink({ intent: "secondary" })} shrink-0 self-start`}
+        >
+          <Icon name="csv" />
+          {t("case.download")}
+        </a>
+      </div>
       <ReadingChart chart={chart.visual} translator={translator} />
-      <ExactList rows={chart.exact} />
+      <ExactList rows={chart.exact} layout="columns" />
       <details className="mt-3">
         <summary className="text-label-m text-text-link focus-visible:focus-ring focus-visible:outline-focus-ring min-h-8 cursor-pointer rounded-xs">
           {t("cf.table")}
@@ -47,16 +57,6 @@ export function DataSection({ reading, translator }: SectionProps) {
           </Table>
         </ScrollRegion>
       </details>
-      <p className="mt-4">
-        <a
-          href={withBasePath(chart.csvHref)}
-          download
-          className={buttonLink({ intent: "secondary" })}
-        >
-          <Icon name="csv" />
-          {t("case.download")}
-        </a>
-      </p>
     </ReadingSection>
   );
 }
@@ -65,11 +65,15 @@ export function SureSection({ reading, translator }: SectionProps) {
   const { sure } = reading;
   return (
     <ReadingSection id="cf-sure" title={translator.t("cf.s.sure")}>
-      <ToneScale level={sure.level} tone={sure.tone} word={sure.word} />
-      <div className="mt-1.5">
-        <Plain>{sure.plain}</Plain>
+      <div className="expanded:grid expanded:grid-cols-2 expanded:gap-8">
+        <div>
+          <ToneScale level={sure.level} tone={sure.tone} word={sure.word} />
+          <div className="mt-1.5">
+            <Plain>{sure.plain}</Plain>
+          </div>
+        </div>
+        <ExactList rows={sure.exact} layout="beside" />
       </div>
-      <ExactList rows={sure.exact} />
     </ReadingSection>
   );
 }
@@ -77,7 +81,7 @@ export function SureSection({ reading, translator }: SectionProps) {
 export function NotSaySection({ reading, translator }: SectionProps) {
   return (
     <ReadingSection id="cf-not" title={translator.t("case.not")} look="dashed">
-      <ul className="text-body-m text-text-secondary grid list-disc gap-1.5 ps-5">
+      <ul className="text-body-m text-text-secondary expanded:grid-cols-3 expanded:gap-x-10 grid list-disc gap-1.5 ps-5">
         {reading.notSay.map((line) => (
           <li key={line}>{line}</li>
         ))}
@@ -95,8 +99,14 @@ export function WhySection({ reading }: SectionProps) {
         <Icon name="info" />
         {why.tag}
       </p>
-      <Plain>{why.plain}</Plain>
-      {why.more ? <p className="text-body-m text-text-secondary max-w-[60ch]">{why.more}</p> : null}
+      <div className="expanded:grid expanded:grid-cols-2 expanded:gap-8 flex flex-col gap-3">
+        <Plain>{why.plain}</Plain>
+        {why.more ? (
+          <p className="text-body-m text-text-secondary expanded:border-s expanded:border-current/20 expanded:ps-6 max-w-[60ch]">
+            {why.more}
+          </p>
+        ) : null}
+      </div>
       {why.breaks?.length ? (
         <ul className="grid gap-2">
           {why.breaks.map((item) => (
@@ -133,48 +143,54 @@ export function SourceSection({ reading, translator }: SectionProps) {
   const newTabHint = t("link.newTab");
   return (
     <ReadingSection id="cf-source" title={t("cf.s.source")}>
-      <Plain>{data.plain}</Plain>
-      <dl className="mt-3.5 grid gap-2">
-        {data.rows.map((row) => (
-          <div
-            key={row.label}
-            className="medium:grid-cols-[minmax(140px,200px)_minmax(0,1fr)] grid gap-x-4 gap-y-0.5"
-          >
-            <dt className="text-body-s text-text-secondary">{row.label}</dt>
-            <dd className="font-mono text-[13px] break-words">
-              {row.href ? (
-                <ExternalLink href={row.href} newTabHint={newTabHint}>
-                  {row.value}
-                </ExternalLink>
-              ) : (
-                row.value
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      {data.orbit.length ? (
-        <figure className="mt-4 flex flex-col gap-2">
-          <div className="medium:grid-cols-2 grid gap-3">
-            {data.orbit.map((image) => (
-              <div key={image.date} className="flex flex-col gap-1">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={480}
-                  height={480}
-                  unoptimized
-                  className="bg-bg-surface-sunken rounded-field aspect-square h-auto w-full"
-                />
-                <span className="text-body-s text-text-secondary text-center tabular-nums">
-                  {formatDate(image.date, locale)}
-                </span>
+      <div
+        className={`flex flex-col gap-4 ${data.orbit.length ? "expanded:grid expanded:grid-cols-2 expanded:items-start expanded:gap-8" : ""}`}
+      >
+        <div>
+          <Plain>{data.plain}</Plain>
+          <dl className="mt-3.5 grid gap-2">
+            {data.rows.map((row) => (
+              <div
+                key={row.label}
+                className="medium:grid-cols-[minmax(140px,200px)_minmax(0,1fr)] grid gap-x-4 gap-y-0.5"
+              >
+                <dt className="text-body-s text-text-secondary">{row.label}</dt>
+                <dd className="font-mono text-[13px] break-words">
+                  {row.href ? (
+                    <ExternalLink href={row.href} newTabHint={newTabHint}>
+                      {row.value}
+                    </ExternalLink>
+                  ) : (
+                    row.value
+                  )}
+                </dd>
               </div>
             ))}
-          </div>
-          <figcaption className="text-body-s text-text-secondary">{t("cf.orbit.d")}</figcaption>
-        </figure>
-      ) : null}
+          </dl>
+        </div>
+        {data.orbit.length ? (
+          <figure className="flex flex-col gap-2">
+            <div className="medium:grid-cols-2 grid gap-3">
+              {data.orbit.map((image) => (
+                <div key={image.date} className="flex flex-col gap-1">
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={480}
+                    height={480}
+                    unoptimized
+                    className="bg-bg-surface-sunken rounded-field aspect-square h-auto w-full"
+                  />
+                  <span className="text-body-s text-text-secondary text-center tabular-nums">
+                    {formatDate(image.date, locale)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <figcaption className="text-body-s text-text-secondary">{t("cf.orbit.d")}</figcaption>
+          </figure>
+        ) : null}
+      </div>
     </ReadingSection>
   );
 }

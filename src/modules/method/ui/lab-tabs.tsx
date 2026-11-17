@@ -4,15 +4,27 @@ import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "rea
 import { Icon } from "@/shared/ui/icon";
 
 /*
- * The two labs behind one set of tabs (POC .lab__tabs): one experiment on screen at a time. Both
- * panels stay mounted, so a reader who switches back finds their sliders where they left them.
+ * The playground's experiments behind one set of tabs, drawn as cards that say what each one lets
+ * the reader do: one experiment on screen at a time. Every panel stays mounted, so a reader who
+ * switches back finds their sliders where they left them.
  * Arrow keys, Home and End move between tabs (WAI-ARIA tabs, automatic activation).
  */
 
-export type LabTab = { id: string; icon: string; label: string; lead: string; panel: ReactNode };
+export type LabTab = {
+  id: string;
+  icon: string;
+  label: string;
+  /** One line on the card: what the reader can do there. */
+  note: string;
+  lead: string;
+  panel: ReactNode;
+};
 
 const TAB =
-  "inline-flex min-h-touch-min cursor-pointer items-center gap-2 rounded-sm px-4 text-label-m font-semibold text-text-secondary transition-colors duration-fast hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-selected:bg-bg-surface aria-selected:text-text-primary aria-selected:shadow-card";
+  "rounded-card border-border-subtle bg-bg-surface text-text-secondary duration-fast hover:border-border-strong focus-visible:focus-ring focus-visible:outline-focus-ring aria-selected:border-border-selected aria-selected:ring-border-selected aria-selected:shadow-card group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] content-start items-start gap-x-3 gap-y-0.5 border p-4 text-start transition-colors aria-selected:ring-1 aria-selected:ring-inset";
+
+const TAB_ICON =
+  "bg-bg-surface-sunken text-text-secondary group-aria-selected:bg-action-primary group-aria-selected:text-text-on-primary row-span-2 grid size-10 place-items-center rounded-full transition-colors";
 
 export function LabTabs({ tabs, label }: { tabs: LabTab[]; label: string }) {
   const base = useId();
@@ -40,11 +52,7 @@ export function LabTabs({ tabs, label }: { tabs: LabTab[]; label: string }) {
 
   return (
     <div className="grid gap-5">
-      <div
-        role="tablist"
-        aria-label={label}
-        className="bg-bg-canvas inline-flex w-fit max-w-full gap-1 overflow-x-auto rounded-md p-1"
-      >
+      <div role="tablist" aria-label={label} className="medium:grid-cols-3 grid gap-3">
         {tabs.map((tab, index) => (
           <button
             key={tab.id}
@@ -61,8 +69,11 @@ export function LabTabs({ tabs, label }: { tabs: LabTab[]; label: string }) {
             onKeyDown={onKeyDown}
             className={TAB}
           >
-            <Icon name={tab.icon} />
-            {tab.label}
+            <span className={TAB_ICON}>
+              <Icon name={tab.icon} />
+            </span>
+            <span className="text-label-l text-text-primary font-semibold">{tab.label}</span>
+            <span className="text-body-s">{tab.note}</span>
           </button>
         ))}
       </div>

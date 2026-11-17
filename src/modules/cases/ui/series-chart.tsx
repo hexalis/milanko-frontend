@@ -21,6 +21,8 @@ type SeriesChartProps = {
   recordLabel?: string;
   /** Mark one year, e.g. an event's run-up against every earlier year. */
   mark?: { year: number; text: string };
+  /** Another version of the series drawn faintly behind it (the playground's measured record). */
+  ghost?: readonly Point[];
 };
 
 const WIDTH = 720;
@@ -47,13 +49,17 @@ export function SeriesChart({
   inline,
   recordLabel,
   mark,
+  ghost = [],
 }: SeriesChartProps) {
   const titleId = useId();
   if (!data.length) return null;
   const margin = { top: 16, right: inline ? 128 : 16, bottom: 28, left: 52 };
   const years = data.map(([year]) => year);
-  const [xMin = 0, xMax = 1] = extent(years);
-  const [yMin = 0, yMax = 1] = extent(data, ([, value]) => value);
+  const drawn = [...data, ...ghost];
+  const [xMin = 0, xMax = 1] = extent(drawn, ([year]) => year);
+  const [yMin = 0, yMax = 1] = extent(drawn, ([, value]) => value);
+  // The trend line spans the series' own years, not the ghost's.
+  const [firstYear = xMin, lastYear = xMax] = extent(years);
   const pad = (yMax - yMin) * 0.12 || 1;
   const x = scaleLinear()
     .domain([xMin, xMax])
@@ -148,6 +154,15 @@ export function SeriesChart({
           className="fill-chart-band"
         />
       ) : null}
+      {ghost.length ? (
+        <path
+          d={line<Point>().x(toX).y(toY)(ghost) ?? ""}
+          fill="none"
+          strokeWidth={1.6}
+          strokeDasharray="3 4"
+          className="stroke-text-tertiary"
+        />
+      ) : null}
       <path
         d={line<Point>().x(toX).y(toY)(data) ?? ""}
         fill="none"
@@ -156,10 +171,10 @@ export function SeriesChart({
       />
       {trend ? (
         <line
-          x1={x(xMin)}
-          x2={x(xMax)}
-          y1={y(trendAt(trend, xMin))}
-          y2={y(trendAt(trend, xMax))}
+          x1={x(firstYear)}
+          x2={x(lastYear)}
+          y1={y(trendAt(trend, firstYear))}
+          y2={y(trendAt(trend, lastYear))}
           strokeWidth={2.2}
           strokeDasharray="7 5"
           className="stroke-chart-trend"

@@ -61,11 +61,29 @@ export function ToneScale({
   );
 }
 
+const exactList = tv({
+  base: "border-border-strong text-text-secondary border-dashed font-mono text-[13px] leading-7 break-words",
+  variants: {
+    layout: {
+      /** Under the sentence, one row per line. */
+      stack: "mt-4 border-t pt-3",
+      /** Under a wide chart: two columns from medium up, so the figures use the card's width. */
+      columns: "medium:grid-cols-2 mt-4 grid gap-x-8 border-t pt-3",
+      /** Beside the sentence on wide screens (a rule at its start), under it on narrow ones. */
+      beside:
+        "expanded:mt-0 expanded:border-t-0 expanded:border-s expanded:pt-0 expanded:ps-6 mt-4 border-t pt-3",
+    },
+  },
+  defaultVariants: { layout: "stack" },
+});
+
+type ExactListProps = { rows: ExactRow[]; layout?: "stack" | "columns" | "beside" };
+
 /** The exact figures under a plain sentence (POC cf-exact): a dashed rule, then label and value. */
-export function ExactList({ rows }: { rows: ExactRow[] }) {
+export function ExactList({ rows, layout }: ExactListProps) {
   if (!rows.length) return null;
   return (
-    <dl className="border-border-strong text-text-secondary mt-4 border-t border-dashed pt-3 font-mono text-[13px] leading-7 break-words">
+    <dl className={exactList({ layout })}>
       {rows.map((row) => (
         <div key={row.label}>
           <dt className="text-text-primary me-1.5 inline font-sans text-[12px] font-semibold">

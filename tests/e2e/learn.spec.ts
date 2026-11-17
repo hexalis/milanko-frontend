@@ -14,12 +14,14 @@ test("briefing leads to the featured case file and the archive", async ({ page }
 });
 
 test("the planet lab redraws its verdict when the trend changes", async ({ page }) => {
-  await page.goto("/method");
+  await page.goto("/method/playground");
   // The sliders are React Aria client components: wait for hydration before using the keyboard.
   await page.waitForLoadState("networkidle");
+  // The playground opens on real data; the planet lab is its second tab.
+  await page.getByRole("tab", { name: /Trend or chance/ }).click();
 
-  const trend = page.locator('input[type="range"]').nth(2);
-  const lab = trend.locator("xpath=ancestor::section[1]");
+  const lab = page.getByRole("tabpanel");
+  const trend = lab.getByRole("slider", { name: /Real trend/ });
   await expect(lab).toContainText("Sen +0.30");
   await trend.focus();
   await page.keyboard.press("Home");

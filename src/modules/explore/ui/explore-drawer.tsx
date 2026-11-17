@@ -69,16 +69,21 @@ export function ExploreDrawer({
       data-tour="exp-drawer"
       aria-labelledby={DRAWER_TITLE_ID}
       inert={isHeld}
-      className={`${isHeld ? PRESENCE.held : PRESENCE.shown} border-border-subtle bg-bg-surface shadow-raised absolute inset-x-0 bottom-0 z-10 max-h-[60%] overflow-y-auto overscroll-contain rounded-t-[22px] border p-5 min-[860px]:inset-x-auto min-[860px]:top-3 min-[860px]:right-3 min-[860px]:bottom-3 min-[860px]:max-h-none min-[860px]:w-[400px] min-[860px]:rounded-[22px]`}
+      className={`${isHeld ? PRESENCE.held : PRESENCE.shown} border-border-subtle bg-bg-surface shadow-raised scrollbar-milanko absolute inset-x-0 bottom-0 z-10 flex max-h-[60%] scroll-py-24 flex-col overflow-y-auto overscroll-contain rounded-t-[22px] border p-5 min-[860px]:inset-x-auto min-[860px]:top-3 min-[860px]:right-3 min-[860px]:bottom-3 min-[860px]:max-h-none min-[860px]:w-[400px] min-[860px]:rounded-[22px] [&>:last-child]:flex-1`}
     >
+      {/*
+       * Pinned to the top corner while the panel scrolls, over the panel's sticky head
+       * (PanelHead): 12px from the edges, and the negative margins take it out of the flow.
+       */}
       <button
         type="button"
         onClick={onClose}
         aria-label={closeLabel}
-        className="rounded-control text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring absolute top-3 right-3 inline-flex size-10 items-center justify-center"
+        className="rounded-control text-text-secondary hover:bg-bg-hover focus-visible:focus-ring focus-visible:outline-focus-ring sticky -top-2 z-[3] -me-2 -mt-2 -mb-8 inline-flex size-10 shrink-0 items-center justify-center self-end"
       >
         <Icon name="x" />
       </button>
+      {/* The panel fills the drawer's height, so its footer (Actions) sits at the bottom. */}
       {children}
     </aside>
   );

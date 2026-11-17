@@ -1,6 +1,7 @@
 import { readString, toQueryString, type SearchParams } from "@/shared/lib/search-params";
 import { askHref, parseDepth, type Depth } from "./ask-state";
 import { compareHref } from "./compare";
+import { isLiveVariable, parsePoint, placeHref, type PlacePoint } from "./place";
 import { PLANET, QUESTION_TYPES, type Facts, type QuestionType, type Rules } from "./rules";
 
 /*
@@ -11,11 +12,19 @@ import { PLANET, QUESTION_TYPES, type Facts, type QuestionType, type Rules } fro
  * Every choice lives in the URL. The POC reset the later segments in the browser when an earlier one
  * changed (askBindBuilder L401–465); here the URL is validated in order (theme → verb → place) and
  * anything that no longer fits is dropped, so a stale or hand-written address still renders a
- * coherent builder. Free points ("mine") are switched off in this deployment and never offered.
+ * coherent builder. A free point ("mine", rule 4) is offered for a trend whose variables the API
+ * serves at any coordinate; the place the reader finds is kept as lat, lon and name in the URL.
+ * Comparing with a free point is not ported yet.
  */
 
 /** What the finished question opens. */
-type GoKind = "guided" | "case" | "compare" | "audit";
+type GoKind = "guided" | "case" | "compare" | "audit" | "place";
+
+/** The id of the "my own place" option (POC "mine"). */
+export const MINE = "mine";
+
+/** The URL fields that hold the reader's own place once found. */
+const POINT_FIELDS = ["lat", "lon", "name"] as const;
 
 /** The case files the builder needs to know about (a CaseCatalog fits). */
 export type BuilderCases = {
@@ -28,7 +37,9 @@ export type Subject =
   | { type: "trend"; place: string }
   | { type: "comparison"; a: string; b: string }
   | { type: "anomaly"; event: string }
-  | { type: "catalog"; category: string };
+  | { type: "catalog"; category: string }
+  /** The reader's own place, named once they have found it. */
+  | { type: "point"; name: string | undefined };
 
 export type WhereOption = { id: string; kind: GoKind; href: string; subject: Subject };
 
@@ -54,6 +65,8 @@ export type BuilderState = {
   variables: string[];
   /** The verb cannot be asked about the reader's own place (rule 4 does not hold). */
   hasNoFreePoint: boolean;
+  /** The reader's own place, once found, while "mine" is the chosen place. */
+  point: PlacePoint | undefined;
 };
 
 export type BuilderExample = {
@@ -68,24 +81,50 @@ export type BuilderExample = {
 const isQuestionType = (value: string | undefined): value is QuestionType =>
   QUESTION_TYPES.some((type) => type === value);
 
-/** Verbs the builder offers for a ready theme: its ready types, plus comparison when comparable. */
+/**
+ * Verbs the builder offers for a ready theme: its ready types, plus comparison when two reviewed
+ * places can be compared. (The POC also compared one reviewed place with a free point; that side
+ * is not ported, so rules.comparable would offer a comparison nobody could finish.)
+ */
 export function builderTypes(rules: Rules, theme: string): QuestionType[] {
   const row = rules.ready().find((candidate) => candidate.theme === theme);
   if (!row) return [];
   return QUESTION_TYPES.filter(
-    (type) => row.types.includes(type) || (type === "comparison" && rules.comparable(theme)),
+    (type) => row.types.includes(type) || (type === "comparison" && rules.pairs(theme).length > 0),
   );
+}
+
+/** "My own place", last in the list: its page opens once the reader has found the place. */
+function mineOption(
+  rules: Rules,
+  theme: string,
+  point: PlacePoint | undefined,
+): WhereOption | undefined {
+  if (!rules.allowsFreePoint(theme, "trend")) return undefined;
+  const [variable] = rules.mains(theme, "trend");
+  return {
+    id: MINE,
+    kind: "place",
+    href: point ? placeHref(point, isLiveVariable(variable) ? variable : undefined) : "",
+    subject: { type: "point", name: point?.name },
+  };
 }
 
 /** Where a verb can be asked, and the page that answers it (POC askWheres). */
 export function whereOptions(
   rules: Rules,
   cases: BuilderCases,
-  { theme, type, depth }: { theme: string; type: QuestionType; depth: Depth },
+  {
+    theme,
+    type,
+    depth,
+    point,
+  }: { theme: string; type: QuestionType; depth: Depth; point?: PlacePoint },
 ): WhereOption[] {
   switch (type) {
-    case "trend":
-      return rules
+    case "trend": {
+      const mine = mineOption(rules, theme, point);
+      const reviewed = rules
         .places(theme, "trend")
         .filter((place) => place !== PLANET)
         .flatMap((place): WhereOption[] => {
@@ -100,6 +139,8 @@ export function whereOptions(
           const href = askHref(id, { screen: "look", depth });
           return [{ id: place, kind: "guided", href, subject }];
         });
+      return mine ? [...reviewed, mine] : reviewed;
+    }
     case "comparison":
       return rules.pairs(theme).map(([a, b]) => ({
         id: `${a}~${b}`,
@@ -195,6 +236,7 @@ export function builderState(
       where: undefined,
       variables: [],
       hasNoFreePoint: false,
+      point: undefined,
     };
   }
 
@@ -206,20 +248,27 @@ export function builderState(
       wheres: [],
       where: undefined,
       variables,
-      hasNoFreePoint: !rules.allowsFreePoint(theme, "trend"),
+      // Comparing with the reader's own place is not ported yet.
+      hasNoFreePoint: true,
+      point: undefined,
     };
   }
 
-  const wheres = whereOptions(rules, cases, { theme, type, depth });
+  // The found place only counts while "mine" is the chosen place.
+  const isMine = readString(params, "where") === MINE;
+  const point = isMine ? parsePoint(params) : undefined;
+  const wheres = whereOptions(rules, cases, { theme, type, depth, point });
   const where = pickWhere(wheres, readString(params, "where"));
   return {
     ...base,
     ...NO_COMPARISON,
     wheres,
     where,
-    go: where ? { href: where.href, kind: where.kind } : undefined,
+    // "Mine" opens nothing until the reader has found the place.
+    go: where?.href ? { href: where.href, kind: where.kind } : undefined,
     variables,
     hasNoFreePoint: type !== "catalog" && !rules.allowsFreePoint(theme, type),
+    point: where?.id === MINE ? point : undefined,
   };
 }
 
@@ -280,9 +329,15 @@ export function builderExamples(
 
 export type BuilderSegment = "theme" | "verb" | "where" | "a" | "b";
 
-/** Segments that become stale when a segment changes (POC askBindBuilder resets). */
-export function staleSegments(changed: BuilderSegment): readonly BuilderSegment[] {
-  if (changed === "theme") return ["verb", "where", "a", "b"];
-  if (changed === "verb") return ["where", "a", "b"];
+type PointField = (typeof POINT_FIELDS)[number];
+
+/**
+ * Fields that become stale when a segment changes (POC askBindBuilder resets). A new place drops
+ * the reader's own place too: choosing "mine" again starts a new search.
+ */
+export function staleSegments(changed: BuilderSegment): readonly (BuilderSegment | PointField)[] {
+  if (changed === "theme") return ["verb", "where", "a", "b", ...POINT_FIELDS];
+  if (changed === "verb") return ["where", "a", "b", ...POINT_FIELDS];
+  if (changed === "where") return POINT_FIELDS;
   return [];
 }

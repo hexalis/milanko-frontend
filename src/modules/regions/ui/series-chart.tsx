@@ -1,10 +1,15 @@
-import { formatNumber } from "@/shared/lib/format";
+import { formatDate } from "@/modules/cases";
+import type { Translator } from "@/shared/lib/i18n";
 import { ScrollRegion } from "@/shared/ui/scroll-region";
+import { formatFor, type Band } from "../domain/reading";
 import type { SeriesPoint } from "../domain/series";
 
 type SeriesChartProps = {
   points: readonly SeriesPoint[];
   label: string;
+  /** What is normal for each point's month, drawn as a grey band behind the line. */
+  band?: readonly (Band | null)[];
+  translator: Translator;
 };
 
 const WIDTH = 1000;
@@ -14,13 +19,39 @@ const TICKS = 4;
 /** Dots are drawn only while they stay readable. */
 const MAX_DOTS = 120;
 
-export function SeriesChart({ points, label }: SeriesChartProps) {
+/** The band as closed paths: along the highs, back along the lows; a month without one splits it. */
+function bandPaths(
+  band: readonly (Band | null)[],
+  x: (index: number) => number,
+  y: (value: number) => number,
+): string[] {
+  const runs: { index: number; band: Band }[][] = [[]];
+  band.forEach((item, index) => {
+    if (item) runs.at(-1)?.push({ index, band: item });
+    else if (runs.at(-1)?.length) runs.push([]);
+  });
+  return runs
+    .filter((run) => run.length > 1)
+    .map((run) => {
+      const top = run.map(({ index, band: b }) => `${x(index).toFixed(1)},${y(b.high).toFixed(1)}`);
+      const bottom = run
+        .toReversed()
+        .map(({ index, band: b }) => `${x(index).toFixed(1)},${y(b.low).toFixed(1)}`);
+      return `M${top.join("L")}L${bottom.join("L")}Z`;
+    });
+}
+
+export function SeriesChart({ points, label, band, translator }: SeriesChartProps) {
+  const { t, locale } = translator;
   const first = points[0];
   const last = points.at(-1);
-  if (!first || !last)
-    return <p className="text-text-tertiary">No hay valores numéricos para graficar.</p>;
+  if (!first || !last) return <p className="text-text-tertiary">{t("rx.chart.empty")}</p>;
 
-  const values = points.map((point) => point.value);
+  const bands = band?.filter((item) => item !== null) ?? [];
+  const values = [
+    ...points.map((point) => point.value),
+    ...bands.flatMap((item) => [item.low, item.high]),
+  ];
   let min = Math.min(...values);
   let max = Math.max(...values);
   if (min === max) {
@@ -40,8 +71,16 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
     { length: TICKS + 1 },
     (_, index) => min + ((max - min) * index) / TICKS,
   );
+  const from = formatDate(first.date, locale);
+  const to = formatDate(last.date, locale);
 
-  const title = `${label}: ${first.date} a ${last.date}, entre ${formatNumber(min)} y ${formatNumber(max)}`;
+  const title = t("rx.chart.aria", {
+    label,
+    from,
+    to,
+    min: formatFor(min, locale),
+    max: formatFor(max, locale),
+  });
   // Wider than a phone: the frame scrolls, and is focusable while it does.
   return (
     <ScrollRegion className="overflow-x-auto" label={title}>
@@ -50,6 +89,11 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
         className="block h-[290px] w-full min-w-[640px] text-[11px]"
       >
         <title>{title}</title>
+        {band
+          ? bandPaths(band, x, y).map((d) => (
+              <path key={d.slice(0, 32)} d={d} className="fill-text-tertiary" opacity={0.22} />
+            ))
+          : null}
         {ticks.map((tick) => (
           <g key={tick}>
             <line
@@ -60,7 +104,7 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
               className="stroke-chart-grid"
             />
             <text x={PAD.left - 8} y={y(tick) + 4} textAnchor="end" className="fill-text-tertiary">
-              {formatNumber(tick)}
+              {formatFor(tick, locale)}
             </text>
           </g>
         ))}
@@ -79,10 +123,10 @@ export function SeriesChart({ points, label }: SeriesChartProps) {
           className="stroke-chart-axis"
         />
         <text x={PAD.left} y={HEIGHT - 8} className="fill-text-tertiary">
-          {first.date}
+          {from}
         </text>
         <text x={WIDTH - PAD.right} y={HEIGHT - 8} textAnchor="end" className="fill-text-tertiary">
-          {last.date}
+          {to}
         </text>
         <path
           d={path}

@@ -114,7 +114,9 @@ describe("GuidedScreen", () => {
   it("checks the reading against the test and carries both answers on", () => {
     renderScreen("warmer", "check", { hunch: "up", reading: "real" });
     expect(screen.getByText("The test finds a clear direction")).toBeInTheDocument();
-    expect(screen.getByText(/^You thought the same\./)).toBeInTheDocument();
+    // Shown as is on wide screens and behind "Why?" on a phone.
+    expect(screen.getAllByText(/^You thought the same./)).toHaveLength(2);
+    expect(screen.getByText("Why?")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Continue/ })).toHaveAttribute(
       "href",
       "/ask/warmer?s=verdict&depth=simple&h=up&r=real",

@@ -1,43 +1,45 @@
 import Form from "next/form";
 import Link from "next/link";
+import { formatDate } from "@/modules/cases";
 import type { VariableCoverage } from "@/modules/coverage";
 import { withBasePath } from "@/shared/lib/base-path";
-import { formatNumber, formatSigned, withUnit } from "@/shared/lib/format";
+import { formatNumber, withUnit } from "@/shared/lib/format";
+import type { Translator } from "@/shared/lib/i18n";
 import { toQueryString } from "@/shared/lib/search-params";
 import { AutoSubmitSelect } from "@/shared/ui/auto-submit-select";
 import { Button, buttonLink } from "@/shared/ui/button";
 import { CopyLinkButton } from "@/shared/ui/copy-link-button";
-import { Field, FilterBar, TextInput } from "@/shared/ui/field";
+import { Field, TextInput } from "@/shared/ui/field";
+import { Icon } from "@/shared/ui/icon";
 import { Notice } from "@/shared/ui/notice";
-import { Panel } from "@/shared/ui/panel";
 import { StatCard, StatGrid } from "@/shared/ui/stat-card";
-import { CellNote, EmptyRow, Table, Td, Th } from "@/shared/ui/table";
-import { TextLink } from "@/shared/ui/text-link";
-import {
-  latestAnomaly,
-  layoutCalendar,
-  readTrend,
-  recentAnomalies,
-  type AnomalyPoint,
-  type RegionTrend,
-} from "../domain/analysis";
+import { latestAnomaly, readTrend, type AnomalyPoint, type RegionTrend } from "../domain/analysis";
 import {
   formatRegionCode,
-  regionLabel,
   type LatestVariable,
   type Region,
   type RegionEvent,
 } from "../domain/region";
-import { summarizeObservations, toSeries, type Observation } from "../domain/series";
-import { AnomalyBarsChart } from "./anomaly-bars-chart";
-import { AnomalyCalendar } from "./anomaly-calendar";
-import { SeriesChart } from "./series-chart";
+import {
+  formatFor,
+  isConfirmed,
+  oneIn,
+  perDecade,
+  RAREST,
+  readableUnit,
+  type RegionPlace,
+} from "../domain/reading";
+import { summarizeObservations, type Observation } from "../domain/series";
+import { RegionTabs, REGION_TABS, type RegionTab } from "./region-tabs";
 
 type RegionExplorerQuery = {
   region: Region;
   variable: VariableCoverage;
   start: string;
   end: string;
+  /** Where the region sits, when the link from the globe says so. */
+  place?: RegionPlace;
+  tab: RegionTab;
   /** Anomalies on or after this date fill the 12-month chart. */
   anomalySince: string;
   /** Shortcut range for the "last 30 days" link. */
@@ -48,6 +50,7 @@ type RegionExplorerQuery = {
 export type Loaded<T> = { data: T } | { error: string };
 
 type RegionExplorerScreenProps = {
+  translator: Translator;
   regions: readonly Region[];
   variables: readonly VariableCoverage[];
   query: RegionExplorerQuery;
@@ -59,299 +62,264 @@ type RegionExplorerScreenProps = {
   maxObservations: number;
 };
 
-const RECENT_ROWS = 40;
+/** A NASA variable in words, or the catalog's own name when the copy has none. */
+function variableName(translator: Translator, code: string, fallback: string): string {
+  return translator.has(`var.${code}`) ? translator.t(`var.${code}`) : fallback;
+}
 
-function TrendCard({ trend }: { trend: RegionExplorerScreenProps["trend"] }) {
+function TrendCard({
+  trend,
+  unit,
+  translator,
+}: {
+  trend: Loaded<RegionTrend | null>;
+  unit: string;
+  translator: Translator;
+}) {
+  const { t, locale } = translator;
+  const label = t("rx.trend.label");
   if ("error" in trend)
-    return <StatCard label="Tendencia · Mann-Kendall" value="—" meta={trend.error} />;
+    return <StatCard label={label} value="—" meta={t("rx.trend.error", { error: trend.error })} />;
   const reading = readTrend(trend.data);
-  if (reading.kind === "missing") {
-    return <StatCard label="Tendencia · Mann-Kendall" value="—" meta="sin datos suficientes" />;
-  }
-  if (reading.kind === "too-short") {
+  if (reading.kind === "missing")
+    return <StatCard label={label} value="—" meta={t("rx.trend.missing")} />;
+  if (reading.kind === "too-short")
     return (
-      <StatCard
-        label="Tendencia · Mann-Kendall"
-        value={`${reading.months} meses`}
-        meta="se necesitan al menos 12 meses"
-      />
+      <StatCard label={label} value="—" meta={t("rx.trend.short", { months: reading.months })} />
     );
-  }
+  const slope = withUnit(
+    formatFor(perDecade(reading.slopePerYear), locale, { signed: true }),
+    unit,
+  );
   return (
     <StatCard
-      label="Tendencia · Mann-Kendall"
-      value={`${formatSigned(reading.slopePerYear, 4)} / año`}
-      meta={`${reading.label} · p=${formatNumber(reading.pValue, 4)} · n=${reading.months} meses`}
+      label={label}
+      value={t("rx.trend.value", { slope })}
+      meta={t(isConfirmed(reading.pValue) ? "rx.trend.yes" : "rx.trend.no", {
+        months: reading.months,
+      })}
     />
   );
 }
 
-export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
-  const { regions, variables, query, observations, anomalies, latest, events } = props;
-  const { region, variable } = query;
-  const unit = variable.unit;
-  const summary = summarizeObservations(observations);
-  const series = toSeries(observations);
-  const anomalyPoints = "data" in anomalies ? anomalies.data : [];
-  const lastAnomaly = latestAnomaly(
-    anomalyPoints.filter((point) => point.time >= query.anomalySince),
+function RarityCard({
+  point,
+  translator,
+}: {
+  point: AnomalyPoint | undefined;
+  translator: Translator;
+}) {
+  const { t, locale } = translator;
+  const label = t("rx.rare.label");
+  if (!point) return <StatCard label={label} value="—" meta={t("rx.rare.none")} />;
+  const date = formatDate(point.time, locale);
+  const n = oneIn(point.z);
+  if (n === null)
+    return (
+      <StatCard
+        label={label}
+        value={t("rx.rare.normal")}
+        meta={t("rx.rare.normal.meta", { date })}
+      />
+    );
+  return (
+    <StatCard
+      label={label}
+      value={
+        n >= RAREST
+          ? t("rx.rare.rarest")
+          : t("rx.rare.value", { n: formatFor(n, locale, { digits: 0 }) })
+      }
+      meta={t("rx.rare.meta", { date })}
+    />
   );
-  const calendar = layoutCalendar(anomalyPoints);
-  const viewHref = (overrides: Record<string, string | number>) =>
-    `/regions${toQueryString({ region: region.code, variable: variable.variable, start: query.start, end: query.end, ...overrides })}`;
+}
+
+/**
+ * A data region's record: one sentence on what matters (the latest day against normal), three
+ * figures in words, and the rest in tabs, each chart with its "How do I read this?". Filters,
+ * period and tab live in the URL, so a record can be shared as it is.
+ */
+export function RegionExplorerScreen(props: RegionExplorerScreenProps) {
+  const { translator, regions, variables, query, observations, anomalies } = props;
+  const { t, locale } = translator;
+  const { region, variable, place } = query;
+  const code = formatRegionCode(region.code);
+  const unit = readableUnit(variable.unit, locale);
+  const name = variableName(translator, variable.variable, variable.name);
+  const where = place
+    ? t("rx.where.place", { code, place: t(`reg.${place}`) })
+    : t("rx.where", { code });
+  const summary = summarizeObservations(observations);
+  const anomalyPoints = "data" in anomalies ? anomalies.data : [];
+  const lastPoint = latestAnomaly(anomalyPoints);
+  const viewHref = (overrides: Record<string, string | number | undefined>) =>
+    `/regions${toQueryString({ region: region.code, variable: variable.variable, start: query.start, end: query.end, place, tab: query.tab, ...overrides })}`;
   const csvHref = withBasePath(
     `/regions/${region.code}/observations${toQueryString({ variable: variable.variable, start: query.start, end: query.end })}`,
   );
+  const globeHref = `/explore${toQueryString({ layer: "data", variable: variable.variable, date: query.end })}`;
+
+  // The sentence: the latest day, and how it sat against normal when that day was compared.
+  const latest = summary.latest;
+  const compared =
+    latest && lastPoint?.time === latest.date && typeof lastPoint.anomaly === "number"
+      ? lastPoint
+      : undefined;
+  const value = latest ? withUnit(formatFor(latest.value, locale), unit) : "";
+  const date = latest ? formatDate(latest.date, locale) : "";
+  const vars = { variable: name, where, value, date };
+  const headline = !latest
+    ? t("rx.head.none", { variable: name.toLowerCase(), where })
+    : !compared || typeof compared.anomaly !== "number"
+      ? t("rx.head.value", vars)
+      : t(
+          compared.anomaly > 0
+            ? "rx.head.above"
+            : compared.anomaly < 0
+              ? "rx.head.below"
+              : "rx.head.equal",
+          { ...vars, diff: withUnit(formatFor(Math.abs(compared.anomaly), locale), unit) },
+        );
+  const pct = typeof compared?.percentile === "number" ? Math.round(compared.percentile) : null;
+  const sinceYear = anomalyPoints[0]?.time.slice(0, 4);
 
   return (
     <>
-      <Form action="/regions">
-        <FilterBar>
-          <Field label="Región">
+      <Link
+        href={globeHref}
+        className="text-label-m text-text-link hover:text-text-brand inline-flex w-fit items-center gap-1.5 font-semibold"
+      >
+        <span aria-hidden="true">←</span>
+        {t("rx.back")}
+      </Link>
+
+      <Form
+        action="/regions"
+        data-tour="rx-filters"
+        className="rounded-card border-border-subtle bg-bg-surface shadow-card flex flex-wrap items-end gap-3 border p-4"
+      >
+        <input type="hidden" name="tab" value={query.tab} />
+        <div className="medium:w-56 w-full">
+          <Field label={t("rx.f.region")}>
             <AutoSubmitSelect name="region" urlValue={String(region.code)}>
               {regions.map((row) => (
                 <option key={row.code} value={row.code}>
-                  {regionLabel(row)}
+                  {t("rx.f.region.opt", { code: formatRegionCode(row.code) })}
                 </option>
               ))}
             </AutoSubmitSelect>
           </Field>
-          <Field label="Variable">
+        </div>
+        <div className="medium:w-80 w-full">
+          <Field label={t("rx.f.variable")}>
             <AutoSubmitSelect name="variable" urlValue={variable.variable}>
               {variables.map((row) => (
                 <option key={row.variable} value={row.variable}>
-                  {row.variable} · {row.source}
-                  {row.unit ? ` · ${row.unit}` : ""}
+                  {variableName(translator, row.variable, row.name)} · {row.variable}
                 </option>
               ))}
             </AutoSubmitSelect>
           </Field>
-          <Field label="Desde">
-            <TextInput name="start" type="date" defaultValue={query.start} />
-          </Field>
-          <Field label="Hasta">
-            <TextInput name="end" type="date" defaultValue={query.end} />
-          </Field>
-          <Button type="submit">Cargar serie</Button>
-          <Link className={buttonLink({ intent: "secondary" })} href={viewHref(query.lastMonth)}>
-            Últimos 30 días
-          </Link>
+        </div>
+        {/* The period is the least used part: one tap away, with the current one written beside it. */}
+        <details className="group/period w-full">
+          <summary className="text-label-m text-text-link w-fit cursor-pointer py-2 font-semibold">
+            {t("rx.f.period")} ·{" "}
+            <span className="text-text-secondary font-normal">
+              {formatDate(query.start, locale)} – {formatDate(query.end, locale)}
+            </span>
+          </summary>
+          <div className="flex flex-wrap items-end gap-3 pt-2">
+            <div className="w-44">
+              <Field label={t("rx.f.from")}>
+                <TextInput name="start" type="date" defaultValue={query.start} />
+              </Field>
+            </div>
+            <div className="w-44">
+              <Field label={t("rx.f.to")}>
+                <TextInput name="end" type="date" defaultValue={query.end} />
+              </Field>
+            </div>
+            <Button type="submit">{t("rx.f.load")}</Button>
+            <Link className={buttonLink({ intent: "secondary" })} href={viewHref(query.lastMonth)}>
+              {t("rx.f.month")}
+            </Link>
+          </div>
+        </details>
+        <div className="flex flex-wrap gap-2">
           <a className={buttonLink({ intent: "secondary" })} href={csvHref} download>
-            Descargar CSV
+            <Icon name="download" />
+            {t("rx.f.csv")}
           </a>
           <CopyLinkButton />
-        </FilterBar>
+        </div>
       </Form>
 
       {observations.length >= props.maxObservations ? (
-        <Notice>
-          La serie llegó al máximo de {formatNumber(props.maxObservations, 0)} filas; acorta el
-          rango para ver el período completo.
-        </Notice>
+        <Notice>{t("rx.cap", { max: formatNumber(props.maxObservations, 0) })}</Notice>
       ) : null}
 
-      <StatGrid>
-        <StatCard
-          label="Región seleccionada"
-          value={regionLabel(region)}
-          meta={`${formatNumber(region.lat, 3)}, ${formatNumber(region.lon, 3)} · ${formatNumber(region.area_km2, 0)} km²`}
-        />
-        <StatCard
-          label="Observaciones"
-          value={formatNumber(summary.count, 0)}
-          meta={
-            summary.firstDate && summary.lastDate
-              ? `${summary.firstDate} → ${summary.lastDate}`
-              : "sin datos"
-          }
-        />
-        <StatCard
-          label="Último valor"
-          value={
-            summary.latest
-              ? withUnit(formatNumber(summary.latest.value, 3), summary.latest.unit)
-              : "—"
-          }
-          meta={summary.latest ? `${summary.latest.date} · ${summary.latest.quality}` : "sin valor"}
-        />
-        <StatCard
-          label="Media del rango"
-          value={withUnit(formatNumber(summary.mean, 3), unit)}
-          meta={
-            summary.numericCount
-              ? `mín ${formatNumber(summary.min, 3)} · máx ${formatNumber(summary.max, 3)} · n=${summary.numericCount}`
-              : "sin valores numéricos"
-          }
-        />
-      </StatGrid>
-
-      <Panel
-        title="Serie"
-        meta={`${formatRegionCode(region.code)} · ${variable.variable}${series.isMonthlyMean ? " · media mensual" : ""}`}
+      <section
+        data-tour="rx-summary"
+        aria-label={t("rx.meta")}
+        className="rounded-card border-border-subtle bg-bg-surface-sunken grid gap-2 border p-5"
       >
-        <SeriesChart points={series.points} label={`${variable.variable} en ${region.name}`} />
-      </Panel>
+        <p className="text-heading-h3 font-display text-text-primary max-w-[60ch] text-balance">
+          {headline}
+        </p>
+        {pct !== null && sinceYear ? (
+          <p className="text-body-m text-text-secondary">
+            {t(pct >= 50 ? "rx.head.pct.above" : "rx.head.pct.below", {
+              pct: pct >= 50 ? pct : 100 - pct,
+              year: sinceYear,
+            })}
+          </p>
+        ) : null}
+      </section>
 
-      <Panel
-        title="Calendario de anomalías"
-        meta={
-          calendar
-            ? `${variable.variable} · ${calendar.firstYear}–${calendar.lastYear} · z (${formatNumber(calendar.dayCount, 0)} días)`
-            : "sin datos"
-        }
-      >
-        {"error" in anomalies ? (
-          <Notice tone="error">No se pudieron cargar las anomalías: {anomalies.error}</Notice>
-        ) : calendar ? (
-          <AnomalyCalendar layout={calendar} variable={variable.variable} />
-        ) : (
-          <p className="text-text-tertiary">Sin datos suficientes para el calendario.</p>
-        )}
-      </Panel>
+      <div data-tour="rx-figures">
+        <StatGrid columns={3}>
+          <TrendCard trend={props.trend} unit={unit} translator={translator} />
+          <RarityCard point={lastPoint} translator={translator} />
+          <StatCard
+            label={t("rx.src.label")}
+            value={variable.source}
+            meta={t("rx.src.meta", { code: variable.variable })}
+          />
+        </StatGrid>
+      </div>
 
-      <StatGrid columns={3}>
-        <TrendCard trend={props.trend} />
-        <StatCard
-          label="Última anomalía"
-          value={lastAnomaly ? withUnit(formatSigned(lastAnomaly.anomaly), unit) : "—"}
-          meta={
-            lastAnomaly
-              ? `z=${formatNumber(lastAnomaly.z, 2)} · percentil ${formatNumber(lastAnomaly.percentile, 0)} · ${lastAnomaly.time}`
-              : "sin anomalías en el rango"
-          }
-        />
-        <StatCard label="Fuente" value={variable.source} meta={variable.name} />
-      </StatGrid>
+      <nav aria-label={t("rx.tabs")} data-tour="rx-tabs" className="border-border-subtle border-b">
+        <ul className="-mb-px flex gap-1 overflow-x-auto">
+          {REGION_TABS.map((tab) => (
+            <li key={tab}>
+              <Link
+                href={viewHref({ tab })}
+                scroll={false}
+                aria-current={tab === query.tab ? "page" : undefined}
+                className="text-label-l text-text-secondary hover:text-text-primary aria-[current=page]:border-action-primary aria-[current=page]:text-text-primary block border-b-2 border-transparent px-3 py-2.5 whitespace-nowrap"
+              >
+                {t(`rx.tab.${tab}`)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-      <Panel title="Anomalías · últimos 12 meses" meta={`desde ${query.anomalySince}`}>
-        <AnomalyBarsChart bars={recentAnomalies(anomalyPoints, query.anomalySince)} />
-      </Panel>
-
-      <Panel title="Últimas observaciones" meta={`las ${RECENT_ROWS} más recientes del rango`}>
-        <Table
-          caption="Últimas observaciones de la serie"
-          head={
-            <>
-              <Th>Fecha</Th>
-              <Th>Valor</Th>
-              <Th>Unidad</Th>
-              <Th>Calidad</Th>
-              <Th>Fracción válida</Th>
-            </>
-          }
-        >
-          {observations.length ? (
-            observations
-              .slice(-RECENT_ROWS)
-              .toReversed()
-              .map((row) => (
-                <tr key={row.date}>
-                  <Td>{row.date}</Td>
-                  <Td>{formatNumber(row.value, 3)}</Td>
-                  <Td>{row.unit ?? ""}</Td>
-                  <Td>{row.quality}</Td>
-                  <Td>{formatNumber(row.valid_fraction, 3)}</Td>
-                </tr>
-              ))
-          ) : (
-            <EmptyRow columns={5}>Sin datos.</EmptyRow>
-          )}
-        </Table>
-      </Panel>
-
-      <Panel
-        title="Últimos valores por variable"
-        meta={
-          "data" in latest
-            ? `${latest.data.length} variables · región ${formatRegionCode(region.code)}`
-            : "sin datos"
-        }
-      >
-        {"error" in latest ? (
-          <Notice tone="error">No se pudieron cargar los últimos valores: {latest.error}</Notice>
-        ) : (
-          <Table
-            caption="Último valor válido de cada variable en la región"
-            head={
-              <>
-                <Th>Variable</Th>
-                <Th>Fuente</Th>
-                <Th>Fecha</Th>
-                <Th>Valor</Th>
-                <Th>Unidad</Th>
-                <Th>Calidad</Th>
-              </>
-            }
-          >
-            {latest.data.length ? (
-              latest.data.map((row) => (
-                <tr key={`${row.source}:${row.variable}`}>
-                  <Td>
-                    <TextLink href={viewHref({ variable: row.variable })}>{row.variable}</TextLink>
-                    <CellNote>{row.name}</CellNote>
-                  </Td>
-                  <Td>{row.source}</Td>
-                  <Td>{row.date}</Td>
-                  <Td>{formatNumber(row.value, 3)}</Td>
-                  <Td>{row.unit ?? ""}</Td>
-                  <Td>{row.quality}</Td>
-                </tr>
-              ))
-            ) : (
-              <EmptyRow columns={6}>Sin datos.</EmptyRow>
-            )}
-          </Table>
-        )}
-      </Panel>
-
-      <Panel
-        title="Eventos en esta región"
-        meta={
-          "data" in events
-            ? `${events.data.total} eventos · últimos ${events.data.events.length}`
-            : "sin eventos"
-        }
-      >
-        {"error" in events ? (
-          <Notice tone="error">No se pudieron cargar los eventos: {events.error}</Notice>
-        ) : (
-          <Table
-            caption="Eventos EONET asociados a la región"
-            head={
-              <>
-                <Th>Inicio</Th>
-                <Th>Fin</Th>
-                <Th>Evento</Th>
-                <Th>Categoría</Th>
-                <Th>Geometrías</Th>
-                <Th>
-                  <span className="sr-only">Acciones</span>
-                </Th>
-              </>
-            }
-          >
-            {events.data.events.length ? (
-              events.data.events.map((event) => (
-                <tr key={event.id}>
-                  <Td>{event.first_date ?? "—"}</Td>
-                  <Td>{event.last_date ?? "—"}</Td>
-                  <Td>
-                    <strong>{event.title}</strong>
-                    <CellNote>{event.id}</CellNote>
-                  </Td>
-                  <Td>{event.category ?? "—"}</Td>
-                  <Td>{formatNumber(event.n_geometries, 0)}</Td>
-                  <Td>
-                    <TextLink href={`/events/${encodeURIComponent(event.id)}`}>Contexto →</TextLink>
-                  </Td>
-                </tr>
-              ))
-            ) : (
-              <EmptyRow columns={6}>Sin eventos asociados.</EmptyRow>
-            )}
-          </Table>
-        )}
-      </Panel>
+      <RegionTabs
+        tab={query.tab}
+        translator={translator}
+        variableLabel={name}
+        unit={unit}
+        observations={observations}
+        anomalies={anomalies}
+        anomalySince={query.anomalySince}
+        latest={props.latest}
+        events={props.events}
+        currentVariable={variable.variable}
+        variableHref={(next) => viewHref({ variable: next })}
+      />
     </>
   );
 }

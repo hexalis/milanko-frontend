@@ -1,8 +1,11 @@
-import { formatNumber } from "@/shared/lib/format";
+import { formatDate } from "@/modules/cases";
+import type { Translator } from "@/shared/lib/i18n";
 import type { AnomalyBar } from "../domain/analysis";
+import { formatFor } from "../domain/reading";
 
 type AnomalyBarsChartProps = {
   bars: readonly AnomalyBar[];
+  translator: Translator;
 };
 
 const WIDTH = 1000;
@@ -11,10 +14,13 @@ const PAD = { left: 46, right: 12, top: 10, bottom: 24 };
 const MIN_BOUND = 0.001;
 
 /** Daily anomalies around zero: above in the "up" signal, below in the "down" signal. */
-export function AnomalyBarsChart({ bars }: AnomalyBarsChartProps) {
+export function AnomalyBarsChart({ bars, translator }: AnomalyBarsChartProps) {
+  const { t, locale } = translator;
   const first = bars[0];
   const last = bars.at(-1);
-  if (!first || !last) return <p className="text-text-tertiary">Sin anomalías para graficar.</p>;
+  if (!first || !last) return <p className="text-text-tertiary">{t("rx.bars.empty")}</p>;
+  const from = formatDate(first.time, locale);
+  const to = formatDate(last.time, locale);
 
   const bound = Math.max(...bars.map((bar) => Math.abs(bar.value)), MIN_BOUND);
   const x = (index: number) =>
@@ -38,7 +44,7 @@ export function AnomalyBarsChart({ bars }: AnomalyBarsChartProps) {
 
   return (
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="block h-[150px] w-full text-[11px]">
-      <title>{`Anomalías diarias de ${first.time} a ${last.time}, entre ${formatNumber(-bound)} y ${formatNumber(bound)}`}</title>
+      <title>{t("rx.bars.aria", { from, to })}</title>
       <line
         x1={PAD.left}
         x2={WIDTH - PAD.right}
@@ -51,7 +57,7 @@ export function AnomalyBarsChart({ bars }: AnomalyBarsChartProps) {
         0
       </text>
       <text x={PAD.left - 6} y={PAD.top + 8} textAnchor="end" className="fill-text-tertiary">
-        {formatNumber(bound)}
+        {formatFor(bound, locale, { signed: true })}
       </text>
       <text
         x={PAD.left - 6}
@@ -59,15 +65,15 @@ export function AnomalyBarsChart({ bars }: AnomalyBarsChartProps) {
         textAnchor="end"
         className="fill-text-tertiary"
       >
-        {formatNumber(-bound)}
+        {formatFor(-bound, locale)}
       </text>
       <path d={shape(true)} className="fill-trend-up" opacity={0.8} />
       <path d={shape(false)} className="fill-trend-down" opacity={0.8} />
       <text x={PAD.left} y={HEIGHT - 6} className="fill-text-tertiary">
-        {first.time}
+        {from}
       </text>
       <text x={WIDTH - PAD.right} y={HEIGHT - 6} textAnchor="end" className="fill-text-tertiary">
-        {last.time}
+        {to}
       </text>
     </svg>
   );

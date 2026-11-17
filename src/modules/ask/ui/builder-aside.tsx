@@ -42,7 +42,10 @@ function Sentence({ state, context }: Omit<BuilderAsideProps, "preview">) {
 function Preview({ lines, context }: { lines: PreviewLine[]; context: BuilderTextContext }) {
   const { t } = context.translator;
   return (
-    <ul aria-label={t("ask.prev.t")} className="text-body-s m-0 grid list-none gap-2 p-0">
+    <ul
+      aria-label={t("ask.prev.t")}
+      className="text-body-s max-medium:hidden m-0 grid list-none gap-2 p-0"
+    >
       {lines.map((line) => (
         <li
           key={"key" in line ? line.key : line.text}
@@ -82,7 +85,8 @@ export function BuilderAside({ state, preview, context }: BuilderAsideProps) {
           <Icon name="arrow-right" />
         </Link>
       ) : (
-        <p className="text-body-s medium:text-body-m m-0 rounded-[14px] bg-white/[0.07] px-3.5 py-3">
+        // On a phone the sentence's gaps already say what is missing: the note would only cover the steps.
+        <p className="text-body-s medium:text-body-m max-medium:hidden m-0 rounded-[14px] bg-white/[0.07] px-3.5 py-3">
           {t("ask.build.todo")}
         </p>
       )}

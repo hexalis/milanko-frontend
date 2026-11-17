@@ -29,7 +29,8 @@ export function PageShell({ lang, kicker, title, lead, aside, children }: PageSh
           <p className="text-body-l font-reading text-text-secondary mt-2 max-w-[60ch]">{lead}</p>
         ) : null}
       </header>
-      <div className="grid gap-4">{children}</div>
+      {/* One column no wider than the page: a row that scrolls sideways inside must not widen it. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4">{children}</div>
     </main>
   );
 }

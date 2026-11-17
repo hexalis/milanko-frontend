@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import { parseArchiveState } from "@/modules/cases/domain/archive";
 import { getCaseCatalog } from "@/modules/cases/domain/catalog";
 import { getEventAudit } from "@/modules/cases/domain/event-audit";
+import { ArchiveLoading } from "@/modules/cases/ui/archive/archive-loading";
 import { ArchiveScreen } from "@/modules/cases/ui/archive/archive-screen";
 import { getTranslator } from "@/modules/copy";
 import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
 import { readString, type SearchParams } from "@/shared/lib/search-params";
-import { LoadingPanel } from "@/shared/ui/notice";
 
 export const metadata: Metadata = { title: "Case Files" };
 
@@ -20,7 +20,9 @@ async function ArchiveContent({ searchParams }: PageProps) {
   const [params, locale] = await Promise.all([searchParams, getLocale()]);
   const catalog = getCaseCatalog();
   return (
-    <div lang={locale}>
+    // The archive fades in as a whole (no rise: a transform would move its floating tour button),
+    // then its folders come in one after another (FOLDER_IN in the archive screen).
+    <div lang={locale} className="motion-safe:animate-page">
       <ArchiveScreen
         state={parseArchiveState(params, catalog)}
         catalog={catalog}
@@ -38,7 +40,7 @@ export default function CasesPage({ searchParams }: PageProps) {
     <Suspense
       fallback={
         <main className="max-w-content-max medium:px-6 expanded:px-12 mx-auto w-full px-4 py-8">
-          <LoadingPanel label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
+          <ArchiveLoading label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
         </main>
       }
     >

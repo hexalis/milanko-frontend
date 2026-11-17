@@ -1,0 +1,268 @@
+/*
+ * The sheets of a case file as paper (PaperSheet). Paper stays light in both themes, a little
+ * dimmer at night, and writes in its own inks; only the sheet's kind changes the stock:
+ *   .pp-graph  graph paper (the series): a fine grid with a bolder one every five squares;
+ *   .pp-pad    a ruled legal pad (the test): blue rules under the heading and a red margin;
+ *   .pp-card   an index card (the source): a red head rule, then blue rules.
+ * Every page is punched for the file, has its bottom corner turned down and lies on a soft
+ * shadow (.pp-shadow, on whatever holds it, since the turned corner clips the page itself).
+ * Nothing here moves; the folder, the opening and the glance move the page.
+ */
+
+:root {
+  --pp-graph: #f3f7f9;
+  --pp-pad: #f7efc9;
+  --pp-card: #f4f8f2;
+  --pp-ink: #1c2229;
+  --pp-ink-soft: #4f5862;
+  --pp-blue: #1f57a4;
+  --pp-amber: #8a5200;
+  --pp-green: #2b6c3f;
+  --pp-red: #b3261e;
+  --pp-grid: #d3e3ec;
+  --pp-grid-major: #b9d1df;
+  --pp-rule: #a9c2dc;
+  --pp-margin: #e39a93;
+}
+
+:root[data-theme="dark"] {
+  --pp-graph: #e4e9ec;
+  --pp-pad: #e8e0bb;
+  --pp-card: #e3e9e1;
+}
+
+.pp-shadow {
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.18)) drop-shadow(0 8px 14px rgb(0 0 0 / 0.2));
+}
+
+.pp {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 12px 16px 12px 30px;
+  border-radius: 3px;
+  color: var(--pp-ink);
+  overflow: hidden;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+}
+
+.pp::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(
+    315deg,
+    transparent 50%,
+    rgb(0 0 0 / 0.14) 50%,
+    rgb(255 255 255 / 0.55) 100%
+  );
+}
+
+.pp[data-inconclusive] {
+  outline: 1.5px dashed var(--pp-ink-soft);
+  outline-offset: -5px;
+}
+
+.pp-holes {
+  position: absolute;
+  inset-block: 0;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding-block: 30%;
+}
+
+.pp-holes i {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-bg-canvas);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+}
+
+.pp-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pp-ink-soft);
+  white-space: nowrap;
+}
+
+.pp-folio {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1.5px solid currentColor;
+}
+
+.pp-folio b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pp-folio span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--pp-ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-value {
+  margin-top: 4px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-note {
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+/* The chart takes the room the page has left, so a tall page draws a taller series. */
+.pp-chart {
+  display: grid;
+  flex: 1 1 64px;
+  min-height: 64px;
+  max-height: 160px;
+  padding-block: 6px 4px;
+  --color-trend-down: var(--pp-blue);
+}
+
+/* The series in the paper's inks: blue for the years, red for a rise, blue for a fall. */
+.pp-chart .stroke-chart-1 {
+  stroke: var(--pp-blue);
+}
+
+.pp-chart .stroke-trend-up {
+  stroke: var(--pp-red);
+}
+
+.pp-chart .stroke-trend-down {
+  stroke: var(--pp-blue);
+}
+
+.pp-chart .stroke-trend-neutral {
+  stroke: var(--pp-ink-soft);
+}
+
+.pp-chart .fill-trend-up {
+  fill: var(--pp-red);
+}
+
+.pp-chart .fill-trend-down {
+  fill: var(--pp-blue);
+}
+
+.pp-chart .fill-trend-neutral {
+  fill: var(--pp-ink-soft);
+}
+
+.pp-chart .stroke-bg-surface {
+  stroke: var(--pp-graph);
+}
+
+.pp-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.pp-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--pp-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-check[data-passed="false"] {
+  color: var(--pp-ink-soft);
+}
+
+.pp-foot {
+  align-self: flex-end;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--pp-ink-soft);
+}
+
+.pp-note + .pp-foot {
+  margin-top: auto;
+}
+
+/* 01 · the series: graph paper. */
+.pp-graph {
+  background:
+    linear-gradient(var(--pp-grid-major) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(90deg, var(--pp-grid-major) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(var(--pp-grid) 1px, transparent 1px) 0 0 / 10px 10px,
+    linear-gradient(90deg, var(--pp-grid) 1px, transparent 1px) 0 0 / 10px 10px,
+    var(--pp-graph);
+}
+
+.pp-graph .pp-folio {
+  color: var(--pp-blue);
+}
+
+/* 02 · the test: a ruled legal pad. */
+.pp-pad {
+  background:
+    linear-gradient(90deg, transparent 23px, var(--pp-margin) 23px 24.5px, transparent 24.5px),
+    repeating-linear-gradient(transparent 0 21px, var(--pp-rule) 21px 22px) 0 56px / 100%
+      calc(100% - 56px) no-repeat,
+    var(--pp-pad);
+}
+
+.pp-pad .pp-folio {
+  color: var(--pp-amber);
+}
+
+/* 03 · the source: an index card. */
+.pp-card {
+  background:
+    linear-gradient(transparent 48px, var(--pp-red) 48px 49.5px, transparent 49.5px),
+    repeating-linear-gradient(transparent 0 23px, var(--pp-rule) 23px 24px) 0 72px / 100%
+      calc(100% - 72px) no-repeat,
+    var(--pp-card);
+}
+
+.pp-card .pp-folio {
+  color: var(--pp-green);
+  border-bottom-color: transparent;
+}
+
+/*
+ * In the folder only the head of each page shows; the rest stays behind the cover. The tray
+ * ends where the cover does, so no page shows below it or past the back's rounded corners.
+ */
+.pp-tray {
+  clip-path: polygon(-50% -100vh, 150% -100vh, 150% 100%, -50% 100%);
+}

@@ -25,7 +25,11 @@ describe("builderSteps", () => {
       place: "locked",
     });
     expect(builderSteps(stateOf({ theme: "soil_water", verb: "trend" })).place).toBe("current");
-    expect(builderSteps(stateOf({ theme: "temperature", verb: "trend" })).place).toBe("done");
+    expect(builderSteps(stateOf({ theme: "temperature", verb: "trend" })).place).toBe("current");
+    expect(
+      builderSteps(stateOf({ theme: "temperature", verb: "trend", where: "svalbard-warming" }))
+        .place,
+    ).toBe("done");
   });
 
   it("keeps a comparison open while both sides are the same place", () => {
@@ -47,7 +51,10 @@ describe("previewLines", () => {
   });
 
   it("names the years and the source of a trend", () => {
-    const lines = previewLines(stateOf({ theme: "temperature", verb: "trend" }), sources);
+    const lines = previewLines(
+      stateOf({ theme: "temperature", verb: "trend", where: "svalbard-warming" }),
+      sources,
+    );
     expect(lines).toEqual([
       { icon: "calendar", key: "ask.prev.years", values: { n: 45, from: 1981, to: 2025 } },
       { icon: "satellite", text: "NASA POWER · MERRA-2" },
@@ -58,6 +65,17 @@ describe("previewLines", () => {
       sources,
     );
     expect(modis[1]).toEqual({ icon: "satellite", text: "MODIS/Terra · NASA" });
+  });
+
+  it("says a found place is read now from NASA and not reviewed", () => {
+    const lines = previewLines(
+      stateOf({ theme: "temperature", verb: "trend", where: "mine", lat: "12.9", lon: "-85.9" }),
+      sources,
+    );
+    expect(lines).toEqual([
+      { icon: "satellite", text: "NASA POWER · MERRA-2" },
+      { icon: "info", key: "ask.prev.live" },
+    ]);
   });
 
   it("reads an anomaly window, a comparison and an audit", () => {

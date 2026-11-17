@@ -1,0 +1,316 @@
+/*
+ * The banner of "How we know" that leads to the data playground (LabBanner), and the little lab
+ * on it that shows what the playground does, on a loop (7 s):
+ *   0–22 %   the cursor comes to the noise slider;
+ *   22–48 %  it grabs the thumb and drags the noise from ×1 to ×3: the years scatter, the trend
+ *            line flattens and the verdict turns from "Confirmed" to "Inconclusive";
+ *   48–62 %  it holds there, to be read;
+ *   62–84 %  it drags the noise back and the verdict returns;
+ *   84–100 % the cursor lets go and leaves.
+ * Everything moves by transform and opacity, so the loop runs off the main thread. It plays only
+ * while the banner is on screen ([data-playing], set by PlayInView); with reduced motion it does
+ * not play at all and the scene rests on its first frame: calm years, confirmed, cursor on the thumb.
+ */
+
+.lb {
+  background:
+    radial-gradient(
+      120% 160% at 100% 0%,
+      color-mix(in oklab, var(--color-action-primary) 16%, transparent),
+      transparent 62%
+    ),
+    var(--color-bg-surface);
+  /* The slider's knob layer is as wide as its track and slides by up to its own width. */
+  overflow-x: clip;
+  transition: border-color 200ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .lb:hover {
+    border-color: color-mix(in oklab, var(--color-action-primary) 55%, transparent);
+  }
+
+  .lb:hover .lb-go-arrow {
+    translate: 3px 0;
+  }
+}
+
+.lb-go {
+  transition: scale 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.lb-go:active {
+  scale: 0.97;
+}
+
+.lb-go-arrow {
+  transition: translate 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ---------- The scene ---------- */
+
+.lb-scene {
+  --lb-loop: 7s;
+  --lb-move: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.lb-scene * {
+  animation-duration: var(--lb-loop);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  animation-play-state: paused;
+}
+
+.lb-scene[data-playing] * {
+  animation-play-state: running;
+}
+
+/* The two versions of each thing, stacked: the calm one shows first. */
+.lb-calm,
+.lb-noisy {
+  transform-box: fill-box;
+}
+
+.lb-noisy {
+  opacity: 0;
+}
+
+.lb-scene .lb-calm {
+  animation-name: lb-calm;
+  animation-timing-function: linear;
+}
+
+.lb-scene .lb-noisy {
+  animation-name: lb-noisy;
+  animation-timing-function: linear;
+}
+
+@keyframes lb-calm {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  46%,
+  64% {
+    opacity: 0;
+  }
+  80%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes lb-noisy {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  46%,
+  64% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The verdict flips once the noise is up, with a small press like a stamp. */
+.lb-scene .lb-stamp-yes {
+  animation-name: lb-stamp-yes;
+}
+
+.lb-scene .lb-stamp-no {
+  opacity: 0;
+  animation-name: lb-stamp-no;
+}
+
+/* One stamp leaves before the other lands, so the two never show through each other. */
+@keyframes lb-stamp-yes {
+  0%,
+  41% {
+    opacity: 1;
+    scale: 1;
+  }
+  43%,
+  76% {
+    opacity: 0;
+    scale: 0.96;
+  }
+  78%,
+  100% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes lb-stamp-no {
+  0%,
+  43% {
+    opacity: 0;
+    scale: 1.08;
+  }
+  46% {
+    opacity: 1;
+    scale: 0.98;
+  }
+  48%,
+  74% {
+    opacity: 1;
+    scale: 1;
+  }
+  76%,
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}
+
+/* The slider: its knob layer spans the track, so a translate in % moves the thumb along it. */
+.lb-knob {
+  translate: 33% 0;
+}
+
+.lb-fill {
+  transform-origin: left center;
+  scale: 0.33 1;
+}
+
+.lb-scene .lb-knob {
+  animation-name: lb-knob;
+}
+
+.lb-scene .lb-fill {
+  animation-name: lb-fill;
+}
+
+@keyframes lb-knob {
+  0%,
+  26% {
+    translate: 33% 0;
+    animation-timing-function: var(--lb-move);
+  }
+  48%,
+  62% {
+    translate: 100% 0;
+    animation-timing-function: var(--lb-move);
+  }
+  84%,
+  100% {
+    translate: 33% 0;
+  }
+}
+
+@keyframes lb-fill {
+  0%,
+  26% {
+    scale: 0.33 1;
+    animation-timing-function: var(--lb-move);
+  }
+  48%,
+  62% {
+    scale: 1 1;
+    animation-timing-function: var(--lb-move);
+  }
+  84%,
+  100% {
+    scale: 0.33 1;
+  }
+}
+
+/* The thumb swells a little while it is held. */
+.lb-scene .lb-thumb {
+  animation-name: lb-thumb;
+}
+
+@keyframes lb-thumb {
+  0%,
+  22% {
+    scale: 1;
+  }
+  26%,
+  80% {
+    scale: 1.18;
+  }
+  84%,
+  100% {
+    scale: 1;
+  }
+}
+
+/* The cursor rides with the thumb (inside the knob) and comes and goes on its own offset. */
+.lb-cursor {
+  translate: 6px 4px;
+}
+
+.lb-scene .lb-cursor {
+  animation-name: lb-cursor;
+}
+
+@keyframes lb-cursor {
+  0% {
+    opacity: 0;
+    translate: 64px 48px;
+    scale: 1;
+  }
+  8% {
+    opacity: 1;
+    translate: 64px 48px;
+    scale: 1;
+    animation-timing-function: var(--lb-move);
+  }
+  21% {
+    translate: 6px 4px;
+    scale: 1;
+  }
+  25%,
+  81% {
+    translate: 6px 4px;
+    scale: 0.88;
+  }
+  85% {
+    opacity: 1;
+    translate: 6px 4px;
+    scale: 1;
+    animation-timing-function: var(--lb-move);
+  }
+  96%,
+  100% {
+    opacity: 0;
+    translate: 64px 48px;
+    scale: 1;
+  }
+}
+
+/* The ring under the cursor while it presses. */
+.lb-press {
+  opacity: 0;
+}
+
+.lb-scene .lb-press {
+  animation-name: lb-press;
+}
+
+@keyframes lb-press {
+  0%,
+  22% {
+    opacity: 0;
+    scale: 0.5;
+  }
+  26%,
+  80% {
+    opacity: 0.7;
+    scale: 1;
+  }
+  84%,
+  100% {
+    opacity: 0;
+    scale: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lb-scene * {
+    animation: none !important;
+  }
+}

@@ -54,7 +54,14 @@ export function whereLabel(option: WhereOption, context: BuilderTextContext): st
     }
     case "catalog":
       return categoryName(subject.category, context);
+    case "point":
+      return context.translator.t("ask.build.mine");
   }
+}
+
+/** The reader's own place as a question says it: "in Matagalpa", or "in your place" until found. */
+function pointIn(name: string | undefined, { translator }: BuilderTextContext): string {
+  return name ? translator.t("ask.in", { place: name }) : translator.t("ask.build.mine.gap");
 }
 
 /** What a chosen place puts into the question's pattern. */
@@ -70,6 +77,8 @@ function subjectSlots(subject: Subject, context: BuilderTextContext): Slots {
       return {
         cat: categoryName(subject.category, context).toLocaleLowerCase(context.translator.locale),
       };
+    case "point":
+      return { place: pointIn(subject.name, context) };
   }
 }
 

@@ -1,20 +1,21 @@
 import Form from "next/form";
 import Link from "next/link";
 import { Icon } from "@/shared/ui/icon";
-import type { BuilderExample, BuilderState } from "../domain/builder";
+import { MINE, type BuilderExample, type BuilderState } from "../domain/builder";
 import { spotChoices, themeChoices, verbChoices, whereChoices } from "../domain/builder-choices";
 import { exampleText, type BuilderTextContext } from "../domain/builder-text";
 import { builderSteps, type PreviewLine } from "../domain/builder-view";
 import { BuilderAside } from "./builder-aside";
 import { BuilderStep } from "./builder-step";
 import { BuilderChoices } from "./builder-tiles";
+import { PlaceSearch } from "./place-search";
 
 /*
  * The question builder: theme · verb · place (POC ask.js askBuilder, the "qb" layout of d2de23a).
  * One GET form, rendered from the URL: each step is a fieldset of tiles (or a list when long) and
  * every choice submits, so the question being built lives in the address. Beside the steps,
  * "Your question" holds the live sentence and the button; examples below fill all three at once.
- * The "my own place" forms are not ported: free points are switched off in this deployment.
+ * "My own place" adds a search under the places; comparing with one's own place is not ported.
  */
 
 type QuestionBuilderProps = {
@@ -41,7 +42,25 @@ function PlaceStep({ state, context }: Pick<QuestionBuilderProps, "state" | "con
   if (state.type !== "comparison") {
     const label = t("ask.build.where");
     const choices = whereChoices(state, context);
-    return <BuilderChoices segment="where" label={label} choices={choices} t={t} />;
+    return (
+      <div className="flex flex-col gap-4">
+        <BuilderChoices segment="where" label={label} choices={choices} t={t} />
+        {state.where?.id === MINE ? (
+          <PlaceSearch
+            // A new place in the URL starts the field over from its name.
+            key={state.point ? `${state.point.lat},${state.point.lon}` : "none"}
+            point={state.point}
+            labels={{
+              label: t("ask.build.mine.label"),
+              placeholder: t("ask.build.mine.ph"),
+              searching: t("ask.build.mine.searching"),
+              notFound: t("ask.build.mine.notfound"),
+              note: t("ask.build.mine.note"),
+            }}
+          />
+        ) : null}
+      </div>
+    );
   }
   const sides = [
     { segment: "a", label: t("ask.build.placeA"), chosen: state.a },

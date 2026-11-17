@@ -13,6 +13,8 @@ export type BuilderChoice = {
   id: string;
   label: string;
   hint?: string;
+  /** A name of a word or two for the phone's tiles ("Lluvia" for "la lluvia"). */
+  short?: string;
   icon: string;
   /** Theme tiles take their family's colour; the others stay plain. */
   family?: Family;
@@ -33,6 +35,7 @@ export function themeChoices(
   return state.themes.map((theme) => ({
     id: theme,
     ...splitHint(translator.t(`ask.theme.${theme}`)),
+    short: translator.t(`ask.tile.${theme}`),
     icon: themeIcon(theme),
     family: themeFamily(themes, theme),
     isChosen: theme === state.theme,
@@ -43,6 +46,7 @@ export function verbChoices(state: BuilderState, { translator }: BuilderTextCont
   return state.types.map((type): BuilderChoice => ({
     id: type,
     label: translator.t(`ask.verb.${type}`),
+    short: translator.t(`ask.tile.verb.${type}`),
     icon: verbIcon(type),
     isChosen: type === state.type,
   }));
@@ -56,11 +60,13 @@ function eventDate(id: string, context: BuilderTextContext): string | undefined 
 export function whereChoices(state: BuilderState, context: BuilderTextContext) {
   return state.wheres.map((option): BuilderChoice => {
     const { subject } = option;
-    // An event reads "name · date": the date goes on the quieter line.
+    // An event reads "name · date": the date goes on the quieter line; a found place, its name.
     const text =
       subject.type === "anomaly"
         ? { label: placeName(subject.event, context), hint: eventDate(subject.event, context) }
-        : splitHint(whereLabel(option, context));
+        : subject.type === "point"
+          ? { label: whereLabel(option, context), hint: subject.name }
+          : splitHint(whereLabel(option, context));
     return {
       id: option.id,
       ...text,

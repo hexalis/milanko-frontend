@@ -46,11 +46,26 @@ describe("builder text", () => {
   });
 
   it("writes the finished question in the reader's language", () => {
-    const state = builderState({ theme: "rain", verb: "trend" }, rules, catalog);
+    const state = builderState(
+      { theme: "rain", verb: "trend", where: "murray-rain" },
+      rules,
+      catalog,
+    );
     const english = text(builderSentence(state, en));
     expect(english).toMatch(/^Has rainfall changed in .+\?$/);
     expect(english).not.toContain("{");
     expect(text(builderSentence(state, es))).not.toBe(english);
+  });
+
+  it("asks about the reader's own place, by name once found", () => {
+    const searching = builderState({ theme: "rain", verb: "trend", where: "mine" }, rules, catalog);
+    expect(text(builderSentence(searching, en))).toBe("Has rainfall changed in your place?");
+    const found = builderState(
+      { theme: "rain", verb: "trend", where: "mine", lat: "12.9", lon: "-85.9", name: "Matagalpa" },
+      rules,
+      catalog,
+    );
+    expect(text(builderSentence(found, en))).toBe("Has rainfall changed in Matagalpa?");
   });
 
   it("fills one side of a comparison and keeps the other open", () => {

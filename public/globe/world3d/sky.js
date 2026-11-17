@@ -1,5 +1,5 @@
-/* The sky around the 3D world: decoration only, never data. Nothing here is drawn from NASA figures and nothing
-   here can be picked; it only sets the scene the Earth turns in.
+/* The sky around the 3D world: decoration and curiosity, never data. Nothing here is drawn from NASA figures; it
+   sets the scene the Earth turns in, and a few things in it answer a tap (the satellite, the Moon, ten constellations).
 
    What is in it, and why each piece makes sense next to the Earth:
    - The Milky Way, faint nebulae and the unresolved glow of far stars, baked once into a sky sphere (one GPU pass at
@@ -12,7 +12,10 @@
    - Now and then one comet, small and quiet, with a green coma, a faint straight ion tail and a soft dust tail,
      both pointing away from the Sun that lights the Earth, as real tails do. It keeps clear of the planet and the
      controls.
-   - The Moon, lit by that same Sun, so its phase agrees with the light on the planet.
+   - The Moon, lit by that same Sun, so its phase agrees with the light on the planet. Its card gives today's real
+     phase; three taps on it mark where Apollo 11 landed.
+   - Ten constellations people know, their main stars at their real places and turned by sidereal time, so the
+     Pole Star sits over the North Pole. Pointing at one draws its figure; a tap opens its card.
    - Auroras round both geomagnetic poles, where they really are.
    - NASA's Terra satellite on a near-polar orbit: the MODIS images and vegetation data in the case files come
      from it, so it is the one satellite drawn. Its orbit is out of scale, like the relief; pointing at it shows
@@ -22,6 +25,7 @@
    planet turns under the finger. Reduced motion stills everything: no twinkle, no shooting stars, the comets
    and auroras hold their place. */
 import * as THREE from 'three';
+import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 const TAU = Math.PI * 2;
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -153,6 +157,42 @@ function glowTexture(stops) {
   return new THREE.CanvasTexture(c);
 }
 
+/* ---------- Curiosities: the Moon's card, Apollo 11, and a few real constellations ---------- */
+// Today's real phase of the Moon, from the mean synodic month counted from a known new Moon (good to about a day).
+const SYNODIC = 29.530588853, NEW_MOON_2000 = Date.UTC(2000, 0, 6, 18, 14);
+const PHASES = [[1, 'Luna nueva', 'New Moon'], [6.4, 'Luna creciente', 'Waxing crescent'], [8.4, 'Cuarto creciente', 'First quarter'], [13.8, 'Gibosa creciente', 'Waxing gibbous'], [15.8, 'Luna llena', 'Full Moon'], [21.1, 'Gibosa menguante', 'Waning gibbous'], [23.1, 'Cuarto menguante', 'Last quarter'], [28.5, 'Luna menguante', 'Waning crescent'], [Infinity, 'Luna nueva', 'New Moon']];
+function moonPhase(ms) {
+  const age = ((((ms - NEW_MOON_2000) / 864e5) % SYNODIC) + SYNODIC) % SYNODIC;
+  return { lit: (1 - Math.cos((TAU * age) / SYNODIC)) / 2, name: PHASES.find((p) => age < p[0]) };
+}
+// Greenwich sidereal angle: turned by it, each catalogue star stands over the place it is over right now.
+const gmst = (ms) => THREE.MathUtils.degToRad((280.46061837 + 360.98564736629 * (ms / 864e5 + 2440587.5 - 2451545)) % 360);
+// A star's direction from its right ascension (hours) and declination, in the planet's own frame (as toVec does).
+function starDir(raH, dec) {
+  const p = THREE.MathUtils.degToRad(dec), l = THREE.MathUtils.degToRad(raH * 15);
+  return new THREE.Vector3(Math.cos(p) * Math.sin(l), Math.sin(p), Math.cos(p) * Math.cos(l));
+}
+// Ten constellations people know, with their main stars at their J2000 places: [RA h, Dec °, magnitude, colour].
+// The lines join them as the usual figures do. Generated with the portal's copy (exp.sky.c.*); keep both in step.
+const CONSTELLATIONS = [
+  {"id": "orion", "name": ["Orión", "Orion"], "lead": ["El cazador: dos hombros, dos pies y un cinturón de tres estrellas en fila.", "The hunter: two shoulders, two feet and a belt of three stars in a row."], "facts": [["Las tres del cinturón son las que en Chile se llaman las Tres Marías.", "The three in the belt are the ones called the Three Marys in Chile."], ["Betelgeuse, su hombro rojizo, es una supergigante al final de su vida.", "Betelgeuse, its reddish shoulder, is a supergiant near the end of its life."], ["Está sobre el ecuador celeste, así que se ve desde todo el planeta.", "It sits on the celestial equator, so it can be seen from the whole planet."]], "star": ["Rigel", "Rigel"], "seen": ["Todo el planeta", "The whole planet"], "stars": [[5.919, 7.407, 0.5, "#ffbe86"], [5.242, -8.202, 0.13, "#c8d6ff"], [5.419, 6.35, 1.64, "#c8d6ff"], [5.533, -0.299, 2.23, null], [5.604, -1.202, 1.69, "#c8d6ff"], [5.679, -1.943, 1.77, "#c8d6ff"], [5.796, -9.67, 2.06, "#c8d6ff"], [5.586, 9.934, 3.39, null]], "lines": [[7, 0], [7, 2], [0, 2], [0, 5], [2, 3], [3, 4], [4, 5], [5, 6], [3, 1]]},
+  {"id": "ursa-major", "name": ["Osa Mayor", "Ursa Major"], "lead": ["Sus siete estrellas más brillantes forman el Carro, una de las figuras más fáciles de reconocer.", "Its seven brightest stars make the Big Dipper, one of the easiest shapes to find."], "facts": [["Merak y Dubhe, el borde del Carro, apuntan hacia la Estrella Polar.", "Merak and Dubhe, the edge of the Dipper, point to the Pole Star."], ["Mizar, en el mango, tiene al lado a Alcor: verlas separadas era una prueba de buena vista.", "Mizar, in the handle, has Alcor beside it: seeing the two apart was a test of good eyesight."], ["Desde buena parte del hemisferio norte nunca se pone: da vueltas alrededor del polo.", "From much of the northern hemisphere it never sets: it circles the pole."]], "star": ["Alioth", "Alioth"], "seen": ["Hemisferio norte", "Northern hemisphere"], "stars": [[11.062, 61.751, 1.79, "#ffd7a8"], [11.031, 56.382, 2.37, null], [11.897, 53.695, 2.44, null], [12.257, 57.033, 3.31, null], [12.9, 55.96, 1.77, null], [13.399, 54.925, 2.27, null], [13.792, 49.313, 1.86, "#c8d6ff"]], "lines": [[0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]]},
+  {"id": "ursa-minor", "name": ["Osa Menor", "Ursa Minor"], "lead": ["Un carro pequeño con la Estrella Polar en la punta de su mango.", "A small dipper with the Pole Star at the tip of its handle."], "facts": [["Polaris está casi justo sobre el polo norte de la Tierra.", "Polaris sits almost exactly above the Earth's North Pole."], ["Por eso parece quieta mientras el resto del cielo gira a su alrededor.", "That is why it seems to stand still while the rest of the sky turns around it."], ["Durante siglos sirvió para encontrar el norte en el mar.", "For centuries it was used to find north at sea."]], "star": ["Polaris", "Polaris"], "seen": ["Hemisferio norte", "Northern hemisphere"], "stars": [[2.53, 89.264, 1.98, "#fff2e0"], [17.537, 86.586, 4.35, null], [16.766, 82.037, 4.2, null], [15.734, 77.795, 4.3, null], [14.845, 74.156, 2.08, "#ffbe86"], [15.346, 71.834, 3.0, null], [16.292, 75.755, 4.95, null]], "lines": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]]},
+  {"id": "cassiopeia", "name": ["Casiopea", "Cassiopeia"], "lead": ["Cinco estrellas que dibujan una W, o una M, según la hora de la noche.", "Five stars that draw a W, or an M, depending on the time of night."], "facts": [["Está al otro lado de la Polar respecto de la Osa Mayor: cuando una sube, la otra baja.", "It sits across the Pole Star from Ursa Major: when one rises, the other sinks."], ["Lleva el nombre de una reina de la mitología griega.", "It is named after a queen in Greek mythology."], ["Cruza la Vía Láctea, así que a su alrededor el cielo se ve lleno de estrellas.", "It lies across the Milky Way, so the sky around it looks full of stars."]], "star": ["Schedar", "Schedar"], "seen": ["Hemisferio norte", "Northern hemisphere"], "stars": [[0.153, 59.15, 2.27, null], [0.675, 56.537, 2.24, "#ffd7a8"], [0.945, 60.717, 2.47, "#c8d6ff"], [1.43, 60.235, 2.68, null], [1.907, 63.67, 3.37, "#c8d6ff"]], "lines": [[0, 1], [1, 2], [2, 3], [3, 4]]},
+  {"id": "crux", "name": ["Cruz del Sur", "Southern Cross"], "lead": ["Cuatro estrellas en cruz, la guía del cielo austral.", "Four stars in a cross, the guide of the southern sky."], "facts": [["Es la más pequeña de las 88 constelaciones.", "It is the smallest of the 88 constellations."], ["Su brazo largo, de Gacrux a Acrux, alargado unas cuatro veces y media, llega cerca del polo sur celeste.", "Its long arm, from Gacrux to Acrux, stretched about four and a half times, reaches close to the south celestial pole."], ["Aparece en las banderas de Australia, Brasil, Nueva Zelanda, Papúa Nueva Guinea y Samoa.", "It appears on the flags of Australia, Brazil, New Zealand, Papua New Guinea and Samoa."]], "star": ["Acrux", "Acrux"], "seen": ["Hemisferio sur", "Southern hemisphere"], "stars": [[12.443, -63.099, 0.77, "#c8d6ff"], [12.795, -59.689, 1.25, "#c8d6ff"], [12.52, -57.113, 1.64, "#ffbe86"], [12.253, -58.749, 2.79, "#c8d6ff"]], "lines": [[2, 0], [1, 3]]},
+  {"id": "scorpius", "name": ["Escorpio", "Scorpius"], "lead": ["Un escorpión con un corazón rojo y una cola curva que termina en el aguijón.", "A scorpion with a red heart and a curved tail that ends in its sting."], "facts": [["Antares, su corazón, es una supergigante: en el lugar del Sol llegaría más allá de la órbita de Marte.", "Antares, its heart, is a supergiant: in the Sun's place it would reach past the orbit of Mars."], ["Su nombre quiere decir «rival de Marte», por su color.", "Its name means “rival of Mars”, for its colour."], ["Se ve alta en las noches de invierno del hemisferio sur.", "It stands high on winter nights in the southern hemisphere."]], "star": ["Antares", "Antares"], "seen": ["Hemisferio sur", "Southern hemisphere"], "stars": [[16.091, -19.806, 2.62, "#c8d6ff"], [16.006, -22.622, 2.29, "#c8d6ff"], [15.981, -26.114, 2.89, "#c8d6ff"], [16.353, -25.593, 2.89, null], [16.49, -26.432, 1.06, "#ffa070"], [16.598, -28.216, 2.82, "#c8d6ff"], [16.836, -34.293, 2.29, "#ffd7a8"], [16.864, -38.047, 3.0, null], [16.91, -42.362, 3.6, null], [17.203, -43.239, 3.3, null], [17.622, -42.998, 1.86, null], [17.793, -40.127, 3.0, null], [17.708, -39.03, 2.4, "#c8d6ff"], [17.56, -37.104, 1.62, "#c8d6ff"], [17.513, -37.296, 2.7, "#c8d6ff"]], "lines": [[0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14]]},
+  {"id": "leo", "name": ["Leo", "Leo"], "lead": ["Un león echado: la cabeza es una hoz, como un signo de interrogación al revés.", "A lion lying down: its head is a sickle, like a backwards question mark."], "facts": [["La hoz termina en Regulus, el corazón del león.", "The sickle ends in Regulus, the lion's heart."], ["Regulus está casi sobre el camino del Sol, así que la Luna y los planetas pasan cerca de ella.", "Regulus lies almost on the Sun's path, so the Moon and the planets pass close to it."], ["De Leo parecen salir las Leónidas, la lluvia de estrellas de noviembre.", "The Leonids, November's meteor shower, seem to come out of Leo."]], "star": ["Regulus", "Regulus"], "seen": ["Todo el planeta", "The whole planet"], "stars": [[10.14, 11.967, 1.35, "#c8d6ff"], [10.122, 16.763, 3.5, null], [10.333, 19.842, 2.0, "#ffd7a8"], [10.278, 23.417, 3.4, null], [9.879, 26.007, 3.9, "#ffd7a8"], [9.764, 23.774, 2.98, "#fff2e0"], [11.235, 20.524, 2.56, null], [11.237, 15.43, 3.33, null], [11.818, 14.572, 2.14, null]], "lines": [[5, 4], [4, 3], [3, 2], [2, 1], [1, 0], [0, 7], [7, 8], [8, 6], [6, 2]]},
+  {"id": "cygnus", "name": ["Cisne", "Cygnus"], "lead": ["Un cisne que vuela a lo largo de la Vía Láctea; también se la llama la Cruz del Norte.", "A swan flying along the Milky Way; it is also called the Northern Cross."], "facts": [["Deneb, su cola, está a más de mil años luz y aun así se ve a simple vista: es enormemente luminosa.", "Deneb, its tail, is over a thousand light-years away and still shows to the naked eye: it is hugely luminous."], ["Deneb, Vega y Altair forman el Triángulo de Verano del norte.", "Deneb, Vega and Altair make the northern Summer Triangle."], ["Albireo, su pico, son dos estrellas de colores distintos, una dorada y otra azul.", "Albireo, its beak, is two stars of different colours, one golden and one blue."]], "star": ["Deneb", "Deneb"], "seen": ["Hemisferio norte", "Northern hemisphere"], "stars": [[20.691, 45.28, 1.25, null], [20.371, 40.257, 2.23, "#fff2e0"], [19.512, 27.96, 3.1, "#ffd7a8"], [20.77, 33.97, 2.48, "#ffd7a8"], [19.75, 45.131, 2.87, "#c8d6ff"]], "lines": [[0, 1], [1, 2], [3, 1], [1, 4]]},
+  {"id": "lyra", "name": ["Lira", "Lyra"], "lead": ["Una lira pequeña colgada de Vega, una de las estrellas más brillantes del cielo.", "A small lyre hanging from Vega, one of the brightest stars in the sky."], "facts": [["Vega es la quinta estrella más brillante del cielo nocturno y está a 25 años luz.", "Vega is the fifth brightest star in the night sky and lies 25 light-years away."], ["Como el eje de la Tierra se bambolea, en unos 12.000 años Vega será la estrella polar del norte.", "Because the Earth's axis wobbles, in about 12,000 years Vega will be the northern pole star."], ["De ella parecen salir las Líridas, la lluvia de estrellas de abril.", "The Lyrids, April's meteor shower, seem to come out of it."]], "star": ["Vega", "Vega"], "seen": ["Hemisferio norte", "Northern hemisphere"], "stars": [[18.616, 38.784, 0.03, "#c8d6ff"], [18.739, 39.67, 4.7, null], [18.746, 37.605, 4.4, null], [18.908, 36.899, 4.3, "#ffbe86"], [18.982, 32.69, 3.25, "#c8d6ff"], [18.835, 33.363, 3.5, "#c8d6ff"]], "lines": [[0, 1], [0, 2], [2, 3], [3, 4], [4, 5], [5, 2]]},
+  {"id": "canis-major", "name": ["Can Mayor", "Canis Major"], "lead": ["El perro grande del cazador Orión, con Sirio, la estrella más brillante de la noche.", "The hunter Orion's big dog, with Sirius, the brightest star of the night."], "facts": [["Sirio está a solo 8,6 años luz: brilla tanto sobre todo por estar cerca.", "Sirius is only 8.6 light-years away: it shines so bright mostly because it is close."], ["El cinturón de Orión apunta hacia Sirio: así se la encuentra.", "Orion's belt points to Sirius: that is how to find it."], ["Sirio da unas 25 veces más luz que el Sol.", "Sirius gives off about 25 times as much light as the Sun."]], "star": ["Sirio", "Sirius"], "seen": ["Todo el planeta", "The whole planet"], "stars": [[6.753, -16.716, -1.46, "#dbe4ff"], [6.378, -17.956, 1.98, "#c8d6ff"], [7.14, -26.393, 1.83, "#fff2e0"], [6.977, -28.972, 1.5, "#c8d6ff"], [7.402, -29.303, 2.45, "#c8d6ff"], [6.339, -30.063, 3.0, "#c8d6ff"]], "lines": [[1, 0], [0, 2], [2, 3], [2, 4], [3, 5]]},
+];
+// Pixel distance from p to the segment ab.
+function segDist(p, a, b) {
+  const abx = b.x - a.x, aby = b.y - a.y, l = abx * abx + aby * aby;
+  const t = l ? Math.min(1, Math.max(0, ((p.x - a.x) * abx + (p.y - a.y) * aby) / l)) : 0;
+  return Math.hypot(p.x - a.x - abx * t, p.y - a.y - aby * t);
+}
+
 /* ---------- Everything together ---------- */
 export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false, reduced = () => false, say = (es) => es }) {
   const px = renderer.getPixelRatio();
@@ -187,15 +227,55 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
   // The Moon, to the right of the planet in the first view, lit by the same Sun.
   const sunDir = new THREE.Vector3(0, 1, 0);
   const moonDir = new THREE.Vector3(0.665, -0.02, -0.744).normalize();
+  const MOON_D = 90;   // its distance from the camera: always the same size on screen
   const moonMap = moonTexture();
   const moonMat = new THREE.ShaderMaterial({ uniforms: { map: { value: moonMap }, sunDir: { value: sunDir } },
     vertexShader: 'varying vec3 vN; varying vec2 vUv; void main(){ vUv = uv; vN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: 'uniform sampler2D map; uniform vec3 sunDir; varying vec3 vN; varying vec2 vUv; void main(){ float l = dot(normalize(vN), sunDir); float lit = smoothstep(-0.04, 0.25, l) * (0.35 + 0.75 * max(l, 0.0)); vec3 tex = texture2D(map, vUv).rgb; gl_FragColor = vec4(tex * lit + vec3(0.012, 0.02, 0.035) * (1.0 - lit), 1.0); }' });
   const moon = new THREE.Mesh(new THREE.SphereGeometry(1.5, 48, 32), moonMat);
-  moon.position.copy(moonDir).multiplyScalar(90); moon.rotation.y = Math.PI * 0.5; moon.renderOrder = -7; group.add(moon);
+  moon.position.copy(moonDir).multiplyScalar(MOON_D); moon.rotation.y = Math.PI * 0.5; moon.renderOrder = -7; group.add(moon);
   const moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture([[0, 'rgba(220,230,255,0.28)'], [0.35, 'rgba(170,190,255,0.08)'], [1, 'rgba(0,0,0,0)']]), blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
   moonGlow.scale.setScalar(9); moonGlow.position.copy(moon.position).multiplyScalar(1.02); moonGlow.renderOrder = -7.5; group.add(moonGlow);
   disposables.push(moonMap, moonGlow.material.map);
+  // Pointing at the Moon lifts its halo. Three taps mark where Apollo 11 landed: the Sea of Tranquillity, 0.67° N
+  // 23.47° E, on the face it turns to the Earth (east to the right as we look at it, north up).
+  const MOON_R = 1.5, moonHit = new THREE.Sphere(new THREE.Vector3(), MOON_R * 1.4);
+  let moonLit = 0, apollo = false;
+  const site = (() => {
+    const f = moonDir, u = new THREE.Vector3(0, 1, 0).projectOnPlane(f).normalize(), r = new THREE.Vector3().crossVectors(f, u);
+    const la = THREE.MathUtils.degToRad(0.674), lo = THREE.MathUtils.degToRad(23.473);
+    return f.clone().multiplyScalar(-Math.cos(la) * Math.cos(lo)).addScaledVector(r, Math.cos(la) * Math.sin(lo)).addScaledVector(u, Math.sin(la));
+  })();
+  const apolloDot = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture([[0, 'rgba(255,214,102,1)'], [0.32, 'rgba(255,190,70,1)'], [0.42, 'rgba(255,170,50,0.35)'], [1, 'rgba(255,170,50,0)']]), depthTest: false, depthWrite: false, toneMapped: false }));
+  apolloDot.position.copy(moon.position).addScaledVector(site, MOON_R * 1.02); apolloDot.scale.setScalar(0.6); apolloDot.renderOrder = -6.5; apolloDot.visible = false; group.add(apolloDot);
+  const apolloEl = document.createElement('div'); apolloEl.className = 'sky-lbl'; apolloEl.textContent = say('Apolo 11 · 1969', 'Apollo 11 · 1969');
+  const apolloLbl = new CSS2DObject(apolloEl); apolloLbl.center.set(0, 0.5); apolloLbl.position.copy(apolloDot.position); apolloLbl.visible = false; group.add(apolloLbl);
+  disposables.push(apolloDot.material.map, apolloDot.material);
+  const _hidden = new THREE.Ray(), _earth = new THREE.Sphere(new THREE.Vector3(), R);
+
+  // The constellations: their stars always shine among the others; pointing at one draws its figure and says its name.
+  const cGroup = new THREE.Group(); cGroup.name = 'constellations'; group.add(cGroup);
+  const C_R = 195, cDimList = [], cBrightList = [];
+  const cons = CONSTELLATIONS.map((c) => {
+    const dirs = c.stars.map(([ra, dec]) => starDir(ra, dec));
+    c.stars.forEach(([, , mag, col], i) => {
+      const s = { p: dirs[i].clone().multiplyScalar(C_R), c: new THREE.Color(col || '#f4f3ff'), tw: 0.25 };
+      if (mag < 1.4) cBrightList.push({ ...s, size: 12 + (1.4 - mag) * 5 });
+      else cDimList.push({ ...s, c: s.c.multiplyScalar(THREE.MathUtils.clamp(1.25 - mag * 0.14, 0.5, 1)), size: THREE.MathUtils.clamp(9 - mag * 1.5, 2.2, 6.5) });
+    });
+    // Each line stops short of its stars, so the stars stay points and the figure reads as drawn between them.
+    const pos = [];
+    c.lines.forEach(([a, b]) => { const A = dirs[a], B = dirs[b], k = Math.min(0.3, 0.014 / A.angleTo(B)); pos.push(...A.clone().lerp(B, k).multiplyScalar(C_R - 2).toArray(), ...B.clone().lerp(A, k).multiplyScalar(C_R - 2).toArray()); });
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    const mat = new THREE.LineBasicMaterial({ color: '#b8ccff', transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+    const line = new THREE.LineSegments(geo, mat); line.frustumCulled = false; line.renderOrder = -8.5; line.visible = false; cGroup.add(line);
+    disposables.push(geo, mat);
+    return { id: c.id, dirs, lines: c.lines, mat, line, a: 0 };
+  });
+  const cDim = points(cDimList, STAR_F, px), cBright = points(cBrightList, BRIGHT_F, px, { spikes: { value: 1 } });
+  cDim.renderOrder = -9; cBright.renderOrder = -8; cGroup.add(cDim, cBright); starMats.push(cDim.material, cBright.material);
+  disposables.push(cDim.geometry, cDim.material, cBright.geometry, cBright.material);
+  let skyHover = null, skySel = null;
 
   /* Shooting stars: a pool of thin glowing streaks, spawned inside the view. */
   const meteorGeo = () => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, -1, 0, 1, 1, -1, 1, 1]), 2)); g.setIndex([0, 2, 1, 2, 3, 1]); return g; };
@@ -355,41 +435,124 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
   scene.add(auroras);
 
   /* Terra (NASA): the satellite whose MODIS sensor gives the vegetation case files their greenness (NDVI) and every
-     case file its true-colour images. A small model on a near-polar orbit, drawn higher than its real orbit so it
-     can be seen: a gold-foil body, a white instrument deck facing the ground, and its single solar wing, which
-     turns to face the same Sun that lights the planet. A faint ring shows the orbit and a short trail its way.
-     Pointing at it lights up the orbit and the strip of ground MODIS sweeps below it; a tap opens its card.
+     case file its true-colour images. A model after NASA's own drawings of it, on a near-polar orbit drawn higher
+     than the real one so it can be seen: a long body wrapped in gold foil with dark blue radiator panels on its
+     sides; the five instruments on the deck that faces the ground (MODIS and its cooler, MISR's nine cameras fanned
+     along the track, ASTER's telescopes, the two CERES scanners turning, MOPITT); the dish that talks to the relay
+     satellites, on its mast; and its one long solar wing, which turns to face the same Sun that lights the planet.
+     A faint ring shows the orbit and a short trail its way. Pointing at it lights up the orbit and the strip of
+     ground MODIS sweeps below it; a tap opens its card and the camera rides along behind it (see follow, below).
      It fades away as the camera comes down, so it never stands between the reader and a tile. */
   const terra = new THREE.Group(); terra.name = 'terra';
   const U = 0.017;
-  function wingTexture() {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 96; const g = c.getContext('2d');
-    const gr = g.createLinearGradient(0, 0, 256, 96); gr.addColorStop(0, '#3d63c4'); gr.addColorStop(1, '#2a4a9e'); g.fillStyle = gr; g.fillRect(0, 0, 256, 96);
-    g.strokeStyle = 'rgba(190,215,255,0.55)'; g.lineWidth = 1.5;
-    for (let x = 0; x <= 256; x += 16) { g.beginPath(); g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, 96); g.stroke(); }
-    for (let y = 0; y <= 96; y += 12) { g.beginPath(); g.moveTo(0, y + 0.5); g.lineTo(256, y + 0.5); g.stroke(); }
-    g.fillStyle = 'rgba(200,215,240,0.6)'; g.fillRect(0, 0, 256, 3); g.fillRect(0, 93, 256, 3);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
-  }
-  const wingMap = wingTexture(); disposables.push(wingMap);
-  const foil = new THREE.MeshStandardMaterial({ color: '#d3a650', metalness: 0.75, roughness: 0.32, emissive: '#2a1d06' });
-  const deck = new THREE.MeshStandardMaterial({ color: '#e9ecf2', metalness: 0.2, roughness: 0.55, emissive: '#1a1d24' });
-  const cellsM = new THREE.MeshStandardMaterial({ map: wingMap, metalness: 0.3, roughness: 0.35, emissive: '#1c3270', emissiveIntensity: 0.6, side: THREE.DoubleSide });
-  const dark = new THREE.MeshStandardMaterial({ color: '#555b66', metalness: 0.6, roughness: 0.4 });
-  // Local frame: +z towards the ground (nadir), +y along the track, +x across it (the wing's side).
-  const bus = new THREE.Mesh(new THREE.BoxGeometry(2.2 * U, 1.8 * U, 3.4 * U), foil);
-  const instr = new THREE.Mesh(new THREE.BoxGeometry(1.8 * U, 1.4 * U, 0.9 * U), deck); instr.position.z = 2.1 * U;
-  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.28 * U, 0.34 * U, 0.4 * U, 14), dark); lens.rotation.x = Math.PI / 2; lens.position.set(0.4 * U, 0.2 * U, 2.7 * U);
-  const dish = new THREE.Mesh(new THREE.ConeGeometry(0.55 * U, 0.4 * U, 18, 1, true), deck); dish.rotation.x = -Math.PI / 2; dish.position.set(-0.6 * U, -0.6 * U, -2.0 * U);
-  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.08 * U, 0.08 * U, 2.4 * U, 6), dark); boom.rotation.z = Math.PI / 2; boom.position.x = 2.3 * U;
-  // The wing hangs on a pivot that turns about the boom (x); its face points along the pivot's +y.
-  const wingPivot = new THREE.Group(); wingPivot.position.x = 3.5 * U;
-  const wing = new THREE.Mesh(new THREE.PlaneGeometry(6.6 * U, 2.6 * U), cellsM); wing.position.x = 3.3 * U; wing.rotation.x = -Math.PI / 2;
-  wingPivot.add(wing);
-  terra.add(bus, instr, lens, dish, boom, wingPivot);
+  const sr = seeded(1999);
+  const canvasTex = (w, h, draw, srgb = true) => {
+    const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; disposables.push(t); return t;
+  };
+  // Crinkled foil: patches of light and shade with fine creases. The same picture shades the colour and the bump.
+  const foilMap = canvasTex(256, 256, (g, w, h) => {
+    g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 280; i++) {
+      const x = sr() * w, y = sr() * h, r = 6 + sr() * 26, v = Math.round(175 + sr() * 80);
+      g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath();
+      for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + sr() * 0.9, rr = r * (0.5 + sr() * 0.7); g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+      g.closePath(); g.fill();
+    }
+    g.strokeStyle = 'rgba(50,50,50,0.45)'; g.lineWidth = 1;
+    for (let i = 0; i < 90; i++) { const x = sr() * w, y = sr() * h, a = sr() * TAU, l = 8 + sr() * 30; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+  }, false);
+  // Radiator panels: dark blue tiles in a light frame, as in NASA's pictures of the spacecraft.
+  const radMap = canvasTex(256, 256, (g, w) => {
+    g.fillStyle = '#b9c3d8'; g.fillRect(0, 0, w, w);
+    const n = 8, s = w / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const v = sr() * 16; g.fillStyle = `rgb(${30 + v},${40 + v},${96 + v * 2})`; g.fillRect(i * s + 2, j * s + 2, s - 4, s - 4); }
+  });
+  // Solar cells with silver lines between them, and the panels' ribbed back.
+  const cellMap = canvasTex(128, 288, (g, w, h) => {
+    g.fillStyle = '#c3cbdb'; g.fillRect(0, 0, w, h);
+    const cx = 4, cy = 9, sw = w / cx, sh = h / cy;
+    for (let i = 0; i < cx; i++) for (let j = 0; j < cy; j++) {
+      const gr = g.createLinearGradient(i * sw, j * sh, (i + 1) * sw, (j + 1) * sh); gr.addColorStop(0, '#3448a8'); gr.addColorStop(1, '#1c2774');
+      g.fillStyle = gr; g.fillRect(i * sw + 1.5, j * sh + 1.5, sw - 3, sh - 3);
+    }
+    g.fillStyle = '#dfe4ee'; g.fillRect(0, 0, w, 4); g.fillRect(0, h - 4, w, 4); g.fillRect(0, 0, 4, h); g.fillRect(w - 4, 0, 4, h);
+  });
+  const backMap = canvasTex(64, 128, (g, w, h) => { g.fillStyle = '#d6d9e0'; g.fillRect(0, 0, w, h); g.fillStyle = '#8f97a5'; for (let y = 8; y < h; y += 16) g.fillRect(0, y, w, 2); g.fillRect(w / 2 - 1, 0, 2, h); });
+  // What the metal reflects: dark space above, the bright blue planet below, a hint of the Sun.
+  const envTex = canvasTex(256, 128, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    gr.addColorStop(0, '#0b0f1a'); gr.addColorStop(0.4, '#2a3550'); gr.addColorStop(0.5, '#e6f0ff'); gr.addColorStop(0.6, '#8fb6e6'); gr.addColorStop(1, '#3d5f8f');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    const s = g.createRadialGradient(70, 34, 0, 70, 34, 44); s.addColorStop(0, 'rgba(255,250,235,1)'); s.addColorStop(1, 'rgba(255,250,235,0)'); g.fillStyle = s; g.fillRect(20, 0, 110, 90);
+  });
+  envTex.mapping = THREE.EquirectangularReflectionMapping;
+  const pmrem = new THREE.PMREMGenerator(renderer), envMap = pmrem.fromEquirectangular(envTex).texture; pmrem.dispose(); disposables.push(envMap);
+  const mat = (o) => { const m = new THREE.MeshStandardMaterial({ envMap, envMapIntensity: 0.9, ...o }); disposables.push(m); return m; };
+  const gold = mat({ color: '#f2b544', map: foilMap, bumpMap: foilMap, bumpScale: 0.45, metalness: 0.9, roughness: 0.26, emissive: '#3a2406', envMapIntensity: 1.5 });
+  const silver = mat({ color: '#e4e6ea', map: foilMap, bumpMap: foilMap, bumpScale: 0.45, metalness: 0.7, roughness: 0.3, emissive: '#2a2c31', envMapIntensity: 0.9 });
+  const rad = mat({ map: radMap, metalness: 0.35, roughness: 0.4, emissive: '#0b1230' });
+  const paint = mat({ color: '#eceef2', metalness: 0.1, roughness: 0.6, emissive: '#16181d', side: THREE.DoubleSide });
+  const strut = mat({ color: '#a9b0bb', metalness: 0.8, roughness: 0.35, side: THREE.DoubleSide });
+  const glass = mat({ color: '#10141c', metalness: 0.6, roughness: 0.15 });
+  const black = mat({ color: '#07080b', metalness: 0.2, roughness: 0.8 });
+  const cells = mat({ map: cellMap, metalness: 0.45, roughness: 0.28, emissive: '#16245e', emissiveIntensity: 0.55 });
+  const back = mat({ map: backMap, metalness: 0.3, roughness: 0.55 });
+  // Parts are placed in units of U. Local frame: +z towards the ground (nadir), +y along the track, +x across it.
+  const put = (geo, m, x, y, z, parent = terra) => { const o = new THREE.Mesh(geo, m); o.position.set(x * U, y * U, z * U); parent.add(o); return o; };
+  const box = (w, h, d, m, x, y, z, parent) => put(new THREE.BoxGeometry(w * U, h * U, d * U), m, x, y, z, parent);
+  // A cylinder with its axis along x, y or z.
+  const cyl = (r, len, m, x, y, z, axis = 'z', parent, seg = 16) => {
+    const o = put(new THREE.CylinderGeometry(r * U, r * U, len * U, seg), m, x, y, z, parent);
+    if (axis === 'x') o.rotation.z = Math.PI / 2; else if (axis === 'z') o.rotation.x = Math.PI / 2;
+    return o;
+  };
+  // The body ([+x, −x, +y, −y, +z, −z]), the bands between its modules, a foil module and a white radiator on top.
+  put(new THREE.BoxGeometry(2.6 * U, 5.6 * U, 2.6 * U), [rad, rad, gold, gold, silver, gold], 0, 0, 0);
+  for (const y of [-1.9, -0.25, 1.4]) box(2.68, 0.1, 2.68, gold, 0, y, 0);
+  box(2.2, 2.3, 0.4, gold, 0.1, 1.25, -1.5);
+  box(1.9, 1.6, 0.12, paint, -0.1, -1.3, -1.36);
+  // The propulsion module at the back with its four thrusters; a smaller module and two star trackers at the front.
+  box(2.0, 0.8, 2.0, gold, 0, -3.2, 0);
+  for (const [sx, sz] of [[-0.65, -0.65], [0.65, -0.65], [-0.65, 0.65], [0.65, 0.65]]) put(new THREE.ConeGeometry(0.15 * U, 0.32 * U, 10, 1, true), strut, sx, -3.76, sz);
+  box(2.1, 0.6, 2.1, gold, 0, 3.1, 0.1);
+  for (const x of [-0.55, 0.55]) { const s = cyl(0.17, 0.5, black, x, 2.9, -1.55, 'z'); s.rotation.x += x * 0.6; }
+  // The deck facing the ground. Right of the track: MODIS (its scan opening, and the cooler that faces cold space),
+  // ASTER's thermal box, its visible-light telescope and its short-wave cylinder. Left: MOPITT, MISR and its nine
+  // cameras, each looking at the ground from another angle. At the front, the two CERES scanners.
+  box(1.2, 1.5, 0.9, paint, 0.55, -1.5, 1.75);
+  box(0.7, 0.9, 0.04, black, 0.55, -1.5, 2.21);
+  const cooler = put(new THREE.ConeGeometry(0.5 * U, 0.55 * U, 4, 1, true), paint, 1.42, -1.5, 1.75); cooler.rotation.z = Math.PI / 2;
+  box(0.8, 0.6, 0.6, silver, 0.7, -0.35, 1.6); cyl(0.16, 0.2, glass, 0.7, -0.35, 2.0, 'z');
+  box(0.7, 0.7, 0.7, paint, 0.75, 0.45, 1.65); cyl(0.24, 0.45, glass, 0.75, 0.45, 2.15, 'z');
+  cyl(0.3, 0.95, paint, 0.7, 1.35, 1.72, 'x');
+  box(0.9, 1.1, 0.6, silver, -0.65, -1.6, 1.6); cyl(0.2, 0.35, glass, -0.65, -1.6, 2.05, 'z');
+  box(1.1, 1.7, 0.7, gold, -0.6, 0.35, 1.65);
+  for (let i = 0; i < 9; i++) { const c = cyl(0.09, 0.3, glass, -0.6, 0.35 + (i - 4) * 0.18, 2.08, 'z', terra, 10); c.rotation.x += (i - 4) * 0.17; }
+  const ceres = [-0.65, 0.65].map((x, k) => {
+    cyl(0.06, 0.35, strut, x, 2.3, 1.45, 'z', terra, 8);
+    const head = new THREE.Group(); head.position.set(x * U, 2.3 * U, 1.88 * U); head.rotation.z = k * 1.3; terra.add(head);
+    cyl(0.3, 0.55, paint, 0, 0, 0, 'x', head);
+    box(0.5, 0.07, 0.05, black, 0, 0, 0.3, head);
+    return head;
+  });
+  // The dish that sends the data up to the relay satellites, on its mast, and a whip antenna.
+  cyl(0.07, 2.0, strut, -0.7, -2.2, -2.3, 'z', terra, 8);
+  box(0.34, 0.34, 0.34, strut, -0.7, -2.2, -3.38);
+  const dish = put(new THREE.LatheGeometry(Array.from({ length: 9 }, (_, i) => new THREE.Vector2((i / 8) * 0.95 * U, (i / 8) ** 2 * 0.32 * U)), 28), paint, -0.7, -2.2, -3.6);
+  dish.rotation.x = -Math.PI / 2 + 0.4;
+  put(new THREE.CylinderGeometry(0.03 * U, 0.03 * U, 0.5 * U, 6), strut, 0, 0.25, 0, dish);
+  cyl(0.025, 1.4, strut, 1.0, -2.6, -2.0, 'z', terra, 6);
+  // The wing: a yoke out of the body's side, then five panels; it turns on the yoke so its cells (the panels' +y
+  // face) look at the Sun.
+  const wingPivot = new THREE.Group(); wingPivot.position.set(1.3 * U, 1.3 * U, -0.6 * U); terra.add(wingPivot);
+  cyl(0.09, 1.2, strut, 0.6, 0, 0, 'x', wingPivot, 8);
+  box(0.32, 0.32, 0.32, strut, 0.05, 0, 0, wingPivot);
+  for (let i = 0; i < 5; i++) put(new THREE.BoxGeometry(1.6 * U, 0.06 * U, 3.6 * U), [strut, strut, cells, back, strut, strut], 2.02 + i * 1.66, 0, 0, wingPivot);
+  cyl(0.05, 8.3, strut, 5.35, -0.08, 0, 'x', wingPivot, 6);
   // A soft blink on the body, so the eye can find it against the stars.
   const beacon = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture([[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(190,225,255,0.5)'], [1, 'rgba(0,0,0,0)']]), blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, transparent: true }));
-  beacon.scale.setScalar(7 * U); disposables.push(beacon.material.map); terra.add(beacon);
+  beacon.scale.setScalar(6 * U); beacon.position.z = -1.6 * U; disposables.push(beacon.material.map); terra.add(beacon);
   // A larger invisible ball makes it easy to point at or tap.
   const terraHit = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ visible: false }));
   terra.add(terraHit);
@@ -418,9 +581,27 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
   const fan = new THREE.Mesh(fanGeo, fanMat); fan.frustumCulled = false; fan.renderOrder = 4; fan.visible = false;
   const terraPath = new THREE.Group(); terraPath.name = 'terraPath'; terraPath.add(ring, trail, fan); scene.add(terraPath);
   let terraA = 0.7, terraScale = 0, terraHover = false, terraSel = false, terraGlow = 0;
+  // Follow: with its card open the camera rides behind the satellite. followT ramps 0..1 over FOLLOW_S seconds; the
+  // page reads it eased (followWeight) to blend its own camera into the chase view and back.
+  const FOLLOW_S = 1.8;
+  let follow = false, followT = 0;
+  const smooth = (x) => x * x * (3 - 2 * x);
+  const followW = () => (visible ? smooth(followT) : 0);
   const _sl = new THREE.Vector3(), _q = new THREE.Quaternion(), _tx = new THREE.Vector3(), _ty = new THREE.Vector3(), _tz = new THREE.Vector3(), _tm = new THREE.Matrix4(), _g1 = new THREE.Vector3(), _g2 = new THREE.Vector3(), _op = new THREE.Vector3();
+  // Moves the satellite on and the follow ramp; called first in each frame, so the camera and the model agree.
+  function advance(dt) {
+    const still = reduced();
+    if (visible && !still) terraA += dt * (TAU / 110);   // one orbit in about two minutes, calm enough to follow
+    const want = follow && visible ? 1 : 0;
+    followT = still ? want : THREE.MathUtils.clamp(followT + (want ? dt : -dt) / FOLLOW_S, 0, 1);
+  }
+  // Where the satellite is and how it faces: position, along the track, up (away from the planet), across.
+  function orbitFrame(p, fwd, up, side) {
+    orbitAt(terraA, TERRA_R, p); up.copy(p).normalize();
+    fwd.copy(orbV).multiplyScalar(Math.cos(terraA)).addScaledVector(orbU, -Math.sin(terraA)).normalize();
+    side.crossVectors(fwd, up).negate().normalize();
+  }
   function stepTerra(dt, t, still, alt) {
-    if (!still) terraA += dt * (TAU / 110);   // one orbit in about two minutes, calm enough to follow
     orbitAt(terraA, TERRA_R, terra.position);
     // Body: nadir down, along the track, the wing across it.
     _tz.copy(terra.position).normalize().negate();
@@ -430,16 +611,19 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
     // The wing turns on its boom so its face, the pivot's +y, points at the Sun.
     _sl.copy(sunDir).applyQuaternion(_q.copy(terra.quaternion).invert());
     wingPivot.rotation.x = Math.atan2(_sl.z, _sl.y);
-    const ts = THREE.MathUtils.smoothstep(alt, 0.75, 1.3); terraScale = ts;
+    // Close to the ground it fades out, unless the camera is riding with it.
+    const fw = followW(), ts = Math.max(THREE.MathUtils.smoothstep(alt, 0.75, 1.3), fw); terraScale = ts;
     terra.scale.setScalar(Math.max(ts, 1e-4)); terra.visible = ts > 0.01; terraPath.visible = ts > 0.01;
-    beacon.material.opacity = still ? 0.7 : 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(t * 2.4), 6);
+    beacon.material.opacity = (1 - fw) * (still ? 0.7 : 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(t * 2.4), 6));
+    if (!still) ceres.forEach((h, k) => { h.rotation.z += dt * (k ? -0.9 : 0.7); });   // the CERES scanners sweep
     // Trail: the last stretch of the orbit behind it.
     for (let i = 0; i < TRAIL; i++) { orbitAt(terraA - i * 0.012, TERRA_R, _op); trailPos.set([_op.x, _op.y, _op.z], i * 3); }
     trailGeo.attributes.position.needsUpdate = true;
     // Pointing at it, or its open card, lights the orbit and the swath.
     const want = terraHover || terraSel ? 1 : 0;
     terraGlow += (want - terraGlow) * (still ? 1 : 1 - Math.pow(0.001, dt));
-    ringMat.opacity = (0.14 + 0.36 * terraGlow) * ts; trailMat.opacity = 0.8 * ts;
+    // Riding behind it, the ring and the trail would run through the camera: they all but fade.
+    ringMat.opacity = (0.14 + 0.36 * terraGlow) * ts * (1 - 0.7 * fw); trailMat.opacity = 0.8 * ts * (1 - 0.9 * fw);
     fanMat.uniforms.a.value = terraGlow * ts;
     fan.visible = terraGlow > 0.01;
     if (fan.visible) {
@@ -464,9 +648,66 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
       link: { href: 'https://terra.nasa.gov/', label: say('Conocer Terra en la NASA', 'About Terra at NASA') },
     },
   };
+  // The constellations' cards: what the figure is, three things worth knowing, its brightest star and where it shows.
+  const C_SRC = say('Sus estrellas están en su lugar real respecto de la Tierra y a esta hora: la Polar queda sobre el polo norte y la Cruz del Sur hacia el polo sur. El resto del cielo es ilustrativo.',
+    'Its stars are in their real places around the Earth at this hour: the Pole Star sits over the North Pole and the Southern Cross towards the South Pole. The rest of the sky is illustrative.');
+  CONSTELLATIONS.forEach((c) => {
+    INFO[c.id] = { kind: say('Constelación', 'Constellation'), title: say(...c.name), tip: say(...c.lead), facts: c.facts.map((f) => say(...f)), src: C_SRC,
+      meta: [[say('Estrella más brillante', 'Brightest star'), say(...c.star)], [say('Se ve mejor desde', 'Best seen from'), say(...c.seen)]] };
+  });
+  // The Moon's card says today's real phase, so it is built when asked for. After the three taps it adds Apollo 11.
+  function moonInfo() {
+    const ph = moonPhase(Date.now()), name = say(ph.name[1], ph.name[2]), pct = Math.round(ph.lit * 100);
+    return {
+      kind: say('Satélite natural', 'Natural satellite'), title: say('La Luna', 'The Moon'),
+      tip: say(`El único satélite natural de la Tierra. Hoy: ${name.toLowerCase()}.`, `The Earth's only natural satellite. Today: ${name.toLowerCase()}.`),
+      facts: [
+        say(`Hoy se ve ${name.toLowerCase()}, iluminada al ${pct} % (aprox.).`, `Today it shows as a ${name.toLowerCase()}, ${pct}% lit (approx.).`),
+        say('Está a 384.400 km en promedio: entre las dos caben unas 30 Tierras en fila.', 'It is 384,400 km away on average: about 30 Earths would fit in a row between the two.'),
+        say('Mide 3.474 km de diámetro, poco más de un cuarto de la Tierra.', 'It is 3,474 km across, a little over a quarter of the Earth.'),
+        say('Siempre nos muestra la misma cara: gira sobre sí misma en lo mismo que tarda en dar la vuelta a la Tierra, 27,3 días.', 'It always shows us the same face: it turns once on itself in the time it takes to go round the Earth, 27.3 days.'),
+        say('Su gravedad mueve las mareas de los océanos.', 'Its gravity drives the ocean tides.'),
+      ],
+      src: say('Ilustración: en el globo la Luna está mucho más cerca y es más grande de lo real, y no está en su lugar de hoy. La fase de hoy sí es la real.', 'Illustration: on the globe the Moon is much closer and bigger than it really is, and not where it is today. Today\'s phase is the real one.'),
+      link: { href: 'https://science.nasa.gov/moon/', label: say('Conocer la Luna en la NASA', 'About the Moon at NASA') },
+      extra: apollo ? {
+        title: say('Apolo 11 · 20 de julio de 1969', 'Apollo 11 · 20 July 1969'),
+        facts: [
+          say('Encontraste el lugar del primer alunizaje: la marca dorada en la Luna.', 'You found the site of the first Moon landing: the golden mark on the Moon.'),
+          say('El módulo Eagle se posó en el Mar de la Tranquilidad.', 'The Eagle lander set down in the Sea of Tranquillity.'),
+          say('Neil Armstrong y Buzz Aldrin caminaron unas dos horas y media por la superficie; Michael Collins los esperaba en órbita.', 'Neil Armstrong and Buzz Aldrin walked the surface for about two and a half hours; Michael Collins waited for them in orbit.'),
+          say('Dejaron un espejo que todavía se usa para medir con láser la distancia a la Luna.', 'They left a mirror that is still used to measure the distance to the Moon with lasers.'),
+        ],
+        link: { href: 'https://www.nasa.gov/mission/apollo-11/', label: say('La misión Apolo 11 en la NASA', 'The Apollo 11 mission at NASA') },
+      } : null,
+    };
+  }
 
   let visible = true;
-  function setVisible(v) { visible = v; group.visible = v; auroras.visible = v; terra.visible = v; terraPath.visible = v; if (!v) { meteors.forEach(m => { m.live = false; m.mesh.visible = false; }); terraHover = terraSel = false; } }
+  function setVisible(v) { visible = v; group.visible = v; auroras.visible = v; terra.visible = v; terraPath.visible = v; if (!v) { meteors.forEach(m => { m.live = false; m.mesh.visible = false; }); terraHover = terraSel = follow = false; skyHover = skySel = null; apolloLbl.visible = false; } }
+  // The Moon's halo, the constellations' figures and the Apollo mark, eased towards what is pointed at or open.
+  function stepCuriosities(dt, t, still) {
+    const k = still ? 1 : 1 - Math.pow(0.002, dt);
+    cGroup.rotation.y = -gmst(Date.now());
+    cons.forEach((c) => {
+      const want = skyHover === c.id || skySel === c.id ? 0.7 : 0;
+      c.a += (want - c.a) * k; if (Math.abs(want - c.a) < 0.005) c.a = want;
+      c.mat.opacity = c.a; c.line.visible = c.a > 0;
+    });
+    moonLit += ((skyHover === 'moon' || skySel === 'moon' ? 1 : 0) - moonLit) * k;
+    moonGlow.scale.setScalar(9 + 4 * moonLit);
+    apolloDot.visible = apollo;
+    if (!apollo) return;
+    apolloDot.scale.setScalar(still ? 0.7 : 0.62 + 0.16 * (0.5 + 0.5 * Math.sin(t * 3)));
+    // The label is a page element, so the planet does not hide it by itself: it shows only while the Moon is in sight.
+    _hidden.set(camera.position, _w.copy(apolloDot.position).normalize());
+    apolloLbl.visible = !_hidden.intersectsSphere(_earth);
+    // Near the right edge the name goes on the Moon's other side, so it never runs off the screen.
+    const flip = _w.copy(apolloDot.position).add(camera.position).project(camera).x > 1 - 340 / innerWidth;
+    // Flipped, it clears the whole disc: the Moon's radius on screen, from its fixed distance and the camera's view.
+    const disc = (MOON_R / MOON_D / Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)) * (innerHeight / 2);
+    apolloLbl.center.x = flip ? 1 : 0; apolloEl.style.marginLeft = flip ? `-${Math.round(disc * 1.4 + 8)}px` : ''; apolloEl.classList.toggle('is-flip', flip);
+  }
 
   // Called once per frame, after the Sun has been placed for this frame.
   function update(dt, t) {
@@ -489,6 +730,7 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
     auroras.visible = auroraMat.uniforms.fade.value > 0.01;
     if (!still) auroraMat.uniforms.t.value = t;
     stepTerra(dt, t, still, alt);
+    stepCuriosities(dt, t, still);
   }
 
   // The satellite under a ray, if it is shown and large enough to point at.
@@ -497,14 +739,44 @@ export function createSky({ renderer, scene, camera, sun, R = 1, mobile = false,
     terra.updateMatrixWorld(true);   // it moved this frame; the last render's matrix may lag
     return ray.intersectObject(terraHit, false).length ? 'terra' : null;
   }
-  function setHover(id) { terraHover = id === 'terra'; }
-  function select(id) { terraSel = id === 'terra'; }
-  const info = (id) => INFO[id] || null;
+  // The Moon or a constellation under the pointer (x, y in CSS pixels): the Moon by its disc, a little enlarged, and a
+  // constellation when the pointer is within slop pixels of one of its lines. The page asks only once the ray has
+  // missed the planet and everything on it, so the sky never takes a tap meant for a case file.
+  const _fwd = new THREE.Vector3(), _w = new THREE.Vector3(), _pt = new THREE.Vector2();
+  function onScreenAt(dir, out) {
+    _w.copy(dir).applyQuaternion(cGroup.quaternion);
+    if (_w.dot(_fwd) < 0.05) return null;
+    _w.multiplyScalar(C_R).add(camera.position).project(camera);
+    return out.set(((_w.x + 1) / 2) * innerWidth, ((1 - _w.y) / 2) * innerHeight);
+  }
+  function pickSky(raycaster, x, y, slop = 12) {
+    if (!visible) return null;
+    moon.getWorldPosition(moonHit.center);
+    if (raycaster.ray.intersectsSphere(moonHit)) return 'moon';
+    camera.getWorldDirection(_fwd); _pt.set(x, y);
+    let best = null, bestD = slop;
+    cons.forEach((c) => {
+      const at = c.dirs.map((d) => onScreenAt(d, new THREE.Vector2()));
+      c.lines.forEach(([a, b]) => { if (!at[a] || !at[b]) return; const d = segDist(_pt, at[a], at[b]); if (d < bestD) { bestD = d; best = c.id; } });
+    });
+    return best;
+  }
+  const isCuriosity = (id) => id === 'moon' || cons.some((c) => c.id === id);
+  function setHover(id) { terraHover = id === 'terra'; skyHover = isCuriosity(id) ? id : null; }
+  // Selecting the satellite (its card opens) also starts the ride behind it; unfollow ends the ride and keeps it lit.
+  // The Moon and the constellations only stay lit while their card is open.
+  function select(id) { terraSel = follow = id === 'terra'; skySel = isCuriosity(id) ? id : null; }
+  function unfollow() { follow = false; }
+  const following = () => follow && visible;
+  const info = (id) => (id === 'moon' ? moonInfo() : INFO[id] || null);
+  // The Apollo 11 mark, found with three taps on the Moon; it stays for the visit.
+  function setApollo(on) { apollo = !!on; if (!apollo) apolloLbl.visible = false; }
 
   function dispose() {
     rt.dispose(); disposables.forEach(d => d.dispose());
+    terra.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     scene.remove(group); scene.remove(auroras); scene.remove(terra); scene.remove(terraPath);
   }
 
-  return { group, update, setVisible, dispose, pick, setHover, select, info };
+  return { group, update, advance, setVisible, dispose, pick, pickSky, setHover, select, unfollow, following, followWeight: followW, orbitFrame, info, setApollo, apollo: () => apollo };
 }

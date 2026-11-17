@@ -25,8 +25,8 @@ export type TrendAnalysis = MannKendall &
   };
 
 const MIN_POINTS = 8;
-const SIGNIFICANCE = 0.05;
-const STRONG_EVIDENCE = 0.01;
+export const SIGNIFICANCE = 0.05;
+export const STRONG_EVIDENCE = 0.01;
 /** z for a two-sided 95 % interval. */
 const Z_95 = 1.96;
 

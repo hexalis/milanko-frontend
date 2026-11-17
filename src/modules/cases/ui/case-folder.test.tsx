@@ -24,7 +24,8 @@ describe("CaseFolder", () => {
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/cases/svalbard-warming");
     expect(screen.getByRole("heading", { level: 3 })).toContainElement(link);
-    expect(screen.getByText("ETD-2026-001")).toBeVisible();
+    // The catalog number on the tab, and printed at the head of every page.
+    expect(screen.getAllByText("ETD-2026-001")).toHaveLength(4);
     expect(screen.getByText("Temperature")).toBeVisible();
     expect(screen.getByText("Change")).toBeVisible();
     expect(screen.getByText("Air temperature")).toBeVisible();
@@ -49,6 +50,16 @@ describe("CaseFolder", () => {
       return folios;
     };
     const all = ["01 · Series", "02 · Test", "03 · Source"];
+    // Each page is a whole sheet of paper, numbered within the file.
+    render(
+      <CaseFolder
+        file={fileById("svalbard-warming")}
+        translator={getTranslator("en")}
+        catalog={catalog}
+      />,
+    );
+    expect(screen.getByText("Sheet 2 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Strict bar · p < 0.01")).toBeInTheDocument();
     expect(sheetsOf("strong")).toEqual(all);
     // Moderate and weak files may be missing from the catalog; a missing one has nothing to show.
     expect(sheetsOf("moderate") ?? all.slice(0, 2)).toEqual(all.slice(0, 2));

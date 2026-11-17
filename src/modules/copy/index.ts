@@ -20,7 +20,16 @@ export function getTranslator(locale: Locale): Translator {
   return createTranslator(CATALOG, locale);
 }
 
-const CASE_FIELDS = ["name", "region", "title", "summary", "why", "limits", "metric"] as const;
+const CASE_FIELDS = [
+  "name",
+  "region",
+  "title",
+  "summary",
+  "why",
+  "limits",
+  "metric",
+  "impact",
+] as const;
 export type CaseTextField = (typeof CASE_FIELDS)[number];
 
 type CaseTextEntry = Record<Locale, Record<CaseTextField, string>>;

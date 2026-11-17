@@ -6,12 +6,17 @@ import { pickExploreMessages } from "@/modules/explore/domain/explore-copy";
 import { initialSelection, parseExploreQuery } from "@/modules/explore/domain/explore-state";
 import { isSectorId } from "@/modules/explore/domain/sectors";
 import { ExploreScreen } from "@/modules/explore/ui/explore-screen";
+import { GlobeLoading } from "@/modules/explore/ui/globe-loading";
 import { PageTour } from "@/modules/tour/ui/page-tour";
 import { getLocale } from "@/server/locale";
 import { withBasePath } from "@/shared/lib/base-path";
 import { DEFAULT_LOCALE } from "@/shared/lib/i18n";
-import type { SearchParams } from "@/shared/lib/search-params";
-import { LoadingPanel } from "@/shared/ui/notice";
+import {
+  readIsoDate,
+  readString,
+  toQueryString,
+  type SearchParams,
+} from "@/shared/lib/search-params";
 
 export const metadata: Metadata = { title: "3D globe" };
 
@@ -38,6 +43,18 @@ async function ExploreContent({ searchParams }: PageProps) {
     { firstYear: audit.firstYear, lastYear: audit.lastCompleteYear + 1, defaultYear },
   );
   const { t } = translator;
+  // A link back from a region record (/regions) opens the globe on the data layer it came from.
+  const variable = readString(params, "variable");
+  const metric = readString(params, "metric");
+  const layer = readString(params, "layer");
+  const globeQuery = toQueryString({
+    embed: 1,
+    lang: locale,
+    layer: layer === "data" || layer === "events" || layer === "weather" ? layer : undefined,
+    variable: variable && /^[A-Z0-9_]{1,40}$/.test(variable) ? variable : undefined,
+    date: readIsoDate(params, "date"),
+    metric: metric === "value" || metric === "anomaly" ? metric : undefined,
+  });
 
   return (
     <div lang={locale}>
@@ -46,7 +63,7 @@ async function ExploreContent({ searchParams }: PageProps) {
         // selection and deep-link effects follow the new URL; the screen's own replaceState does not.
         key={JSON.stringify(query)}
         locale={locale}
-        frameSrc={withBasePath(`/globe/world3d/index.html?embed=1&lang=${locale}`)}
+        frameSrc={withBasePath(`/globe/world3d/index.html${globeQuery}`)}
         frameTitle={t("exp.view.3d.title")}
         heading={t("exp.title")}
         viewerLabel={t("exp.viewer")}
@@ -67,9 +84,11 @@ export default function ExplorePage({ searchParams }: PageProps) {
   return (
     <Suspense
       fallback={
-        <div className="bg-space shell:fixed shell:inset-0 shell:z-10 shell:h-auto grid h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem] place-items-center p-4">
-          <LoadingPanel label={getTranslator(DEFAULT_LOCALE).t("pt.loading")} />
-        </div>
+        // The globe's own loader from the first paint, where the globe will show it: no card in between.
+        <GlobeLoading
+          label={getTranslator(DEFAULT_LOCALE).t("pt.loading")}
+          className="shell:fixed shell:inset-0 shell:z-10 shell:h-auto h-[calc(100dvh-var(--shell-top)-var(--shell-bottom))] min-h-[30rem]"
+        />
       }
     >
       <ExploreContent searchParams={searchParams} />

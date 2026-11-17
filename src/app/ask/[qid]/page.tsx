@@ -93,7 +93,8 @@ async function GuidedContent({
         translator={translator}
         catalog={catalog}
         rules={rules}
-        tour={<PageTour id={LESSON_TOURS[state.screen]} translator={translator} />}
+        // Compact, beside the step name: a floating button would cover the bar's "Check".
+        tour={<PageTour id={LESSON_TOURS[state.screen]} translator={translator} isCompact />}
       />
     </div>
   );

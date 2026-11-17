@@ -1,0 +1,214 @@
+/*
+ * Opening a case file (CaseGlance). One short sequence, about 1.5 s, told in the order a reader
+ * should take it in, then the page is still:
+ *   0 ms     the answer rises; the world map settles from a slight zoom;
+ *   320 ms   the folder's sheets are dealt out of one stack, one per level of evidence;
+ *   520 ms   the pin drops on the place and pings twice; the evidence bars fill, one by one;
+ *   820 ms   the place seen from orbit grows out of the pin;
+ *   1000 ms  the verdict stamp is pressed onto the answer (a confirmed one leaves an ink ring;
+ *            "not proven" lands softly, without it); the meaning cards rise.
+ * Only transform, opacity and filter move. `backwards` keeps each piece hidden until its turn and
+ * leaves the final layout untouched, so the page reads the same with or without the motion.
+ * Under reduced motion nothing plays: everything is simply there.
+ *
+ * Arriving from the archive, the folder has just opened and let its sheets out (folder-open.css),
+ * so the sheets dealt here read as the same pages landing on the desk.
+ */
+
+.cg {
+  --cg-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --cg-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cg-answer {
+  animation: cg-rise 460ms var(--cg-out) backwards;
+}
+
+.cg-fig {
+  animation: cg-focus 620ms var(--cg-out) 180ms backwards;
+}
+
+.cg-where {
+  animation: cg-rise 460ms var(--cg-out) 80ms backwards;
+}
+
+.cg-map {
+  animation: cg-settle 1100ms var(--cg-out) backwards;
+}
+
+.cg-pin {
+  animation: cg-drop 420ms var(--cg-spring) 520ms backwards;
+}
+
+.cg-ring {
+  opacity: 0;
+  animation: cg-ping 900ms ease-out 760ms 2;
+}
+
+.cg-zoom {
+  transform-origin: var(--cg-ox, 50%) var(--cg-oy, 50%);
+  animation: cg-grow 560ms var(--cg-spring) 820ms backwards;
+}
+
+/* Dealt from one stack: each sheet starts where the first one lies, then slides to its place. */
+.cg-sheet {
+  animation: cg-deal 620ms var(--cg-spring) calc(320ms + var(--i) * 150ms) backwards;
+}
+
+.cg-slot {
+  animation: cg-fade 400ms ease-out 900ms backwards;
+}
+
+.cg-meter i {
+  transform-origin: bottom;
+  animation: cg-bar 320ms var(--cg-spring) backwards;
+}
+
+.cg-meter i:nth-child(1) {
+  animation-delay: 560ms;
+}
+
+.cg-meter i:nth-child(2) {
+  animation-delay: 680ms;
+}
+
+.cg-meter i:nth-child(3) {
+  animation-delay: 800ms;
+}
+
+.cg-stamp {
+  position: relative;
+  animation: cg-press 420ms cubic-bezier(0.2, 1.6, 0.4, 1) 1000ms backwards;
+}
+
+.cg-stamp[data-verdict="confirmed"]::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 10px;
+  border: 2px solid var(--color-status-ok);
+  opacity: 0;
+  pointer-events: none;
+  animation: cg-ink 700ms ease-out 1180ms;
+}
+
+.cg-stamp[data-verdict="inconclusive"] {
+  animation: cg-press-soft 620ms var(--cg-out) 1000ms backwards;
+}
+
+.cg-note {
+  animation: cg-rise 460ms var(--cg-out) 1040ms backwards;
+}
+
+@keyframes cg-rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+@keyframes cg-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cg-focus {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    scale: 0.92;
+  }
+}
+
+@keyframes cg-settle {
+  from {
+    opacity: 0;
+    scale: 1.12;
+  }
+}
+
+@keyframes cg-drop {
+  from {
+    opacity: 0;
+    translate: 0 -22px;
+    scale: 1.4;
+  }
+}
+
+@keyframes cg-ping {
+  from {
+    opacity: 0.9;
+    scale: 0.4;
+  }
+  to {
+    opacity: 0;
+    scale: 2.2;
+  }
+}
+
+@keyframes cg-grow {
+  from {
+    opacity: 0;
+    scale: 0.06;
+  }
+}
+
+/* Wide screens deal sideways along the row; one column deals downwards. */
+@keyframes cg-deal {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--i) * -100% - 18px);
+    rotate: calc(-5deg + var(--i) * 2deg);
+  }
+}
+
+@media (width >= 48rem) {
+  @keyframes cg-deal {
+    from {
+      opacity: 0;
+      translate: calc(var(--i) * (-100% - 12px)) -18px;
+      rotate: calc(-5deg + var(--i) * 2deg);
+    }
+  }
+}
+
+@keyframes cg-bar {
+  from {
+    scale: 1 0;
+  }
+}
+
+@keyframes cg-press {
+  from {
+    opacity: 0;
+    scale: 1.9;
+    rotate: -14deg;
+  }
+}
+
+@keyframes cg-press-soft {
+  from {
+    opacity: 0;
+    scale: 1.15;
+    rotate: -8deg;
+  }
+}
+
+@keyframes cg-ink {
+  from {
+    opacity: 0.7;
+    scale: 0.9;
+  }
+  to {
+    opacity: 0;
+    scale: 1.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg *,
+  .cg *::after {
+    animation: none !important;
+  }
+}

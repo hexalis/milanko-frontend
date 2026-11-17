@@ -1,11 +1,12 @@
+import Link from "next/link";
 import type { Ref } from "react";
 import { eventTitle, formatCoordinates, formatDate } from "@/modules/cases";
 import type { Locale } from "@/shared/lib/i18n";
 import { Icon } from "@/shared/ui/icon";
-import { ExternalLink, TextLink } from "@/shared/ui/text-link";
+import { ExternalLink } from "@/shared/ui/text-link";
 import { categoryName, type ExploreT } from "../domain/explore-copy";
 import type { GlobeEvent } from "../domain/globe-messages";
-import { Actions, Facts, PanelHead, SECONDARY_BUTTON } from "./drawer-parts";
+import { Actions, Facts, PanelHead, PRIMARY_LINK, SECONDARY_BUTTON } from "./drawer-parts";
 
 /** GDACS titles end in their own record number ("Flood in Nigeria 1104186"). */
 const RECORD_NUMBER = /\s\d{6,}$/;
@@ -60,20 +61,19 @@ export function EventPanel({ ev, sources, locale, t, titleRef, onInvestigate }: 
         titleRef={titleRef}
       />
       <Facts facts={facts} />
-      <ul className="text-body-m flex flex-col gap-2">
-        <li>
-          <TextLink href={`/events/${encodeURIComponent(ev.id)}`}>{t("event.record")}</TextLink>
-        </li>
-        <li>
-          <ExternalLink
-            href={`${EONET_EVENT}${encodeURIComponent(ev.id)}`}
-            newTabHint={t("link.newTab")}
-          >
-            {t("event.eonet")}
-          </ExternalLink>
-        </li>
-      </ul>
+      <p className="text-body-m">
+        <ExternalLink
+          href={`${EONET_EVENT}${encodeURIComponent(ev.id)}`}
+          newTabHint={t("link.newTab")}
+        >
+          {t("event.eonet")}
+        </ExternalLink>
+      </p>
       <Actions>
+        <Link href={`/events/${encodeURIComponent(ev.id)}`} className={PRIMARY_LINK}>
+          {t("event.record")}
+          <Icon name="arrow-right" />
+        </Link>
         <button type="button" className={SECONDARY_BUTTON} onClick={onInvestigate}>
           <Icon name="globe-pin" />
           {t("event.point")}

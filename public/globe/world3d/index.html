@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Explorador · Mundo 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="loader-orb.css?v=42">
+<script>
+/* Milanko: the portal puts its rail's right edge in the address (#rail=…), so the loader is centred beside the rail
+   from its very first paint, where the portal's still stood, instead of sliding over once the page has loaded. */
+(() => { const m = /(?:^#|&)rail=(d+)/.exec(location.hash); if (!m) return; document.documentElement.style.setProperty('--cover-l', `${Math.min(400, +m[1])}px`); document.documentElement.classList.add('is-handoff'); })();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* Tokens copied from portal/styles.css (Evidence Ledger), so view B matches view A. */
@@ -18,7 +24,7 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   #stage { position: fixed; inset: 0; touch-action: none; }
   .ic { width: 18px; height: 18px; flex: none; }
-  .lbl { padding: 3px 8px; border-radius: 999px; background: rgba(10, 14, 28, 0.7); font-size: 12px; font-weight: 600; white-space: nowrap; margin: -8px 0 0 19px; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out); }
+  .lbl { padding: 3px 8px; border-radius: 999px; background: rgba(10, 14, 28, 0.7); font-size: 12px; font-weight: 600; white-space: nowrap; margin: -10px 0 0 20px; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out); }
   .loading { position: fixed; inset: 0; display: grid; place-items: center; color: var(--rail-ink); z-index: 4; transition: opacity 400ms var(--ease-out); text-align: center; padding: 24px; }
   .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
@@ -29,19 +35,31 @@
   .gx-search input { flex: 1; min-width: 0; border: 0; background: none; color: #fff; font: 400 15px var(--sans); outline: none; }
   .gx-search input::placeholder { color: #8e99b0; }
   .gx-search kbd { color: var(--rail-ink); font: 500 12px var(--mono); border: 1px solid var(--space-line); border-radius: 6px; padding: 2px 6px; }
-  .gx-results { margin-top: 8px; max-height: 50vh; overflow-y: auto; padding: 6px; border-radius: 24px; background: rgba(10, 14, 28, 0.96); border: 1px solid var(--space-line); }
+  .gx-results { position: relative; margin-top: 8px; max-height: 50vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 6px; border-radius: 24px; background: rgba(10, 14, 28, 0.96); border: 1px solid var(--space-line); transform-origin: 50% 0; }
+  .gx-results::-webkit-scrollbar { display: none; }
   .gx-results[hidden] { display: none; }
+  /* No scrollbar: when there is more above or below, the list fades out at that edge (at-top / at-end, set on scroll). */
+  :is(.gx-results, .gx-pick__pop)::before, :is(.gx-results, .gx-pick__pop)::after { content: ''; position: sticky; z-index: 1; display: block; height: 32px; pointer-events: none; transition: opacity var(--dur-fast) var(--ease-out); }
+  :is(.gx-results, .gx-pick__pop)::before { top: -6px; margin: -6px -6px -26px; background: linear-gradient(rgba(10, 14, 28, 0.98), rgba(10, 14, 28, 0)); }
+  :is(.gx-results, .gx-pick__pop)::after { bottom: -6px; margin: -26px -6px -6px; background: linear-gradient(rgba(10, 14, 28, 0), rgba(10, 14, 28, 0.98)); }
+  :is(.gx-results, .gx-pick__pop).at-top::before, :is(.gx-results, .gx-pick__pop).at-end::after { opacity: 0; }
+  /* It unfolds from the field down, and folds back up when it closes. */
+  .gx-results:not([hidden]) { animation: gx-unfold 220ms var(--ease-out); }
+  .gx-results.is-closing { animation: gx-fold 140ms var(--ease-out) forwards; pointer-events: none; }
+  @keyframes gx-unfold { from { opacity: 0; translate: 0 -6px; clip-path: inset(0 0 100% 0 round 24px); } to { clip-path: inset(0 0 0 0 round 24px); } }
+  @keyframes gx-fold { to { opacity: 0; translate: 0 -4px; clip-path: inset(0 0 60% 0 round 24px); } }
   .gx-results p { margin: 8px 10px 4px; font-size: 12px; color: #95a1b7; }
   .gx-opt { width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 0; border-radius: 8px; background: none; color: #e7ebf5; text-align: left; cursor: pointer; }
   .gx-opt span { font-size: 13px; color: #a3aec2; }
   .gx-opt:hover, .gx-opt.is-active { background: rgba(169, 180, 255, 0.12); }
-  .gx-regions { position: fixed; top: 84px; left: 24px; z-index: 5; display: flex; gap: 6px; max-width: calc(100% - 200px); overflow-x: auto; scrollbar-width: none; padding-right: 24px; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent); }
-  .gx-regions button { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; border: 1px solid var(--space-line); border-radius: 999px; background: rgba(10, 14, 28, 0.85); color: var(--rail-ink); font: 500 13px var(--sans); cursor: pointer; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
-  .gx-regions .num { font-size: 12px; color: #95a1b7; }
-  .gx-regions button:hover { color: #fff; background: #22324e; }
-  .gx-regions button[aria-pressed="true"] { background: var(--sector); border-color: var(--sector); color: var(--rail); }
-  .gx-regions button[aria-pressed="true"] .num { color: var(--rail); }
-  .gx-search:has(.gx-results:not([hidden])) ~ .gx-regions { visibility: hidden; }
+  /* With the field empty the list browses the regions (the most case files first): a row each, its count, an arrow;
+     the region on screen is marked. */
+  .gx-opt--region { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 12px; }
+  .gx-opt--region > span { grid-column: 1; }
+  .gx-opt--region > svg { grid-column: 2; grid-row: 1 / span 2; width: 16px; height: 16px; color: #95a1b7; transition: translate var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+  .gx-opt--region:hover > svg, .gx-opt--region.is-active > svg { color: #fff; translate: 2px 0; }
+  .gx-opt--region.is-here { box-shadow: inset 3px 0 0 var(--sector); }
+  .gx-opt--region.is-here > span { color: var(--sector); }
 
   /* Tools: view switch (A Points · B 3D world) and the zoom pill */
   .gx-tools { position: fixed; top: 24px; right: 24px; z-index: 6; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; transition: transform var(--dur-leave) var(--ease-in); }
@@ -50,7 +68,7 @@
   .zoom button:hover { background: rgba(255, 255, 255, 0.08); }
 
   /* Dock: layer switch and Settings; what the globe shows, with its key; the time machine */
-  .gx-dock { position: fixed; left: 50%; bottom: 24px; z-index: 5; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; width: min(720px, calc(100% - 48px)); padding: 12px; border-radius: 24px; background: rgba(10, 14, 28, 0.92); border: 1px solid var(--space-line); transition: transform var(--dur-leave) var(--ease-in), width var(--dur-leave) var(--ease-in), opacity var(--dur-leave) var(--ease-in); container: dock / inline-size; }
+  .gx-dock { position: fixed; left: 50%; bottom: 24px; z-index: 5; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; width: min(720px, calc(100% - 48px)); padding: 10px 12px; border-radius: 24px; background: rgba(10, 14, 28, 0.92); border: 1px solid var(--space-line); transition: transform var(--dur-leave) var(--ease-in), width var(--dur-leave) var(--ease-in), opacity var(--dur-leave) var(--ease-in); container: dock / inline-size; }
   .gx-dock__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .gx-dock__layers { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); min-width: 0; }
   .gx-dock__layers button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 14px; border: 0; border-radius: 999px; background: none; color: var(--rail-ink); font: 600 13px var(--sans); cursor: pointer; white-space: nowrap; transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
@@ -63,7 +81,25 @@
   .gx-dock__fbtn.is-on, .gx-dock__fbtn[aria-expanded="true"] { border-color: var(--glow); color: #fff; }
   .gx-dock__badge { min-width: 18px; height: 18px; display: inline-grid; place-items: center; padding: 0 5px; border-radius: 999px; background: var(--glow); color: var(--rail); font-size: 12px; font-weight: 600; }
   .gx-dock__badge[hidden] { display: none; }
-  .gx-dock__fold { display: none; }
+  /* The dock folds down to its layer tabs, on any screen, so the globe keeps the screen. */
+  .gx-dock__fold { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 24px; margin: -6px 0 -6px; padding: 0; border: 0; border-radius: 12px; background: none; color: #95a1b7; cursor: pointer; }
+  .gx-dock__fold:hover { color: #fff; }
+  .gx-dock__fold:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+  .gx-dock__fold .ic { width: 16px; height: 16px; }
+  .gx-dock__grip { width: 36px; height: 4px; border-radius: 999px; background: currentColor; opacity: 0.6; }
+  .gx-dock.is-folded > :not(.gx-dock__fold):not(.gx-dock__top):not(.gx-panel) { display: none; }
+  /* The rest (what the colours mean, the top regions, the source) waits behind "Details". */
+  .gx-more-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 10px; border: 1px solid var(--space-line); border-radius: 999px; background: none; color: #b3bdd0; font: 600 12px var(--sans); cursor: pointer; transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+  .gx-more-btn:hover { color: #fff; border-color: #3a4a72; }
+  .gx-more-btn:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+  .gx-more-btn svg { width: 14px; height: 14px; transition: rotate var(--dur-fast) var(--ease-out); }
+  .gx-more-btn[aria-expanded="true"] svg { rotate: 180deg; }
+  .gx-more { display: flex; flex-direction: column; gap: 8px; padding: 8px 4px 0; border-top: 1px solid var(--space-line); }
+  .gx-more[hidden], .gx-more > [hidden] { display: none; }
+  .gx-more > div { display: flex; flex-direction: column; gap: 6px; }
+  .gx-more .gx-dock__src { margin: 0; }
+  /* On the data layer the sentence of pickers already says what is painted: the line above it is for screen readers. */
+  .gx-dock:has(#dataRow:not([hidden])) .gx-dock__say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .gx-dock__fold svg { transition: transform var(--dur-fast) var(--ease-out); }
   .gx-dock.is-folded .gx-dock__fold svg { transform: rotate(180deg); }
   .gx-dock__info { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; padding: 0 4px; }
@@ -73,10 +109,8 @@
   .legend li { display: flex; align-items: center; gap: 7px; }
   .hexdot { width: 12px; height: 12px; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); display: inline-block; flex: none; }
   .dot { width: 9px; height: 9px; border-radius: 9999px; display: inline-block; flex: none; }
-  .tri-up { width: 0; height: 0; border: 6px solid transparent; border-bottom: 10px solid #ec6896; border-top: 0; }
-  .tri-down { width: 0; height: 0; border: 6px solid transparent; border-top: 10px solid #2eaac4; border-bottom: 0; }
-  .ring { width: 10px; height: 10px; border-radius: 99px; border: 2px dashed #c3cad9; }
-  .diamond { width: 9px; height: 9px; border-radius: 3px; transform: rotate(45deg); background: #ff8a4c; box-shadow: 0 0 0 1.5px #fff; }
+  .pk { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; display: inline-grid; place-items: center; flex: none; color: #0a0e1c; font: 800 8px/1 var(--sans); }
+  .pk--up { background: #ec6896; } .pk--down { background: #2eaac4; } .pk--flat { background: #3a4458; color: #e7ebf5; } .pk--anom { background: #ff8a4c; }
   .gx-dock__src { margin: -4px 4px 0; font-size: 12px; color: #8e99b0; }
   .gx-dock__time { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
   .gx-dock__time .gx-dock__range { flex: 1; }
@@ -108,13 +142,64 @@
   .chips button:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
   .chips button[aria-pressed="true"] { background: var(--glow); color: var(--rail); }
   .chips .num { font-size: 12px; }
-  .gx-data { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 10px 0 0; }
+  .gx-data { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; padding: 0 4px; }
   .gx-data[hidden] { display: none; }
   .gx-data label { display: grid; gap: 4px; font: 600 12px var(--sans); color: #95a1b7; }
-  .gx-data select, .gx-data input { min-height: 36px; padding: 6px 10px; border: 1px solid var(--space-line); border-radius: 10px; background: rgba(10, 14, 28, 0.92); color: #e7ebf5; font: 500 13px var(--sans); }
+  .gx-data select, .gx-data input { min-height: 38px; padding: 6px 12px; border: 1px solid var(--space-line); border-radius: 12px; background: rgba(10, 14, 28, 0.92); color: #e7ebf5; font: 500 14px var(--sans); color-scheme: dark; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+  .gx-data select { appearance: none; -webkit-appearance: none; padding-right: 34px; max-width: min(320px, 100%);
+    background: rgba(10, 14, 28, 0.92) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a9b4ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; }
+  .gx-data select:hover, .gx-data input:hover { border-color: #3a4a72; background-color: #121a33; }
+  .gx-data select:focus-visible, .gx-data input:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+  .gx-data option, .gx-data optgroup { background: #101c2f; color: #e7ebf5; }
+  /* The data layer as a sentence: "Show [variable] as [how] on [day]". Each part is a button that opens its list
+     just above it, in the globe's own style. */
+  .gx-data { position: relative; }
+  .gx-phrase { width: 100%; margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font: 500 14px/1.4 var(--sans); color: #b3bdd0; }
+  .gx-pick { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; max-width: 100%; padding: 3px 10px 3px 12px; border: 1px solid var(--space-line); border-radius: 999px; background: rgba(169, 180, 255, 0.08); color: #fff; font: 600 14px var(--sans); cursor: pointer; transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+  .gx-pick > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gx-pick > svg { flex: none; width: 14px; height: 14px; color: #95a1b7; transition: rotate var(--dur-fast) var(--ease-out); }
+  .gx-pick:hover { background: rgba(169, 180, 255, 0.16); border-color: #3a4a72; }
+  .gx-pick[aria-expanded="true"] { border-color: var(--glow); }
+  .gx-pick[aria-expanded="true"] > svg { rotate: 180deg; }
+  .gx-pick:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
+  .gx-pick__pop { position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 3; width: min(380px, 100%); max-height: min(52vh, 440px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 6px; border-radius: 16px; background: rgba(10, 14, 28, 0.98); border: 1px solid var(--space-line); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5); }
+  .gx-pick__pop::-webkit-scrollbar { display: none; }
+  .gx-pick__pop[hidden] { display: none; }
+  .gx-pick__pop:not([hidden]) { animation: gx-rise 200ms var(--ease-out); }
+  .gx-pick__pop.is-closing { animation: gx-sink 120ms var(--ease-out) forwards; pointer-events: none; }
+  @keyframes gx-rise { from { opacity: 0; translate: 0 6px; clip-path: inset(100% 0 0 0 round 16px); } to { clip-path: inset(0 0 0 0 round 16px); } }
+  @keyframes gx-sink { to { opacity: 0; translate: 0 4px; } }
+  .gx-pick__h { margin: 10px 10px 4px; font: 600 12px var(--sans); color: #95a1b7; }
+  .gx-pick__opt { width: 100%; display: grid; gap: 2px; padding: 9px 12px; border: 0; border-radius: 10px; background: none; color: #e7ebf5; text-align: left; font: inherit; cursor: pointer; outline: none; }
+  .gx-pick__opt .n { font: 600 14px var(--sans); }
+  .gx-pick__opt .d { font-size: 13px; line-height: 1.4; color: #b3bdd0; }
+  .gx-pick__opt .c { font: 500 11px var(--mono); color: #7d89a1; }
+  .gx-pick__opt:hover, .gx-pick__opt:focus { background: rgba(169, 180, 255, 0.12); }
+  .gx-pick__opt:is([aria-selected="true"], [aria-pressed="true"]) { box-shadow: inset 3px 0 0 var(--glow); }
+  .gx-pick__opt:is([aria-selected="true"], [aria-pressed="true"]) .n { color: var(--glow); }
+  .gx-pick__opt:focus-visible { box-shadow: inset 0 0 0 2px var(--glow); }
+  .gx-pick__other { display: grid; gap: 6px; margin: 6px 6px 4px; padding-top: 10px; border-top: 1px solid var(--space-line); }
+  .gx-data__help { width: 100%; margin: 0; font-size: 13px; line-height: 1.45; color: #b3bdd0; }
+  .gx-data__help strong { color: #e7ebf5; font-weight: 600; }
+  .gx-data__toph { width: 100%; margin: 4px 0 0; font: 600 12px var(--sans); color: #95a1b7; }
   .gx-data__top { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
-  .gx-data__top a { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 4px 10px; border: 1px solid var(--space-line); border-radius: 999px; color: var(--rail-ink); font: 500 12px var(--sans); text-decoration: none; }
-  .gx-data__top a:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+  .gx-data__top button, .gx-data__top a { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 4px 12px; border: 1px solid var(--space-line); border-radius: 999px; background: rgba(255, 255, 255, 0.04); color: #e7ebf5; font: 500 12px var(--sans); text-decoration: none; cursor: pointer; transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+  .gx-data__top button:hover, .gx-data__top a:hover { background: rgba(169, 180, 255, 0.12); border-color: #3a4a72; }
+  .gx-data__top .v { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--glow); }
+  /* Contemplation: only the planet and its sky. */
+  body.is-immersive :is(.gx-search, .gx-tools, .gx-dock, .tip) { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--dur-panel) var(--ease-out), visibility 0s linear var(--dur-panel); }
+  body.is-immersive .lbl { opacity: 0 !important; }
+  .gx-imm { display: none; position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 8; transform: translateX(-50%); gap: 8px; transition: opacity var(--dur-panel) var(--ease-out); }
+  body.is-immersive .gx-imm { display: flex; }
+  .gx-imm.is-idle:not(:has(:focus-visible)) { opacity: 0; }
+  .gx-show { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 16px; border: 1px solid var(--space-line); border-radius: 999px; background: rgba(10, 14, 28, 0.88); color: #e7ebf5; font: 600 14px var(--sans); white-space: nowrap; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out); }
+  .gx-show kbd { font: 600 11px var(--mono); border: 1px solid var(--space-line); border-radius: 5px; padding: 1px 6px; color: var(--rail-ink); }
+  .gx-show svg { width: 18px; height: 18px; }
+  .gx-show[aria-pressed="true"] { border-color: var(--glow); color: var(--glow); }
+  /* The Apollo 11 mark's name, beside it on the Moon. */
+  .sky-lbl { margin-left: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(10, 14, 28, 0.78); color: #ffe7b0; font: 600 12px var(--sans); white-space: nowrap; pointer-events: none; }
+  .sky-lbl.is-flip { margin-left: 0; }
+  body.is-immersive .sky-lbl { opacity: 0; }
   .toggle { display: flex; align-items: center; justify-content: space-between; min-height: 44px; font-size: 15px; color: #e7ebf5; cursor: pointer; }
   .toggle input { appearance: none; width: 44px; height: 26px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); position: relative; cursor: pointer; transition: background var(--dur-fast) var(--ease-out); }
   .toggle input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 999px; background: #fff; transition: transform var(--dur-panel) var(--ease-out); }
@@ -141,8 +226,10 @@
   .card__facts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-radius: 8px; background: var(--surface-2); }
   .card__facts li { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 15px; color: var(--ink); }
   .card__facts li:first-child { border-top: 0; }
+  .card__h { margin: 4px 0 0; font-size: 15px; font-weight: 700; color: var(--ink); }
+  .card__extra { margin: 0; font-size: 15px; }
+  .card__extra a { color: var(--ink); font-weight: 600; }
   .card h2:focus { outline: none; }
-  @media (min-width: 861px) { .gx:has(.card.is-open) .gx-regions { max-width: calc(100% - 640px); } }
   .card__src { margin: 0; font-size: 13px; color: var(--muted); }
   .card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 8px; }
   @media (min-width: 861px) {
@@ -154,8 +241,10 @@
   .gx.is-covered .gx-tools { transform: translateX(calc(-1 * var(--cover-r))); }
   .gx.is-covered .gx-dock { transform: translateX(calc(-50% - var(--cover-r) / 2)); width: min(720px, calc(100% - 48px - var(--cover-r))); }
   .gx.is-covered .gx-search { width: min(440px, calc(100% - 48px - var(--cover-r))); }
-  .gx.is-covered .gx-regions { max-width: calc(100% - 120px - var(--cover-r)); }
   .gx.is-covered :is(.gx-tools, .gx-dock) { transition-duration: var(--dur-panel); transition-timing-function: var(--ease-out); }
+  /* A panel open in the portal leads, with its main action: the search and the layers step back until it
+     closes (Esc or its close button). The zoom stays, to look around the selection. */
+  .gx:is(.is-covered, .is-sheet) :is(.gx-search, .gx-dock) { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--dur-panel) var(--ease-out), visibility 0s linear var(--dur-panel); }
   /* A bottom sheet covers the dock: it fades out with the sheet coming up and leaves the Tab order, as it does for
      this frame's own card. */
   .gx.is-sheet .gx-dock { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity var(--dur-panel) var(--ease-out), visibility 0s linear var(--dur-panel); }
@@ -179,8 +268,7 @@
   /* Phones: dock and panel as sheets, card as a bottom sheet that hides the dock */
   @media (max-width: 860px) {
     .gx-search { top: 12px; left: 12px; width: calc(100% - 24px); }
-    .gx-regions { top: 72px; left: 12px; max-width: calc(100% - 12px); }
-    .gx-tools { top: 124px; right: 12px; }
+    .gx-tools { top: 76px; right: 12px; }
     .gx-dock { bottom: 12px; width: calc(100% - 24px); }
     /* Four tabs do not fit a 390px phone (Data slid under Settings): they scroll sideways instead. */
     .gx-dock__top .gx-dock__layers { flex: 1; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; }
@@ -188,28 +276,31 @@
     .gx-dock__layers button { flex: 1 0 auto; justify-content: center; padding: 6px 8px; scroll-snap-align: start; }
     .gx-dock__fbtn { min-width: 44px; min-height: 44px; justify-content: center; padding: 6px 10px; }
     .gx-dock__fbtn .lbl2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-    /* Phones: the dock folds down to its layer tabs so the globe keeps the screen. */
-    .gx-dock__fold { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 28px; margin: -8px 0 -6px; padding: 0; border: 0; border-radius: 12px; background: none; color: #95a1b7; cursor: pointer; }
-    .gx-dock__fold:hover { color: #fff; }
-    .gx-dock__fold:focus-visible { outline: 2px solid var(--glow); outline-offset: 2px; }
-    .gx-dock__grip { width: 36px; height: 4px; border-radius: 999px; background: currentColor; opacity: 0.6; }
-    .gx-dock.is-folded > :not(.gx-dock__fold):not(.gx-dock__top):not(.gx-panel) { display: none; }
+    .gx-dock__fold { min-height: 28px; }
     .gx-dock__say { font-size: 13px; }
-    .gx-dock__src { display: none; }
+    /* Phones start with the dock folded, so the world keeps the screen: the layer tabs and one line under them,
+       the key (sliding sideways) or the layer's own controls (data, years). The grip opens the rest. */
+    .gx-dock.is-folded { gap: 6px; padding-bottom: 8px; }
+    .gx-dock.is-folded > :is(.gx-dock__info, #dataRow:not([hidden]), #timeRow:not([hidden])) { display: flex; }
+    .gx-dock.is-folded:has(#dataRow:not([hidden])) > .gx-dock__info { display: none; }
+    .gx-dock.is-folded .gx-dock__info { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+    .gx-dock.is-folded .gx-dock__info::-webkit-scrollbar { display: none; }
+    .gx-dock.is-folded .gx-dock__say { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .gx-dock.is-folded #moreBtn { display: none; }
+    .gx-dock.is-folded .legend { flex-wrap: nowrap; white-space: nowrap; font-size: 12px; }
+    .gx-dock.is-folded .legend li:nth-child(n) { display: flex; }
     .gx-panel { right: 0; left: 0; width: auto; bottom: 0; max-height: calc(100dvh - 180px); background: #0a0e1c; }
     .card { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 58%; transform: translateY(calc(100% + 16px)); }
     .card.is-open { transform: none; }
     .gx:has(.card.is-open) .gx-dock { opacity: 0; pointer-events: none; }
     .gx.is-covered .gx-search { width: calc(100% - 24px - var(--cover-r)); }
-    .gx.is-covered .gx-regions { max-width: calc(100% - 12px - var(--cover-r)); }
     .gx.is-covered .gx-dock { width: calc(100% - 24px - var(--cover-r)); }
   }
   /* Phones held sideways (short and wide): the controls shrink to one row at the top and a small dock in the
-     corner, so the world keeps most of the frame. The regions stay one search away (the search lists them). */
+     corner, so the world keeps most of the frame. */
   @media (max-height: 480px) and (orientation: landscape) {
     .gx-search { top: 8px; left: 8px; width: min(320px, calc(50% - 16px)); }
     .gx-search__field { min-height: 44px; }
-    .gx-regions { display: none; }
     .gx-tools { top: 8px; right: 8px; }
     .zoom { flex-direction: row; }
     .gx-dock { left: 8px; bottom: 8px; transform: none; width: min(440px, calc(100% - 16px)); padding: 8px 10px; gap: 6px; }
@@ -225,55 +316,43 @@
   /* A narrow dock (a phone, or the space a drawer leaves): no counts on the layers, then no icons either. */
   @container dock (max-width: 420px) { .gx-dock__layers .num { display: none; } .legend li:nth-child(n+5) { display: none; } }
   @container dock (max-width: 330px) { .gx-dock__layers button { flex: 1 1 auto; padding: 6px 4px; font-size: 12px; } .gx-dock__layers button .ic { display: none; } }
-  @media (pointer: coarse) { .gx-regions button, .chips button, .now { min-height: 44px; } }
+  @media (pointer: coarse) { .gx-opt, .gx-pick, .gx-pick__opt, .chips button, .now { min-height: 44px; } }
 
   /* Milanko: the board assembles itself while NASA's tiles download, then the planet is born and the controls rise. */
-  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity 600ms var(--ease-out); }
-  .ld-orb { width: min(220px, 46vw); height: auto; overflow: visible; transition: scale 700ms var(--ease-out), filter 700ms var(--ease-out); }
-  .ld-halo { fill: none; stroke: var(--glow); stroke-opacity: 0.18; stroke-width: 1; animation: ld-breathe 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-  .ld-ball { fill: #0f1830; stroke: var(--space-line); stroke-width: 1; }
-  .ld-hex polygon { opacity: 0.08; animation: ld-tile 2.6s var(--d) ease-in-out infinite; }
-  .ld-shade { fill: url(#ldShade); pointer-events: none; }
-  .ld-orbit { fill: none; stroke: var(--glow); stroke-opacity: 0.35; stroke-width: 2.4; stroke-dasharray: 2 6; }
-  .ld-spin { animation: ld-spin 3.2s linear infinite; }
-  .ld-sat { fill: #ffb347; }
+  /* The planet sits at the very centre (the portal's still puts it there too, for a seamless hand-over); the words,
+     the bar and the steps hang below it. A failure (W3_FAIL) replaces all of it with a centred message. */
+  .loading { display: grid; grid-template-rows: 1fr auto 1fr; justify-items: center; transition: opacity 600ms var(--ease-out); }
+  .loading > .ld-orb { grid-row: 2; }
+  .is-handoff .ld-orb { animation: ld-float 4.2s ease-in-out infinite; }
+  .ld-info { grid-row: 3; align-self: start; display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 18px; }
+  .loading[role="alert"] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
   .ld-msg { margin: 0; max-width: 34ch; font-size: 14px; line-height: 1.5; color: var(--rail-ink); animation: ld-fade 400ms var(--ease-out); }
-  .ld-bar { width: min(220px, 46vw); height: 3px; border-radius: 999px; background: var(--space-line); overflow: hidden; }
-  .ld-bar i { display: block; height: 100%; width: calc(var(--p, 0.12) * 100%); border-radius: inherit; background: linear-gradient(90deg, var(--glow), #8ff0d8); transition: width 600ms var(--ease-out); }
+  /* The bar keeps its own pace, quick at first and ever slower, never stopping short of the end for long; it
+     fills only when the board is truly built (finishLoading). The steps below it report the real stages. */
+  .ld-bar { position: relative; width: min(220px, 46vw); height: 3px; border-radius: 999px; background: var(--space-line); overflow: hidden; }
+  .ld-bar i { display: block; width: 100%; height: 100%; background: linear-gradient(90deg, var(--glow), #8ff0d8); transform-origin: left center; transform: scaleX(0.03); animation: ld-trickle 24s linear 120ms forwards; }
+  .ld-bar::after { content: ""; position: absolute; inset: 0; width: 45%; background: linear-gradient(90deg, transparent, #ffffff66, transparent); animation: ld-sheen 1.8s ease-in-out infinite; }
   .loading.is-done { opacity: 0; pointer-events: none; }
   .loading.is-done .ld-orb { scale: 1.8; filter: blur(8px); }
-  @keyframes ld-tile { 0%, 100% { opacity: 0.08; } 40%, 60% { opacity: 1; } }
-  @keyframes ld-spin { to { rotate: 360deg; } }
-  @keyframes ld-breathe { 50% { scale: 1.06; stroke-opacity: 0.32; } }
+  @keyframes ld-trickle { 0% { transform: scaleX(0.03); } 6% { transform: scaleX(0.28); } 16% { transform: scaleX(0.47); } 32% { transform: scaleX(0.64); } 55% { transform: scaleX(0.78); } 80% { transform: scaleX(0.87); } 100% { transform: scaleX(0.92); } }
+  @keyframes ld-sheen { from { transform: translateX(-100%); } to { transform: translateX(240%); } }
   @keyframes ld-fade { from { opacity: 0; translate: 0 4px; } }
-  body:not(.is-ready) #stage, body:not(.is-ready) :is(.gx-search, .gx-regions, .gx-tools, .gx-dock) { opacity: 0; pointer-events: none; }
+  body:not(.is-ready) #stage, body:not(.is-ready) :is(.gx-search, .gx-tools, .gx-dock) { opacity: 0; pointer-events: none; }
   body.is-ready #stage { animation: gx-born 1200ms var(--ease-out) backwards; }
-  body.is-ready :is(.gx-search, .gx-regions, .gx-tools, .gx-dock) { animation: gx-in 600ms var(--ease-out) backwards; }
+  body.is-ready :is(.gx-search, .gx-tools, .gx-dock) { animation: gx-in 600ms var(--ease-out) backwards; }
   body.is-ready .gx-search { animation-delay: 350ms; }
-  body.is-ready .gx-regions { animation-delay: 450ms; }
   body.is-ready .gx-tools { animation-delay: 520ms; }
   body.is-ready .gx-dock { animation-delay: 620ms; }
   @keyframes gx-born { from { opacity: 0; scale: 0.72; filter: blur(10px); } }
   @keyframes gx-in { from { opacity: 0; translate: 0 14px; } }
   /* The portal's rail floats over the left of the frame (--cover-l): the picture and the controls keep clear of it. */
-  .gx-search, .gx-regions { margin-left: var(--cover-l, 0px); }
+  .gx-search { margin-left: var(--cover-l, 0px); }
   .gx-dock { margin-left: calc(var(--cover-l, 0px) / 2); max-width: calc(100% - 48px - var(--cover-l, 0px)); }
-  @media (min-width: 861px) {
-    .gx:not(.is-covered) .gx-regions { max-width: calc(100% - 200px - var(--cover-l, 0px)); }
-    .gx.is-covered .gx-regions { max-width: calc(100% - 120px - var(--cover-r) - var(--cover-l, 0px)); }
-  }
 
   /* Loader polish: it centres in the space beside the portal's rail, stars twinkle behind it, a ping
-     leaves the planet, a moon keeps a second orbit, and three steps tick off with a percent. */
-  .loading { padding-left: calc(24px + var(--cover-l, 0px)); transition: opacity 600ms var(--ease-out), padding-left 400ms var(--ease-out); background: radial-gradient(1px 1px at 12% 22%, #fff8, transparent), radial-gradient(1px 1px at 78% 18%, #fff6, transparent), radial-gradient(1.5px 1.5px at 64% 72%, #fff7, transparent), radial-gradient(1px 1px at 28% 80%, #fff5, transparent), radial-gradient(1px 1px at 88% 58%, #fff6, transparent), radial-gradient(1.5px 1.5px at 40% 12%, #fff5, transparent), var(--space); animation: ld-twinkle 4s ease-in-out infinite alternate; }
-  .ld-orb { animation: ld-rise 700ms var(--ease-out) both; }
-  .ld-ping { fill: none; stroke: var(--glow); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: ld-ping 2.4s var(--ease-out) infinite; }
-  .ld-trail { fill: #ffb347; opacity: 0.35; filter: blur(2.5px); }
-  .ld-orbit--b { stroke: #8ff0d8; stroke-opacity: 0.25; stroke-dasharray: 1 5; }
-  .ld-spin--b { animation-duration: 5.4s; animation-direction: reverse; }
-  .ld-moon { fill: #d7dcea; }
+     leaves the planet, a moon keeps a second orbit, and three steps tick off the real stages. */
+  .loading { padding-left: calc(24px + var(--cover-l, 0px)); transition: opacity 600ms var(--ease-out), padding-left 400ms var(--ease-out); }
   .ld-meter { display: flex; align-items: center; gap: 10px; animation: ld-fade 500ms 120ms var(--ease-out) both; }
-  .ld-pct { min-width: 4ch; font-size: 12px; color: var(--glow); text-align: right; }
   .ld-steps { display: flex; gap: 18px; margin: 2px 0 0; padding: 0; list-style: none; font-size: 12px; color: #6f7a92; animation: ld-fade 500ms 220ms var(--ease-out) both; }
   .ld-steps li { display: inline-flex; align-items: center; gap: 6px; transition: color 300ms var(--ease-out); }
   .ld-steps li::before { content: ""; width: 8px; height: 8px; border-radius: 999px; border: 1.5px solid currentColor; transition: background 300ms var(--ease-out), border-color 300ms var(--ease-out), scale 300ms var(--ease-out); }
@@ -281,10 +360,7 @@
   .ld-steps li.is-active::before { border-color: var(--glow); animation: ld-blink 900ms ease-in-out infinite; }
   .ld-steps li.is-done { color: #8ff0d8; }
   .ld-steps li.is-done::before { background: #8ff0d8; border-color: #8ff0d8; scale: 1.15; }
-  @keyframes ld-ping { from { scale: 0.95; stroke-opacity: 0.5; } to { scale: 1.45; stroke-opacity: 0; } }
-  @keyframes ld-rise { from { opacity: 0; scale: 0.8; } }
   @keyframes ld-blink { 50% { background: var(--glow); } }
-  @keyframes ld-twinkle { to { background-position: 2px 1px, -1px 2px, 1px -1px, -2px 0, 0 2px, 1px 1px, 0 0; } }
   @media (max-width: 600px) { .ld-steps { gap: 10px; font-size: 11px; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; } .ld-hex polygon { animation: none; opacity: 0.6; } }
 </style>
@@ -297,36 +373,45 @@
 <body>
 <section class="gx" aria-label="Explorador global, Mundo 3D">
 <div id="stage" role="img" aria-label="Globo 3D como un tablero de hexágonos con biomas y relieve de NASA. Arrastra para girarlo; toca un expediente o un fenómeno para acercarte."></div>
-<div class="loading" id="loading">
-  <svg class="ld-orb" viewBox="-64 -64 128 128" aria-hidden="true">
+<div class="loading ld-sky" id="loading">
+  <div class="ld-orb" aria-hidden="true">
+  <span class="ld-halo"></span><span class="ld-ping"></span>
+  <span class="ld-orbit is-back"><span class="ld-run"><i class="ld-sat"></i></span></span>
+  <span class="ld-orbit ld-orbit--b is-back"><span class="ld-run"><i class="ld-moon"></i></span></span>
+  <span class="ld-air"></span>
+  <svg class="ld-globe" viewBox="-64 -64 128 128">
     <defs><radialGradient id="ldShade" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity="0.12"/><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient></defs>
-    <circle class="ld-halo" r="50"/>
     <circle class="ld-ball" r="40"/>
     <g class="ld-hex"><polygon points="-26.7,-9.0 -29.0,-5.1 -33.4,-5.1 -35.7,-9.0 -33.4,-12.9 -29.0,-12.9" fill="#2b6cb0" style="--d:234ms"/><polygon points="-26.7,0.0 -29.0,3.9 -33.4,3.9 -35.7,0.0 -33.4,-3.9 -29.0,-3.9" fill="#2b6cb0" style="--d:243ms"/><polygon points="-26.7,9.0 -29.0,12.9 -33.4,12.9 -35.7,9.0 -33.4,5.1 -29.0,5.1" fill="#2b6cb0" style="--d:202ms"/><polygon points="-18.9,-22.5 -21.2,-18.6 -25.6,-18.6 -27.9,-22.5 -25.6,-26.4 -21.2,-26.4" fill="#2b6cb0" style="--d:411ms"/><polygon points="-18.9,-13.5 -21.2,-9.6 -25.6,-9.6 -27.9,-13.5 -25.6,-17.4 -21.2,-17.4" fill="#3f8f5a" style="--d:481ms"/><polygon points="-18.9,-4.5 -21.2,-0.6 -25.6,-0.6 -27.9,-4.5 -25.6,-8.4 -21.2,-8.4" fill="#2b6cb0" style="--d:369ms"/><polygon points="-18.9,4.5 -21.2,8.4 -25.6,8.4 -27.9,4.5 -25.6,0.6 -21.2,0.6" fill="#dfe8f2" style="--d:420ms"/><polygon points="-18.9,13.5 -21.2,17.4 -25.6,17.4 -27.9,13.5 -25.6,9.6 -21.2,9.6" fill="#3f8f5a" style="--d:373ms"/><polygon points="-18.9,22.5 -21.2,26.4 -25.6,26.4 -27.9,22.5 -25.6,18.6 -21.2,18.6" fill="#dfe8f2" style="--d:376ms"/><polygon points="-11.1,-27.0 -13.4,-23.1 -17.8,-23.1 -20.1,-27.0 -17.8,-30.9 -13.4,-30.9" fill="#2b6cb0" style="--d:543ms"/><polygon points="-11.1,-18.0 -13.4,-14.1 -17.8,-14.1 -20.1,-18.0 -17.8,-21.9 -13.4,-21.9" fill="#2b6cb0" style="--d:564ms"/><polygon points="-11.1,-9.0 -13.4,-5.1 -17.8,-5.1 -20.1,-9.0 -17.8,-12.9 -13.4,-12.9" fill="#dfe8f2" style="--d:609ms"/><polygon points="-11.1,0.0 -13.4,3.9 -17.8,3.9 -20.1,0.0 -17.8,-3.9 -13.4,-3.9" fill="#3f8f5a" style="--d:542ms"/><polygon points="-11.1,9.0 -13.4,12.9 -17.8,12.9 -20.1,9.0 -17.8,5.1 -13.4,5.1" fill="#2b6cb0" style="--d:541ms"/><polygon points="-11.1,18.0 -13.4,21.9 -17.8,21.9 -20.1,18.0 -17.8,14.1 -13.4,14.1" fill="#dfe8f2" style="--d:573ms"/><polygon points="-11.1,27.0 -13.4,30.9 -17.8,30.9 -20.1,27.0 -17.8,23.1 -13.4,23.1" fill="#2b6cb0" style="--d:554ms"/><polygon points="-3.3,-31.5 -5.6,-27.7 -10.0,-27.7 -12.3,-31.5 -10.0,-35.4 -5.6,-35.4" fill="#6aa84f" style="--d:781ms"/><polygon points="-3.3,-22.5 -5.6,-18.6 -10.0,-18.6 -12.3,-22.5 -10.0,-26.4 -5.6,-26.4" fill="#2b6cb0" style="--d:779ms"/><polygon points="-3.3,-13.5 -5.6,-9.6 -10.0,-9.6 -12.3,-13.5 -10.0,-17.4 -5.6,-17.4" fill="#3f8f5a" style="--d:721ms"/><polygon points="-3.3,-4.5 -5.6,-0.6 -10.0,-0.6 -12.3,-4.5 -10.0,-8.4 -5.6,-8.4" fill="#2b6cb0" style="--d:755ms"/><polygon points="-3.3,4.5 -5.6,8.4 -10.0,8.4 -12.3,4.5 -10.0,0.6 -5.6,0.6" fill="#2b6cb0" style="--d:778ms"/><polygon points="-3.3,13.5 -5.6,17.4 -10.0,17.4 -12.3,13.5 -10.0,9.6 -5.6,9.6" fill="#2b6cb0" style="--d:780ms"/><polygon points="-3.3,22.5 -5.6,26.4 -10.0,26.4 -12.3,22.5 -10.0,18.6 -5.6,18.6" fill="#3f8f5a" style="--d:787ms"/><polygon points="-3.3,31.5 -5.6,35.4 -10.0,35.4 -12.3,31.5 -10.0,27.7 -5.6,27.7" fill="#dfe8f2" style="--d:771ms"/><polygon points="4.5,-27.0 2.2,-23.1 -2.2,-23.1 -4.5,-27.0 -2.2,-30.9 2.2,-30.9" fill="#c9a66b" style="--d:979ms"/><polygon points="4.5,-18.0 2.2,-14.1 -2.2,-14.1 -4.5,-18.0 -2.2,-21.9 2.2,-21.9" fill="#1f4e8c" style="--d:939ms"/><polygon points="4.5,-9.0 2.2,-5.1 -2.2,-5.1 -4.5,-9.0 -2.2,-12.9 2.2,-12.9" fill="#6aa84f" style="--d:926ms"/><polygon points="4.5,0.0 2.2,3.9 -2.2,3.9 -4.5,0.0 -2.2,-3.9 2.2,-3.9" fill="#2b6cb0" style="--d:911ms"/><polygon points="4.5,9.0 2.2,12.9 -2.2,12.9 -4.5,9.0 -2.2,5.1 2.2,5.1" fill="#3f8f5a" style="--d:969ms"/><polygon points="4.5,18.0 2.2,21.9 -2.2,21.9 -4.5,18.0 -2.2,14.1 2.2,14.1" fill="#6aa84f" style="--d:890ms"/><polygon points="4.5,27.0 2.2,30.9 -2.2,30.9 -4.5,27.0 -2.2,23.1 2.2,23.1" fill="#1f4e8c" style="--d:947ms"/><polygon points="12.3,-31.5 10.0,-27.7 5.6,-27.7 3.3,-31.5 5.6,-35.4 10.0,-35.4" fill="#c9a66b" style="--d:1163ms"/><polygon points="12.3,-22.5 10.0,-18.6 5.6,-18.6 3.3,-22.5 5.6,-26.4 10.0,-26.4" fill="#1f4e8c" style="--d:1144ms"/><polygon points="12.3,-13.5 10.0,-9.6 5.6,-9.6 3.3,-13.5 5.6,-17.4 10.0,-17.4" fill="#2b6cb0" style="--d:1087ms"/><polygon points="12.3,-4.5 10.0,-0.6 5.6,-0.6 3.3,-4.5 5.6,-8.4 10.0,-8.4" fill="#dfe8f2" style="--d:1066ms"/><polygon points="12.3,4.5 10.0,8.4 5.6,8.4 3.3,4.5 5.6,0.6 10.0,0.6" fill="#c9a66b" style="--d:1072ms"/><polygon points="12.3,13.5 10.0,17.4 5.6,17.4 3.3,13.5 5.6,9.6 10.0,9.6" fill="#1f4e8c" style="--d:1070ms"/><polygon points="12.3,22.5 10.0,26.4 5.6,26.4 3.3,22.5 5.6,18.6 10.0,18.6" fill="#2b6cb0" style="--d:1104ms"/><polygon points="12.3,31.5 10.0,35.4 5.6,35.4 3.3,31.5 5.6,27.7 10.0,27.7" fill="#2b6cb0" style="--d:1136ms"/><polygon points="20.1,-27.0 17.8,-23.1 13.4,-23.1 11.1,-27.0 13.4,-30.9 17.8,-30.9" fill="#c9a66b" style="--d:1320ms"/><polygon points="20.1,-18.0 17.8,-14.1 13.4,-14.1 11.1,-18.0 13.4,-21.9 17.8,-21.9" fill="#c9a66b" style="--d:1266ms"/><polygon points="20.1,-9.0 17.8,-5.1 13.4,-5.1 11.1,-9.0 13.4,-12.9 17.8,-12.9" fill="#1f4e8c" style="--d:1299ms"/><polygon points="20.1,0.0 17.8,3.9 13.4,3.9 11.1,0.0 13.4,-3.9 17.8,-3.9" fill="#1f4e8c" style="--d:1297ms"/><polygon points="20.1,9.0 17.8,12.9 13.4,12.9 11.1,9.0 13.4,5.1 17.8,5.1" fill="#2b6cb0" style="--d:1231ms"/><polygon points="20.1,18.0 17.8,21.9 13.4,21.9 11.1,18.0 13.4,14.1 17.8,14.1" fill="#6aa84f" style="--d:1343ms"/><polygon points="20.1,27.0 17.8,30.9 13.4,30.9 11.1,27.0 13.4,23.1 17.8,23.1" fill="#2b6cb0" style="--d:1283ms"/><polygon points="27.9,-22.5 25.6,-18.6 21.2,-18.6 18.9,-22.5 21.2,-26.4 25.6,-26.4" fill="#6aa84f" style="--d:1401ms"/><polygon points="27.9,-13.5 25.6,-9.6 21.2,-9.6 18.9,-13.5 21.2,-17.4 25.6,-17.4" fill="#1f4e8c" style="--d:1476ms"/><polygon points="27.9,-4.5 25.6,-0.6 21.2,-0.6 18.9,-4.5 21.2,-8.4 25.6,-8.4" fill="#dfe8f2" style="--d:1430ms"/><polygon points="27.9,4.5 25.6,8.4 21.2,8.4 18.9,4.5 21.2,0.6 25.6,0.6" fill="#c9a66b" style="--d:1507ms"/><polygon points="27.9,13.5 25.6,17.4 21.2,17.4 18.9,13.5 21.2,9.6 25.6,9.6" fill="#1f4e8c" style="--d:1396ms"/><polygon points="27.9,22.5 25.6,26.4 21.2,26.4 18.9,22.5 21.2,18.6 25.6,18.6" fill="#2b6cb0" style="--d:1439ms"/><polygon points="35.7,-9.0 33.4,-5.1 29.0,-5.1 26.7,-9.0 29.0,-12.9 33.4,-12.9" fill="#2b6cb0" style="--d:1644ms"/><polygon points="35.7,0.0 33.4,3.9 29.0,3.9 26.7,0.0 29.0,-3.9 33.4,-3.9" fill="#2b6cb0" style="--d:1629ms"/><polygon points="35.7,9.0 33.4,12.9 29.0,12.9 26.7,9.0 29.0,5.1 33.4,5.1" fill="#6aa84f" style="--d:1593ms"/></g>
     <circle class="ld-shade" r="40"/>
-    <circle class="ld-ping" r="42"/><g transform="rotate(-18) scale(1 0.3)"><circle class="ld-orbit" r="56"/><g class="ld-spin"><circle class="ld-trail" cx="56" r="4"/><circle class="ld-sat" cx="56" r="4"/></g></g><g transform="rotate(28) scale(1 0.42)"><circle class="ld-orbit ld-orbit--b" r="48"/><g class="ld-spin ld-spin--b"><circle class="ld-moon" cx="48" r="3"/></g></g>
   </svg>
+  <span class="ld-sweep"></span>
+  <span class="ld-orbit is-front"><span class="ld-run"><i class="ld-sat"></i></span></span>
+  <span class="ld-orbit ld-orbit--b is-front"><span class="ld-run"><i class="ld-moon"></i></span></span>
+  </div>
+  <div class="ld-info">
   <p class="ld-msg" id="loadingMsg" role="status">Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…</p>
-  <div class="ld-meter" aria-hidden="true"><div class="ld-bar"><i></i></div><span class="ld-pct num" id="loadingPct">0%</span></div>
+  <div class="ld-meter" aria-hidden="true"><div class="ld-bar"><i></i></div></div>
   <ol class="ld-steps" id="loadingSteps" aria-hidden="true"><li>Datos de NASA</li><li>Casillas del tablero</li><li>Mundo en órbita</li></ol>
+  </div>
 </div>
 
 <div class="gx-search" role="search">
   <label class="gx-search__field">
     <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.5-4.5"/></svg>
     <span class="sr-only">Buscar en el globo</span>
-    <input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="Busca una región, expediente o tormenta" role="combobox" aria-expanded="false" aria-controls="qList" aria-autocomplete="list">
+    <input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="Busca o explora por región…" role="combobox" aria-expanded="false" aria-controls="qList" aria-autocomplete="list">
     <kbd aria-hidden="true">/</kbd>
   </label>
   <div class="gx-results" id="qList" role="listbox" hidden></div>
 </div>
-<nav class="gx-regions" id="regions" aria-label="Ir a una región"></nav>
 
 <div class="gx-tools">
   <div class="zoom">
     <button type="button" id="zin" aria-label="Acercar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
     <button type="button" id="zout" aria-label="Alejar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>
     <button type="button" id="homeBtn" aria-label="Ver el planeta completo"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></button>
+    <button type="button" id="immBtn" aria-label="Ocultar la interfaz (H)" title="Ocultar la interfaz (H)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg></button>
   </div>
 </div>
 
@@ -344,13 +429,26 @@
   <div class="gx-dock__info">
     <p class="gx-dock__say" id="say" aria-live="polite">…</p>
     <ul class="legend" id="key" aria-label="Leyenda"></ul>
+    <button type="button" class="gx-more-btn" id="moreBtn" aria-expanded="false" aria-controls="more">Detalles<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
-  <p class="gx-dock__src" id="src"></p>
   <div class="gx-data" id="dataRow" hidden>
-    <label>Variable <select id="dataVar"></select></label>
-    <label>Métrica <select id="dataMetric"><option value="value">Valor</option><option value="anomaly">Anomalía mensual</option></select></label>
-    <label>Fecha <input id="dataDate" type="date"></label>
-    <div class="gx-data__top" id="dataTop"></div>
+    <p class="gx-phrase" id="dataPhrase"></p>
+    <div class="gx-pick__pop" id="pickVarPop" role="listbox" hidden></div>
+    <div class="gx-pick__pop" id="pickMetricPop" role="listbox" hidden></div>
+    <div class="gx-pick__pop" id="pickDatePop" role="dialog" hidden>
+      <div id="pickDatePresets"></div>
+      <label class="gx-pick__other"><span class="gx-pick__h">Otra fecha</span><input id="dataDate" type="date"></label>
+    </div>
+    <select id="dataVar" hidden></select>
+    <select id="dataMetric" hidden><option value="value">Cuánto marcó</option><option value="anomaly">Qué tan raro fue</option></select>
+  </div>
+  <div class="gx-more" id="more" hidden>
+    <div id="dataMore" hidden>
+      <p class="gx-data__help" id="dataHelp"></p>
+      <p class="gx-data__toph" id="dataTopH" hidden></p>
+      <div class="gx-data__top" id="dataTop"></div>
+    </div>
+    <p class="gx-dock__src" id="src"></p>
   </div>
   <div class="gx-dock__time" id="timeRow" hidden>
     <button type="button" class="timebar__play" id="tPlay" aria-label="Reproducir los años"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
@@ -365,7 +463,8 @@
     <section aria-labelledby="detT"><h3 id="detT">Detalle del mundo</h3><p class="gx-panel__note">Solo cambia el aspecto; los datos no cambian.</p>
       <label class="toggle">Árboles, montañas y volcanes <input type="checkbox" id="tProps" checked></label>
       <label class="toggle">Nubes de adorno <input type="checkbox" id="tClouds" checked></label>
-      <label class="toggle">Cielo: estrellas, cometas, Luna y auroras <input type="checkbox" id="tSky" checked></label>
+      <label class="toggle">Cielo: estrellas, cometas, Luna y auroras <input type="checkbox" id="tSky" checked aria-describedby="skyHint"></label>
+      <p class="gx-panel__note" id="skyHint">Toca la Luna o una constelación para saber más.</p>
       <label class="toggle">Girar solo <input type="checkbox" id="tSpin" checked></label>
     </section>
     <div class="gx-panel__foot"><button type="button" class="linklike" id="setClear" hidden>Limpiar</button><button type="button" class="btn btn--glow" id="setDone">Listo</button></div>
@@ -381,6 +480,10 @@
   <div class="card__actions" id="cardActions"></div>
 </aside>
 <div class="tip" id="tip" hidden></div>
+<div class="gx-imm" id="immBar">
+  <button type="button" class="gx-show" id="showUi">Mostrar interfaz <kbd>H</kbd></button>
+  <button type="button" class="gx-show" id="spinUi" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg>Girar despacio</button>
+</div>
 <p class="sr-only" id="announce" aria-live="polite"></p>
 </section>
 
@@ -401,7 +504,7 @@ addEventListener('message', (e) => {
   const ql = new URLSearchParams(location.search).get('lang'); if (ql && ql !== I18N.lang) I18N.set(ql);
   const LANG = window.W3_LANG = I18N.lang === 'es' ? 'es' : 'en';
   document.documentElement.lang = LANG;
-  const EN = window.W3_EN = {"No se pudo cargar el mundo 3D: la biblioteca three.js no llegó desde jsDelivr. Revisa tu conexión.": "The 3D world could not load: the three.js library did not arrive from jsDelivr. Check your connection.", "Reintentar": "Try again", "Datos de NASA": "NASA data", "Casillas del tablero": "Board tiles", "Mundo en órbita": "World in orbit", "Explorador · Mundo 3D": "Explorer · 3D world", "Explorador global, Mundo 3D": "Global explorer, 3D world", "Globo 3D como un tablero de hexágonos con biomas y relieve de NASA. Arrastra para girarlo; toca un expediente o un fenómeno para acercarte.": "A 3D globe as a board of hexagons, with NASA biomes and relief. Drag to turn it; tap a case file or a phenomenon to get close.", "Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…": "Loading the NASA board: land cover, elevation, color and the sea floor…", "No se pudo cargar el tablero de NASA. Revisa la conexión y recarga.": "The NASA board could not be loaded. Check the connection and reload.", "Buscar en el globo": "Search the globe", "Busca una región, expediente o tormenta": "Search a region, case file or storm", "Ir a una región": "Go to a region", "Acercar": "Zoom in", "Alejar": "Zoom out", "Ver el planeta completo": "See the whole planet", "Capa": "Layer", "Expedientes": "Case files", "Eventos": "Events", "Clima": "Weather", "En vivo": "Live", "Ajustes": "Settings", "Datos": "Data", "Métrica": "Metric", "Fecha": "Date", "Valor": "Value", "Anomalía mensual": "Monthly anomaly", "Ocultar panel": "Hide panel", "Mostrar panel": "Show panel", "Reproducir los años": "Play the years", "Pausar": "Pause", "Ahora": "Now", "Eventos reportados en": "Events reported in", "Hoy": "Today", "Ajustes de la vista": "View settings", "Cerrar": "Close", "Qué mostrar": "What to show", "Detalle del mundo": "World detail", "Solo cambia el aspecto; los datos no cambian.": "This changes the look only; the data stays the same.", "Árboles, montañas y volcanes": "Trees, mountains and volcanoes", "Nubes de adorno": "Decorative clouds", "Estrellas y cometas": "Stars and comets", "Cielo: estrellas, cometas, Luna y auroras": "Sky: stars, comets, Moon and auroras", "Girar solo": "Turn on its own", "Limpiar": "Clear", "Listo": "Done", "Cerrar y volver al planeta": "Close and go back to the planet", "Leyenda": "Key", "Bosque de coníferas": "Coniferous forest", "Selva tropical": "Tropical rainforest", "Bosque caducifolio o mixto": "Deciduous or mixed forest", "Matorral": "Shrubland", "Sabana": "Savanna", "Pradera": "Grassland", "Humedal": "Wetland", "Cultivos": "Cropland", "Ciudad": "City", "Hielo y nieve permanentes": "Permanent snow and ice", "Desierto o suelo desnudo": "Desert or bare ground", "Tundra": "Tundra", "Montaña (más de 3.000 m)": "Mountain (over 3,000 m)", "Volcán con actividad en EONET": "Volcano active in EONET", "Lago": "Lake", "Costa y mar poco profundo": "Coast and shallow sea", "Mar": "Sea", "Mar profundo": "Deep sea", "No se pudo descargar una capa de NASA GIBS. Revisa la conexión y recarga.": "A NASA GIBS layer could not be downloaded. Check the connection and reload.", "Pintando las casillas…": "Painting the tiles…", "Pidiendo los eventos a NASA EONET…": "Asking NASA EONET for events…", "No se pudo leer NASA EONET ahora. Prueba con un año.": "NASA EONET could not be read right now. Try a year.", "Evidencia fuerte": "Strong evidence", "Evidencia moderada": "Moderate evidence", "Evidencia débil": "Weak evidence", "No concluyente": "Inconclusive", "Tendencia confirmada": "Confirmed trend", "Expediente de anomalía": "Anomaly file", "Tormenta severa": "Severe storm", "Tornado": "Tornado", "Inundación": "Flood", "Incendio forestal": "Wildfire", "Volcán": "Volcano", "Hielo marino o lacustre": "Sea or lake ice", "Polvo y bruma": "Dust and haze", "Sismo": "Earthquake", "Ciclón (gira según su hemisferio)": "Cyclone (turns with its hemisphere)", "Lluvia e inundación": "Rain and flood", "Incendio y humo": "Wildfire and smoke", "Ceniza volcánica": "Volcanic ash", "Hielo y nieve": "Ice and snow", "tormentas": "storms", "tornado": "tornado", "inundaciones": "floods", "incendios": "wildfires", "volcanes": "volcanoes", "de hielo o nieve": "ice or snow", "de polvo": "dust", "sismos": "earthquakes", "Anomalías": "Anomalies", "Tormentas": "Storms", "Inundaciones": "Floods", "Incendios": "Wildfires", "Volcanes": "Volcanoes", "Sismos": "Earthquakes", "Todos": "All", "Mueve la barra para ver un año": "Move the bar to see a year", "Fenómenos registrados en": "Phenomena recorded in", "Sube": "Rising", "Baja": "Falling", "Anomalía": "Anomaly", "Biomas: MODIS (NASA) · relieve: ASTER GDEM (NASA/METI) · color y mar: Blue Marble (NASA) · vía NASA GIBS": "Biomes: MODIS (NASA) · relief: ASTER GDEM (NASA/METI) · color and sea: Blue Marble (NASA) · via NASA GIBS", "NASA EONET en vivo: eventos abiertos de los últimos 45 días, con trayectoria de cada tormenta": "NASA EONET live: open events of the last 45 days, with each storm’s track", "Un tipo de expediente a la vez. El globo cambia al elegir.": "One kind of case file at a time. The globe changes as you pick.", "Un tipo de fenómeno a la vez. Cada forma es un evento real de EONET.": "One kind of phenomenon at a time. Every shape is a real EONET event.", "Ajustes · 1 filtro activo": "Settings · 1 filter on", "Regiones": "Regions", "Clima en pantalla": "Weather on screen", "Sin resultados. Prueba con un país, una región o el nombre de una tormenta.": "No results. Try a country, a region or a storm’s name.", "Expediente del portal: datos de NASA POWER, MODIS y EONET.": "A portal case file: data from NASA POWER, MODIS and EONET.", "Fuente: NASA EONET. La forma en el globo es un símbolo del tipo de evento.": "Source: NASA EONET. The shape on the globe is a symbol of the kind of event.", "Abrir el expediente": "Open the case file", "Volver al planeta": "Back to the planet", "Toca para acercarte": "Tap to get close", "Toca para saber más": "Tap to learn more", "Agua": "Water", "Sin dato de elevación": "No elevation data"};
+  const EN = window.W3_EN = {"No se pudo cargar el mundo 3D: la biblioteca three.js no llegó desde jsDelivr. Revisa tu conexión.": "The 3D world could not load: the three.js library did not arrive from jsDelivr. Check your connection.", "Reintentar": "Try again", "Datos de NASA": "NASA data", "Casillas del tablero": "Board tiles", "Mundo en órbita": "World in orbit", "Explorador · Mundo 3D": "Explorer · 3D world", "Explorador global, Mundo 3D": "Global explorer, 3D world", "Globo 3D como un tablero de hexágonos con biomas y relieve de NASA. Arrastra para girarlo; toca un expediente o un fenómeno para acercarte.": "A 3D globe as a board of hexagons, with NASA biomes and relief. Drag to turn it; tap a case file or a phenomenon to get close.", "Cargando el tablero de NASA: cobertura del suelo, elevación, color y fondo del mar…": "Loading the NASA board: land cover, elevation, color and the sea floor…", "No se pudo cargar el tablero de NASA. Revisa la conexión y recarga.": "The NASA board could not be loaded. Check the connection and reload.", "Buscar en el globo": "Search the globe", "Busca o explora por región…": "Search, or explore by region…", "Explorar por región": "Explore by region", "Aquí": "Here", "Acercar": "Zoom in", "Alejar": "Zoom out", "Ver el planeta completo": "See the whole planet", "Capa": "Layer", "Expedientes": "Case files", "Eventos": "Events", "Clima": "Weather", "En vivo": "Live", "Ajustes": "Settings", "Datos": "Data", "Métrica": "Metric", "Qué ver": "What to see", "Cómo verlo": "How to see it", "Día": "Day", "Valor del día": "Value that day", "Diferencia con lo normal": "Difference from normal", "Cuánto marcó": "What it measured", "Qué tan raro fue": "How unusual it was", "Otra fecha": "Another date", "Ocultar la interfaz (H)": "Hide the interface (H)", "Mostrar interfaz": "Show interface", "Fecha": "Date", "Valor": "Value", "Anomalía mensual": "Monthly anomaly", "Ocultar panel": "Hide panel", "Detalles": "Details", "Mostrar panel": "Show panel", "Reproducir los años": "Play the years", "Pausar": "Pause", "Ahora": "Now", "Eventos reportados en": "Events reported in", "Hoy": "Today", "Ajustes de la vista": "View settings", "Cerrar": "Close", "Qué mostrar": "What to show", "Detalle del mundo": "World detail", "Solo cambia el aspecto; los datos no cambian.": "This changes the look only; the data stays the same.", "Árboles, montañas y volcanes": "Trees, mountains and volcanoes", "Nubes de adorno": "Decorative clouds", "Estrellas y cometas": "Stars and comets", "Cielo: estrellas, cometas, Luna y auroras": "Sky: stars, comets, Moon and auroras", "Girar solo": "Turn on its own", "Girar despacio": "Turn slowly", "Toca la Luna o una constelación para saber más.": "Tap the Moon or a constellation to learn more.", "Limpiar": "Clear", "Listo": "Done", "Cerrar y volver al planeta": "Close and go back to the planet", "Leyenda": "Key", "Bosque de coníferas": "Coniferous forest", "Selva tropical": "Tropical rainforest", "Bosque caducifolio o mixto": "Deciduous or mixed forest", "Matorral": "Shrubland", "Sabana": "Savanna", "Pradera": "Grassland", "Humedal": "Wetland", "Cultivos": "Cropland", "Ciudad": "City", "Hielo y nieve permanentes": "Permanent snow and ice", "Desierto o suelo desnudo": "Desert or bare ground", "Tundra": "Tundra", "Montaña (más de 3.000 m)": "Mountain (over 3,000 m)", "Volcán con actividad en EONET": "Volcano active in EONET", "Lago": "Lake", "Costa y mar poco profundo": "Coast and shallow sea", "Mar": "Sea", "Mar profundo": "Deep sea", "No se pudo descargar una capa de NASA GIBS. Revisa la conexión y recarga.": "A NASA GIBS layer could not be downloaded. Check the connection and reload.", "Pintando las casillas…": "Painting the tiles…", "Pidiendo los eventos a NASA EONET…": "Asking NASA EONET for events…", "No se pudo leer NASA EONET ahora. Prueba con un año.": "NASA EONET could not be read right now. Try a year.", "Evidencia fuerte": "Strong evidence", "Evidencia moderada": "Moderate evidence", "Evidencia débil": "Weak evidence", "No concluyente": "Inconclusive", "Tendencia confirmada": "Confirmed trend", "Expediente de anomalía": "Anomaly file", "Tormenta severa": "Severe storm", "Tornado": "Tornado", "Inundación": "Flood", "Incendio forestal": "Wildfire", "Volcán": "Volcano", "Hielo marino o lacustre": "Sea or lake ice", "Polvo y bruma": "Dust and haze", "Sismo": "Earthquake", "Ciclón (gira según su hemisferio)": "Cyclone (turns with its hemisphere)", "Lluvia e inundación": "Rain and flood", "Incendio y humo": "Wildfire and smoke", "Ceniza volcánica": "Volcanic ash", "Hielo y nieve": "Ice and snow", "tormentas": "storms", "tornado": "tornado", "inundaciones": "floods", "incendios": "wildfires", "volcanes": "volcanoes", "de hielo o nieve": "ice or snow", "de polvo": "dust", "sismos": "earthquakes", "Anomalías": "Anomalies", "Tormentas": "Storms", "Inundaciones": "Floods", "Incendios": "Wildfires", "Volcanes": "Volcanoes", "Sismos": "Earthquakes", "Todos": "All", "Mueve la barra para ver un año": "Move the bar to see a year", "Fenómenos registrados en": "Phenomena recorded in", "Sube": "Rising", "Baja": "Falling", "Anomalía": "Anomaly", "Biomas: MODIS (NASA) · relieve: ASTER GDEM (NASA/METI) · color y mar: Blue Marble (NASA) · vía NASA GIBS": "Biomes: MODIS (NASA) · relief: ASTER GDEM (NASA/METI) · color and sea: Blue Marble (NASA) · via NASA GIBS", "NASA EONET en vivo: eventos abiertos de los últimos 45 días, con trayectoria de cada tormenta": "NASA EONET live: open events of the last 45 days, with each storm’s track", "Un tipo de expediente a la vez. El globo cambia al elegir.": "One kind of case file at a time. The globe changes as you pick.", "Un tipo de fenómeno a la vez. Cada forma es un evento real de EONET.": "One kind of phenomenon at a time. Every shape is a real EONET event.", "Ajustes · 1 filtro activo": "Settings · 1 filter on", "Regiones": "Regions", "Clima en pantalla": "Weather on screen", "Sin resultados. Prueba con un país, una región o el nombre de una tormenta.": "No results. Try a country, a region or a storm’s name.", "Expediente del portal: datos de NASA POWER, MODIS y EONET.": "A portal case file: data from NASA POWER, MODIS and EONET.", "Fuente: NASA EONET. La forma en el globo es un símbolo del tipo de evento.": "Source: NASA EONET. The shape on the globe is a symbol of the kind of event.", "Abrir el expediente": "Open the case file", "Volver al planeta": "Back to the planet", "Toca para acercarte": "Tap to get close", "Toca para saber más": "Tap to learn more", "Agua": "Water", "Sin dato de elevación": "No elevation data"};
   const T = (s) => (LANG === 'en' ? EN[s] ?? s : s);
   if (LANG === 'en') {
     // Static text in the page: text nodes and the labels people and screen readers see.
@@ -430,7 +533,7 @@ import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { cells as gridCells, cellGeometry, basis, regionCentres, regionOf, BIOMES, RECORD, FLAG } from './grid.js?v=42';
-import { createSky } from './sky.js?v=5';
+import { createSky } from './sky.js?v=13';
 
 // Language and the page's static text: set by the classic script above, which runs before three.js arrives.
 const LANG = window.W3_LANG, EN = window.W3_EN;
@@ -445,19 +548,24 @@ reducedMQ.addEventListener('change', (e) => { REDUCED = e.matches; if (REDUCED) 
 // narrow for a moment while it loads, which must not pick the phone's grid on a desktop.
 const MOBILE = matchMedia('(pointer: coarse)').matches || (() => { try { return (window.top || window).innerWidth <= 700; } catch (e) { return innerWidth <= 700; } })();
 const stage = document.getElementById('stage'), loading = document.getElementById('loading');
-// The loader's line and bar: each step says what is happening and moves the bar on.
-let pctNow = 0;
-const loadStep = (msg, p, step) => {
+// The loader's line and steps: each real stage says what is happening and ticks its step off. The bar does not
+// follow them: it keeps its own steady pace (CSS ld-trickle) and fills in finishLoading, once the board is built.
+const loadStep = (msg, step) => {
   const m = document.getElementById('loadingMsg'); if (m && msg) { m.textContent = msg; m.style.animation = 'none'; void m.offsetWidth; m.style.animation = ''; }
-  loading.style.setProperty('--p', p);
   document.querySelectorAll('#loadingSteps li').forEach((li, i) => { li.classList.toggle('is-done', i < step); li.classList.toggle('is-active', i === step); });
-  // The percent counts up to where the bar is heading.
-  const el = document.getElementById('loadingPct'), from = pctNow, to = Math.round(p * 100), t0 = performance.now();
-  pctNow = to; if (!el) return;
-  const tick = (now) => { const k = Math.min(1, (now - t0) / 600); el.textContent = `${Math.round(from + (to - from) * (1 - (1 - k) ** 3))}%`; if (k < 1) requestAnimationFrame(tick); };
-  requestAnimationFrame(tick);
 };
-loadStep(null, 0.35, 0);
+// The board is built and a first frame is out: the bar runs to the end from wherever its pace had taken it, the
+// last step ticks off, and only then the loader zooms away and the planet is born.
+const finishLoading = () => {
+  loadStep(null, 3);
+  const bar = loading.querySelector('.ld-bar i'), from = bar ? getComputedStyle(bar).transform : 'none';
+  bar?.getAnimations().forEach((a) => a.cancel());
+  const fill = bar?.animate([{ transform: from }, { transform: 'scaleX(1)' }], { duration: REDUCED ? 0 : 450, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
+  (fill ? fill.finished : Promise.resolve()).then(() => setTimeout(() => {
+    document.body.classList.add('is-ready'); loading.classList.add('is-done'); tell({ type: 'shown' }); setTimeout(() => loading.remove(), 700);
+  }, REDUCED ? 0 : 180));
+};
+loadStep(null, 0);
 const R = 1;
 // The board comes from api-processor /world/ when available, else data/world/: a base grid for the whole planet — 64,002
 // hexagons about 90 km across on desktop, 31,362 about 130 km across on phones — and a fine grid of 829,442
@@ -546,6 +654,9 @@ const wrapLon = (v) => ((v + 540) % 360) - 180;
 const cam = { lat: 12, lon: -25, alt: homeAlt }, goal = { ...cam };
 if (Q0.has('lat') && Q0.has('lon')) { cam.lat = goal.lat = clampLat(+Q0.get('lat')); cam.lon = goal.lon = +Q0.get('lon'); cam.alt = goal.alt = clampAlt(+Q0.get('z') || homeAlt); }
 const camCtl = { spin: !REDUCED && !Q0.has('lat'), tween: null, drag: null, vel: { lat: 0, lon: 0 }, pointers: new Map(), pinch0: 0, alt0: 0 };
+// The ride with Terra (stepChase): turned round the satellite by yaw and pitch, dist times its usual distance; drop asks
+// it to end at the next frame (any flight does).
+const chase = { on: false, yaw: 0, pitch: 0, dist: 1, dist0: 1, drop: false };
 const lookTarget = new THREE.Vector3(), north = new THREE.Vector3(), camP = new THREE.Vector3(), _back = new THREE.Vector3();
 // camGround eases toward the highest base tile top round the point (within about 70 km), so the camera's height
 // counts from the peaks there and not from a valley between them; camDist is the distance from the camera to
@@ -595,7 +706,7 @@ function flyCam(lat, lon, alt) {
   const ang = THREE.MathUtils.radToDeg(toVec(from.lat, from.lon).angleTo(toVec(to.lat, to.lon)));
   // A long trip rises first and comes back down, so the planet never sweeps past too close.
   const bump = Math.min(1.6, ang / 70) * Math.max(0, 1 - Math.abs(to.alt - from.alt) / 3);
-  camCtl.spin = false; camCtl.vel.lat = camCtl.vel.lon = 0;
+  camCtl.spin = false; camCtl.vel.lat = camCtl.vel.lon = 0; chase.drop = true;
   camCtl.tween = { from, to, bump, t0: performance.now(), dur: REDUCED ? 1 : Math.min(2200, 900 + ang * 9) };
 }
 const CLOSE_ALT = R + 0.18;   // where a selection flies: about 1,150 km over the point, its region in view
@@ -610,12 +721,55 @@ function stepCamera(dt, now) {
   } else if (!camCtl.drag) {
     // A flick keeps turning and stops in about half a second.
     if (Math.abs(camCtl.vel.lat) + Math.abs(camCtl.vel.lon) > 0.05) { goal.lat = clampLat(goal.lat + camCtl.vel.lat * dt); goal.lon += camCtl.vel.lon * dt; const d = Math.pow(0.004, dt); camCtl.vel.lat *= d; camCtl.vel.lon *= d; }
-    if (camCtl.spin && cam.alt > 2) goal.lon += 2.4 * dt;
+    // Contemplating, it turns at any height and slower: about one degree a second, a turn in six minutes.
+    if (camCtl.spin && immersive) goal.lon += 1 * dt;
+    else if (camCtl.spin && cam.alt > 2) goal.lon += 2.4 * dt;
     const f = REDUCED ? 1 : 1 - Math.pow(0.0005, dt);           // about 90% of the way in 0.3s
     cam.lat += (goal.lat - cam.lat) * f; cam.lon += (goal.lon - cam.lon) * f; cam.alt += (goal.alt - cam.alt) * f;
   }
   camGround += (groundAt(cam.lat, cam.lon) - camGround) * (REDUCED ? 1 : 1 - Math.pow(0.002, dt));
   placeCamera();
+  stepChase();
+}
+/* Riding with Terra: while its card is open the camera flies behind the satellite and a little above it, the planet
+   below, and keeps pace with it. Dragging turns the view round it, the wheel, a pinch or + and - bring it nearer or
+   farther; closing the card, or any flight, brings the camera back over the ground under the satellite. sky.js gives
+   the satellite's frame and the eased weight of the ride, which blends the chase view with the usual one. */
+const CHASE_D = 0.85, CHASE_YAW = -0.55, CHASE_PITCH = 0.3, CHASE_PITCH_MIN = -0.6, CHASE_PITCH_MAX = 1.0, CHASE_NEAR = 0.45, CHASE_FAR = 3;
+const _cP = new THREE.Vector3(), _cF = new THREE.Vector3(), _cU = new THREE.Vector3(), _cS = new THREE.Vector3(), _cD = new THREE.Vector3(), _cE = new THREE.Vector3(), _cT = new THREE.Vector3(), _cA = new THREE.Vector3(), _cB = new THREE.Vector3();
+const _cM = new THREE.Matrix4(), _cQ = new THREE.Quaternion(), _cR = new THREE.Quaternion(), _cW = new THREE.Quaternion();
+const chaseTurn = (dyaw, dpitch) => { chase.yaw += dyaw; chase.pitch = THREE.MathUtils.clamp(chase.pitch + dpitch, CHASE_PITCH_MIN - CHASE_PITCH, CHASE_PITCH_MAX - CHASE_PITCH); };
+const chaseZoom = (k) => { chase.dist = THREE.MathUtils.clamp(chase.dist * k, CHASE_NEAR, CHASE_FAR); };
+function stepChase() {
+  if (chase.drop) { chase.drop = false; skyFx.unfollow(); }
+  const on = skyFx.following();
+  if (on && !chase.on) { chase.yaw = chase.pitch = 0; chase.dist = 1; camCtl.spin = false; camCtl.tween = null; camCtl.vel.lat = camCtl.vel.lon = 0; }
+  if (!on && chase.on) {
+    // The way back: over the ground under the satellite, high enough to see it pass.
+    skyFx.orbitFrame(_cP, _cF, _cU, _cS); const [la, lo] = toLatLon(_cP);
+    cam.lat = goal.lat = clampLat(la); cam.lon = goal.lon = cam.lon + wrapLon(lo - cam.lon); cam.alt = goal.alt = Math.max(goal.alt, R + 1.3);
+  }
+  chase.on = on;
+  const w = skyFx.followWeight(); if (w <= 0) return;
+  skyFx.orbitFrame(_cP, _cF, _cU, _cS);
+  const yaw = CHASE_YAW + chase.yaw, pitch = CHASE_PITCH + chase.pitch, d = CHASE_D * chase.dist;
+  _cD.copy(_cF).multiplyScalar(-Math.cos(yaw) * Math.cos(pitch)).addScaledVector(_cS, Math.sin(yaw) * Math.cos(pitch)).addScaledVector(_cU, Math.sin(pitch));
+  _cE.copy(_cP).addScaledVector(_cD, d);                 // the eye
+  _cT.copy(_cP).addScaledVector(_cU, -0.12 * d);         // a little below the satellite, so the planet fills the bottom
+  _cQ.setFromRotationMatrix(_cM.lookAt(_cE, _cT, _cU));
+  if (w < 1) {
+    // On the way, the camera swings round the planet's centre (never through it) and turns as it goes.
+    const r0 = camera.position.length(), r1 = _cE.length();
+    _cA.copy(camera.position).divideScalar(r0); _cB.copy(_cE).divideScalar(r1);
+    const ang = _cA.angleTo(_cB);
+    _cW.identity().slerp(_cR.setFromUnitVectors(_cA, _cB), w);
+    camera.position.copy(_cA.applyQuaternion(_cW)).multiplyScalar(r0 + (r1 - r0) * w + 0.35 * ang * Math.sin(Math.PI * w));
+    camera.quaternion.slerp(_cQ, w);
+  } else { camera.position.copy(_cE); camera.quaternion.copy(_cQ); }
+  // The Sun aims at the ground under the satellite, and the near plane lets the model come close.
+  lookTarget.lerp(_cB.copy(_cP).setLength(R), w);
+  const near = Math.min(camera.near, 0.003 + 0.05 * (1 - w));
+  if (near !== camera.near) { camera.near = near; camera.updateProjectionMatrix(); }
 }
 // Side or bottom panels in the portal: the picture slides so the selection stays in the free space.
 const insetNow = { x: 0, y: 0 }, insetGoal = { x: 0, y: 0 };
@@ -632,12 +786,19 @@ function stepInset(dt) {
     try { el.setPointerCapture(e.pointerId); } catch (err) { /* not capturable: fine */ }
     camCtl.pointers.set(e.pointerId, [e.clientX, e.clientY]);
     camCtl.tween = null; camCtl.spin = false; camCtl.vel.lat = camCtl.vel.lon = 0;
-    if (camCtl.pointers.size === 2) { const [a, b] = [...camCtl.pointers.values()]; camCtl.pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); camCtl.alt0 = goal.alt; camCtl.drag = null; }
+    if (camCtl.pointers.size === 2) { const [a, b] = [...camCtl.pointers.values()]; camCtl.pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); camCtl.alt0 = goal.alt; chase.dist0 = chase.dist; camCtl.drag = null; }
     else camCtl.drag = { x: e.clientX, y: e.clientY, t: performance.now() };
   });
   el.addEventListener('pointermove', (e) => {
     if (!camCtl.pointers.has(e.pointerId)) return;
     camCtl.pointers.set(e.pointerId, [e.clientX, e.clientY]);
+    // Riding with Terra, a drag turns the view round it and a pinch brings it nearer or farther.
+    if (chase.on) {
+      if (camCtl.pointers.size === 2) { const [a, b] = [...camCtl.pointers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (camCtl.pinch0 && d) { chase.dist = 1; chaseZoom(chase.dist0 * camCtl.pinch0 / d); } return; }
+      const dr = camCtl.drag; if (!dr) return;
+      chaseTurn(-(e.clientX - dr.x) * 0.006, (e.clientY - dr.y) * 0.005);
+      dr.x = e.clientX; dr.y = e.clientY; dr.t = performance.now(); return;
+    }
     if (camCtl.pointers.size === 2) { const [a, b] = [...camCtl.pointers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (camCtl.pinch0 && d) goal.alt = clampAlt(R + (camCtl.alt0 - R) * camCtl.pinch0 / d); return; }
     const dr = camCtl.drag; if (!dr) return;
     const now = performance.now(), dx = e.clientX - dr.x, dy = e.clientY - dr.y, dt = Math.max(8, now - dr.t) / 1000, u = dpp();
@@ -652,10 +813,12 @@ function stepInset(dt) {
     if (!camCtl.pointers.size) { if (!camCtl.drag || performance.now() - camCtl.drag.t > 90) { camCtl.vel.lat = camCtl.vel.lon = 0; } camCtl.drag = null; }
   };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-  el.addEventListener('wheel', (e) => { e.preventDefault(); camCtl.tween = null; camCtl.spin = false; goal.alt = clampAlt(R + (goal.alt - R) * Math.exp(Math.max(-60, Math.min(60, e.deltaY)) * 0.004)); }, { passive: false });
+  el.addEventListener('wheel', (e) => { e.preventDefault(); if (chase.on) { chaseZoom(Math.exp(Math.max(-60, Math.min(60, e.deltaY)) * 0.004)); return; } camCtl.tween = null; camCtl.spin = false; goal.alt = clampAlt(R + (goal.alt - R) * Math.exp(Math.max(-60, Math.min(60, e.deltaY)) * 0.004)); }, { passive: false });
   // Keyboard on the globe: arrows turn it, + and − zoom.
   el.tabIndex = 0;
+  const CHASE_KEYS = { ArrowLeft: () => chaseTurn(0.15, 0), ArrowRight: () => chaseTurn(-0.15, 0), ArrowUp: () => chaseTurn(0, 0.1), ArrowDown: () => chaseTurn(0, -0.1), '+': () => chaseZoom(0.8), '=': () => chaseZoom(0.8), '-': () => chaseZoom(1.25) };
   el.addEventListener('keydown', (e) => {
+    if (chase.on && CHASE_KEYS[e.key]) { CHASE_KEYS[e.key](); e.preventDefault(); return; }
     const step = 8 * (cam.alt - R);
     if (e.key === 'ArrowLeft') goal.lon -= step; else if (e.key === 'ArrowRight') goal.lon += step;
     else if (e.key === 'ArrowUp') goal.lat = clampLat(goal.lat + step); else if (e.key === 'ArrowDown') goal.lat = clampLat(goal.lat - step);
@@ -667,6 +830,8 @@ function stepInset(dt) {
 }
 window.etdLook = (lat, lon, z) => flyCam(lat, lon, z || cam.alt);
 window.etdCam = () => ({ ...cam, goal: { ...goal }, dist: +camera.position.length().toFixed(4), min: ALT_MIN });
+// Probe for checks: where Terra is on screen, in CSS pixels, and whether the ride with it is on.
+window.etdSat = () => { const p = new THREE.Vector3(); skyFx.orbitFrame(p, _cF, _cU, _cS); p.project(camera); return { x: Math.round((p.x + 1) / 2 * innerWidth), y: Math.round((1 - p.y) / 2 * innerHeight), front: p.z < 1, riding: chase.on }; };
 
 scene.add(new THREE.HemisphereLight('#eef4ff', '#4a5670', 1.25));
 const sun = new THREE.DirectionalLight('#fff1d8', 2.3); scene.add(sun);
@@ -805,7 +970,7 @@ const [meta, baseBuf, casesJson, filesJson, evJson, volcJson] = await Promise.al
   fetch(wv('../data/cases.json')).then(r => r.json()), fetch(wv('../data/event-files.json')).then(r => r.json()), fetch(wv('../data/events/2025.json')).then(r => r.json()),
   fetch(wv('../data/volcanoes.json')).then(r => r.json()),
 ]).catch((e) => { window.W3_FAIL('No se pudo cargar el tablero de NASA. Revisa la conexión y recarga.'); throw e; });
-loadStep(T('Pintando las casillas…'), 0.75, 1);
+loadStep(T('Pintando las casillas…'), 1);
 // Let the sentence paint before the board is built (a hidden tab would hold a timer back for a second).
 await (document.hidden ? new Promise(r => { const ch = new MessageChannel(); ch.port1.onmessage = r; ch.port2.postMessage(0); }) : new Promise(r => setTimeout(r, 30)));
 const BASE = readCells(baseBuf, 0), CELLS = BASE.cells, baseIndex = new CellIndex(CELLS, 3);
@@ -1255,47 +1420,77 @@ async function buildEvents(y) {
 const markers = new THREE.Group(); world.add(markers);
 // The canvas is painted in sRGB: said so, or three.js reads it as linear and the pins come out pale.
 const srgbTex = (c) => { const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+// A case file is a beacon: a coloured disc with a white rim and its glyph, over a dark halo that keeps it apart
+// from the relief. ▲ rising, ▼ falling, – no clear trend, ! a one-off anomaly.
 function markerTexture(kind, color) {
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
-  g.translate(32, 32); g.lineWidth = 5; g.strokeStyle = '#fff'; g.fillStyle = color; g.beginPath();
-  if (kind === 'up') { g.moveTo(0, -22); g.lineTo(20, 14); g.lineTo(-20, 14); g.closePath(); }
-  else if (kind === 'down') { g.moveTo(0, 22); g.lineTo(20, -14); g.lineTo(-20, -14); g.closePath(); }
-  else if (kind === 'flat') { g.arc(0, 0, 16, 0, 7); g.fillStyle = '#1e2a2f'; g.fill(); g.setLineDash([8, 6]); g.strokeStyle = color; g.lineWidth = 6; g.stroke(); return srgbTex(c); }
-  else { g.moveTo(0, -20); g.lineTo(20, 0); g.lineTo(0, 20); g.lineTo(-20, 0); g.closePath(); }
-  g.fill(); g.stroke(); return srgbTex(c);
+  g.translate(32, 32);
+  g.beginPath(); g.arc(0, 0, 30, 0, 7); g.fillStyle = 'rgba(10, 14, 28, 0.55)'; g.fill();
+  g.beginPath(); g.arc(0, 0, 21, 0, 7); g.fillStyle = kind === 'flat' ? '#3a4458' : color; g.fill();
+  g.lineWidth = 4; g.strokeStyle = '#fff'; g.stroke();
+  const ink = kind === 'flat' ? '#e7ebf5' : '#0a0e1c'; g.fillStyle = ink; g.strokeStyle = ink; g.lineWidth = 4.5; g.lineCap = 'round'; g.beginPath();
+  if (kind === 'up') { g.moveTo(0, -10); g.lineTo(10, 7); g.lineTo(-10, 7); g.closePath(); g.fill(); }
+  else if (kind === 'down') { g.moveTo(0, 10); g.lineTo(10, -7); g.lineTo(-10, -7); g.closePath(); g.fill(); }
+  else if (kind === 'flat') { g.moveTo(-8, 0); g.lineTo(8, 0); g.stroke(); }
+  else { g.moveTo(0, -11); g.lineTo(0, 3); g.stroke(); g.beginPath(); g.arc(0, 10, 2.8, 0, 7); g.fill(); }
+  return srgbTex(c);
 }
-const TEX = { up: markerTexture('up', '#ec6896'), down: markerTexture('down', '#2eaac4'), flat: markerTexture('flat', '#c3cad9'), anom: markerTexture('anom', '#ff8a4c') };
+// The ring that pulses out of a beacon with a confirmed trend or an anomaly (white, tinted by its material).
+function ringTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.beginPath(); g.arc(32, 32, 27, 0, 7); g.lineWidth = 3.5; g.strokeStyle = '#fff'; g.stroke();
+  return srgbTex(c);
+}
+const TEX = { up: markerTexture('up', '#ec6896'), down: markerTexture('down', '#2eaac4'), flat: markerTexture('flat', '#c3cad9'), anom: markerTexture('anom', '#ff8a4c'), ring: ringTexture() };
+const PIN_COLOR = { up: '#ec6896', down: '#2eaac4', anom: '#ff8a4c' };
+const pulses = new THREE.Group(); world.add(pulses);
+function addPulse(pin, kind) {
+  const r = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.ring, color: PIN_COLOR[kind], transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false }));
+  r.renderOrder = 1; r.userData = { pin, phase: Math.random() }; r.scale.setScalar(pinScale(pin.userData.px)); pulses.add(r);
+}
 const caseLabels = [];
 // Pins keep one size on screen at every distance (about 16 px for the shape, which fills two thirds of its
 // 64 px canvas; DESIGN asks for 13) and stand on their tile: the sprite's anchor is near the shape's foot. A sprite that does
 // not shrink with distance takes its scale in screen terms, so it is set again when the window resizes.
-const pinScale = (px) => 2 * px * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) / innerHeight;
+// They shrink a little on a phone and while the whole planet is in view, where thirty-odd of them crowd together;
+// coming closer brings them back to full size (pinK, set by the loop as the camera moves).
+let pinK = 1;
+const pinScale = (px) => 2 * px * pinK * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) / innerHeight;
+function pinFactor() {
+  const screen = Math.min(innerWidth, innerHeight) < 600 ? 0.82 : 1;
+  const far = THREE.MathUtils.clamp((cam.alt - R - 0.6) / Math.max(0.01, homeAlt - R - 0.6), 0, 1);
+  return screen * (1 - 0.2 * far);
+}
 // Drawn over the relief and its props, in their exact colours (no tone mapping); the far side stays hidden by the
 // horizon test in the loop.
-function pinSprite(tex, px) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false })); s.center.set(0.5, 0.2); s.renderOrder = 2; s.userData.px = px; s.scale.setScalar(pinScale(px)); return s; }
+function pinSprite(tex, px) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false })); s.center.set(0.5, 0.5); s.renderOrder = 2; s.userData.px = px; s.scale.setScalar(pinScale(px)); return s; }
 // On the tile drawn at its place, just over its top: the base tile while the board loads (the level of detail
 // does not exist yet), then the tile actually drawn, fine or base, whenever the level of detail changes.
 function seatMarkers(drawn) {
   markers.children.forEach(o => { if (!o.isSprite) return; const [la, lo] = o.userData.at, c = drawn ? pickCell(la, lo) : CELLS[cellIndex(la, lo)]; o.position.copy(toVec(la, lo, R + (c ? c.h : 0) + 0.0015)); if (o.userData.lbl) o.userData.lbl.position.copy(o.position); });
+  pulses.children.forEach(r => r.position.copy(r.userData.pin.position));
 }
 for (const c of casesJson.cases) {
   const t = TrendStats.analyzeTrend(c.series.map(d => d[0]), c.series.map(d => d[1]));
   const kind = t.significant ? (t.perDecade > 0 ? 'up' : 'down') : 'flat';
-  const s = pinSprite(TEX[kind], 26);
+  const s = pinSprite(TEX[kind], 34);
   const ev = T({ strong: 'Evidencia fuerte', moderate: 'Evidencia moderada', weak: 'Evidencia débil' }[t.strength]), yrs = `${c.series[0][0]}–${c.series[c.series.length - 1][0]} · ${F(`${c.series.length} años de datos`, `${c.series.length} years of data`)}`;
   s.userData = { ...s.userData, sel: { type: 'case', id: c.id }, theme: c.theme, at: [c.lat, c.lon], href: `/cases/${c.id}`, tip: `<strong>${CASE_NAME[c.id] || c.id}</strong><br>${T(kind === 'flat' ? 'No concluyente' : 'Tendencia confirmada')} · ${c.catalog}<br>${ev}<br>${yrs}` };
-  markers.add(s);
+  markers.add(s); if (kind !== 'flat') addPulse(s, kind);
   const el = document.createElement('div'); el.className = 'lbl'; el.textContent = CASE_NAME[c.id] || c.id;
   // Its left edge at the pin (CSS2DRenderer writes the element's transform itself, so the offset is a margin).
   const lbl = new CSS2DObject(el); lbl.center.set(0, 0.5); s.userData.lbl = lbl; markers.add(lbl); caseLabels.push({ el, n: toVec(c.lat, c.lon), theme: c.theme });
 }
 for (const f of filesJson.files) {
-  const s = pinSprite(TEX.anom, f.strength === 'strong' ? 24 : 20);
+  const s = pinSprite(TEX.anom, f.strength === 'strong' ? 32 : 28);
   s.userData = { ...s.userData, sel: { type: 'case', id: f.id }, theme: 'event', at: [f.lat, f.lon], href: `/cases/${f.id}`, tip: `<strong>${escT(f.title.replace(/\s\d{6,}$/, ''))}</strong><br>${T('Expediente de anomalía')} · ${f.date}` };
-  markers.add(s);
+  markers.add(s); addPulse(s, 'anom');
 }
 seatMarkers(false);
-loadStep(null, 1, 2); setTimeout(() => loadStep(null, 1, 3), 200); setTimeout(() => { document.body.classList.add('is-ready'); loading.classList.add('is-done'); setTimeout(() => loading.remove(), 700); }, 550);
+loadStep(null, 2);
+// Two frames, then a quiet moment: by then the rest of this module and the first render (shaders) have run, so
+// the reveal plays on a free main thread instead of stuttering through that work.
+requestAnimationFrame(() => requestAnimationFrame(() => (window.requestIdleCallback ? requestIdleCallback(finishLoading, { timeout: 900 }) : setTimeout(finishLoading, 0))));
 performance.mark('etd-world-ready');   // probe: when the board is built (load time)
 
 const nf = (n) => n.toLocaleString(LANG);
@@ -1906,7 +2101,92 @@ const WX_GROUP = { severeStorms: 'storms', floods: 'floods', wildfires: 'fires',
 const WX_NAME = Object.fromEntries(Object.entries({ storms: 'Tormentas', floods: 'Inundaciones', fires: 'Incendios', volcanoes: 'Volcanes', ice: 'Hielo y nieve', dust: 'Polvo y bruma', quakes: 'Sismos' }).map(([k, v]) => [k, T(v)]));
 const REGION = Object.fromEntries(Object.entries({ arctic: [80, 0], 'north-america': [45, -100], 'central-america': [15, -85], 'south-america': [-15, -60], europe: [50, 15], africa: [5, 20], asia: [40, 95], oceania: [-25, 140], antarctica: [-80, 0] }).map(([id, ll]) => [id, [I18N.t(`reg.${id}`), ...ll]]));
 let layer = 'cases', themeF = 'all', evCat = '', wxCat = '', year = 2025, live = true, wxAll = [], wxCount = 0, wxBuilt = false;
-let dataSnapshot = null, dataReady = false, dataToken = 0;
+let dataSnapshot = null, dataReady = false, dataToken = 0, pendingVar = null;
+const DATA_REGIONS = new Map();   // code → [lat, lon] of the region's centre
+const DATA_VARS = new Map();      // code → the catalog row (source, unit, NASA's own name)
+// Each variable in words: [es, en, group]. Codes not listed keep NASA's own name.
+const VAR_GROUPS = [['temp', 'Temperatura', 'Temperature'], ['water', 'Agua, lluvia y nieve', 'Water, rain and snow'], ['air', 'Aire y viento', 'Air and wind'], ['sun', 'Sol y luz', 'Sun and light'], ['land', 'Suelo y vegetación', 'Land and vegetation'], ['sea', 'Mar y hielo', 'Sea and ice'], ['other', 'Otras', 'Other']];
+const VAR_INFO = {
+  T2M: ['Temperatura del aire', 'Air temperature', 'temp'], T2M_MAX: ['Máxima del día', 'Daily high', 'temp'], T2M_MIN: ['Mínima del día', 'Daily low', 'temp'],
+  TS: ['Temperatura de la superficie', 'Surface temperature', 'temp'], LST_DAY: ['Temperatura del suelo de día', 'Daytime land temperature', 'temp'],
+  TSOIL1: ['Temperatura del suelo (arriba)', 'Soil temperature (top)', 'temp'], TSOIL4: ['Temperatura del suelo (profundo)', 'Soil temperature (deep)', 'temp'],
+  FROST_DAYS: ['Días de helada', 'Frost days', 'temp'], CDD18_3: ['Necesidad de enfriar (grados-día)', 'Cooling need (degree days)', 'temp'], HDD18_3: ['Necesidad de calefacción (grados-día)', 'Heating need (degree days)', 'temp'],
+  PRECTOTCORR: ['Lluvia', 'Rainfall', 'water'], PRECIP: ['Lluvia por satélite', 'Rainfall from satellite', 'water'], PRECSNO: ['Nieve caída', 'Snowfall', 'water'],
+  SNODP: ['Profundidad de la nieve', 'Snow depth', 'water'], SNOW_COVER: ['Cobertura de nieve', 'Snow cover', 'water'], EVLAND: ['Evaporación del suelo', 'Evaporation from land', 'water'],
+  TQV: ['Agua en la columna de aire', 'Water in the air column', 'water'], RH2M: ['Humedad relativa', 'Relative humidity', 'air'], QV2M: ['Humedad del aire (g/kg)', 'Air humidity (g/kg)', 'air'],
+  CLOUD_AMT: ['Nubosidad', 'Cloud cover', 'air'], WS10M_MAX: ['Viento máximo', 'Strongest wind', 'air'], U10M: ['Viento hacia el este', 'Eastward wind', 'air'], V10M: ['Viento hacia el norte', 'Northward wind', 'air'],
+  SLP: ['Presión a nivel del mar', 'Sea-level pressure', 'air'], PSC: ['Presión en la superficie', 'Surface pressure', 'air'], PBLTOP: ['Techo de la capa de aire de superficie', 'Top of the surface air layer', 'air'],
+  AOD_55_ADJ: ['Partículas en el aire (polvo, humo)', 'Particles in the air (dust, smoke)', 'air'], AOD_84: ['Partículas en el aire (840 nm)', 'Particles in the air (840 nm)', 'air'],
+  NO2: ['Dióxido de nitrógeno (contaminación)', 'Nitrogen dioxide (pollution)', 'air'], TO3: ['Ozono total', 'Total ozone', 'air'],
+  ALLSKY_SFC_SW_DWN: ['Radiación solar', 'Sunlight reaching the ground', 'sun'], ALLSKY_SFC_SW_DIFF: ['Luz solar difusa', 'Diffuse sunlight', 'sun'], ALLSKY_SFC_LW_DWN: ['Calor que irradia el cielo', 'Heat radiated by the sky', 'sun'],
+  ALLSKY_SFC_PAR_TOT: ['Luz útil para las plantas', 'Light plants can use', 'sun'], ALLSKY_SFC_UV_INDEX: ['Índice UV', 'UV index', 'sun'], ALLSKY_SRF_ALB: ['Cuánta luz refleja el suelo', 'How much light the ground reflects', 'sun'],
+  NDVI: ['Verdor de la vegetación', 'Vegetation greenness', 'land'], GWETROOT: ['Humedad del suelo (raíces)', 'Root-zone soil wetness', 'land'], RZMC: ['Humedad del suelo (raíces)', 'Root-zone soil moisture', 'land'],
+  SFMC: ['Humedad del suelo (superficie)', 'Surface soil moisture', 'land'], SOIL_MOISTURE: ['Humedad del suelo por satélite', 'Soil moisture from satellite', 'land'],
+  SST: ['Temperatura del mar', 'Sea temperature', 'sea'], SST_ANOM: ['Temperatura del mar frente a lo normal', 'Sea temperature against normal', 'sea'], CHLOR_A: ['Clorofila en el mar', 'Chlorophyll in the sea', 'sea'],
+  SEA_ICE: ['Hielo marino', 'Sea ice', 'sea'], FRSEAICE: ['Superficie cubierta de hielo', 'Ice-covered share', 'sea'],
+};
+const varLabel = (code) => { const v = VAR_INFO[code]; return v ? F(v[0], v[1]) : DATA_VARS.get(code)?.name || code; };
+// Units as people read them.
+const fmtUnit = (u) => (!u || ['index', 'dimensionless', '1'].includes(u) ? '' : u === 'C' ? '°C' : u === 'm3/m3' || u === 'm3 m-3' ? 'm³/m³' : u === 'mm/day' ? F('mm/día', 'mm/day') : u === 'mm/hr' ? 'mm/h' : u === 'kg m-2' || u === 'kg/m2' ? 'kg/m²' : u === 'W m-2' || u === 'W/m2' || u === 'W/m^2' ? 'W/m²' : u === 'MJ/m^2/day' ? F('MJ/m²/día', 'MJ/m²/day') : u);
+// The sectors of the portal (src/modules/explore/domain/sectors.ts), for naming a data region by its centre.
+const SECTOR_RULES = [
+  ['central-america', (la, lo) => la >= 5 && la < 24 && lo >= -118 && lo <= -58],
+  ['north-america', (la, lo) => la >= 14 && lo >= -170 && lo <= -50],
+  ['north-america', (la, lo) => la >= 55 && lo >= -75 && lo <= -10],
+  ['south-america', (la, lo) => la < 13 && lo >= -93 && lo <= -30],
+  ['africa', (la, lo) => la <= 37.5 && la >= -36 && lo >= -20 && lo <= 52 && !(lo > 34 && la > 12)],
+  ['europe', (la, lo) => la >= 35 && lo >= -25 && lo <= 45],
+  ['oceania', (la, lo) => la <= -11 && lo >= 110],
+  ['oceania', (la, lo) => lo <= -120 && la <= 0 && la >= -50],
+  ['asia', (_la, lo) => lo >= 25 || lo <= -168],
+];
+// A region is named by the sector of its centre, or "ocean" when little of it is land.
+const LAND_SHARE = new Map();
+function landShare(code) {
+  if (!LAND_SHARE.has(code)) { let land = 0, all = 0; for (const c of CELLS) if (c.region === code) { all++; if (!c.water) land++; } LAND_SHARE.set(code, all ? land / all : 0); }
+  return LAND_SHARE.get(code);
+}
+function placeOf(code) {
+  const at = DATA_REGIONS.get(code); if (!at) return null;
+  const [la, lo] = at;
+  if (la >= 66) return 'arctic'; if (la <= -60) return 'antarctica';
+  if (landShare(code) < 0.25) return 'ocean';
+  return SECTOR_RULES.find(([, test]) => test(la, lo))?.[0] || 'ocean';
+}
+const placeName = (code) => { const p = placeOf(code); return p ? I18N.t(`reg.${p}`) : F('Región', 'Region'); };
+const regionLabel = (code) => `R${String(code).padStart(3, '0')}`;
+// The data region under a point: the region of its base tile.
+function regionAt(la, lo) { const c = CELLS[cellIndex(la, lo)]; return c ? c.region : null; }
+// A data region as the portal's drawer takes it: where it is and what the map shows there.
+function regionSel(code) {
+  if (!Number.isInteger(code) || !dataSnapshot) return null;
+  const at = DATA_REGIONS.get(code) || null, row = (dataSnapshot.regions || []).find((r) => r.code === code) || null;
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  return {
+    type: 'region', code, place: placeOf(code),
+    lat: at ? at[0] : null, lon: at ? at[1] : null,
+    reading: {
+      variable: dataSnapshot.variable, label: varLabel(dataSnapshot.variable), source: dataSnapshot.source || '',
+      unit: fmtUnit(dataSnapshot.unit), date: row?.date || dataSnapshot.date, period: dataSnapshot.metric === 'anomaly' ? 'month' : 'day',
+      value: num(row?.value), anomaly: num(row?.anomaly), z: num(row?.z), baseline: num(row?.baseline),
+    },
+  };
+}
+// One line under the controls that says what the colours mean.
+function dataHelp(snapshot, anomaly) {
+  if (!snapshot) return '';
+  const tap = EMBED ? F(' Toca una región para ver su detalle.', ' Tap a region to see its details.') : '';
+  return anomaly
+    ? F(`<strong>Rojo</strong>: el mes de esa fecha estuvo por encima de lo normal para la región. <strong>Azul</strong>: por debajo. Cada región se compara consigo misma.${tap}`, `<strong>Red</strong>: the month of that date was above normal for the region. <strong>Blue</strong>: below. Each region is compared with itself.${tap}`)
+    : F(`El color va de los valores más bajos (morado) a los más altos (amarillo) entre todas las regiones ese día.${tap}`, `The colour runs from the lowest values (purple) to the highest (yellow) among all regions that day.${tap}`);
+}
+// The portal asks for a variable on the data layer (the satellite panel's "see it on the globe").
+function showVariable(code) {
+  const varEl = $('dataVar');
+  if (dataReady && [...varEl.options].some((o) => o.value === code)) { varEl.value = code; if (layer !== 'data') setLayer('data'); loadData(); return; }
+  pendingVar = code; setLayer('data');
+}
+const isTyping = (el) => el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 const DATA_MISSING = new THREE.Color('#2b3445');
 const fmtData = (v) => Number(v).toLocaleString(LANG === 'es' ? 'es-CL' : 'en-US', { maximumFractionDigits: 2 });
 function dataColor(value, min, max, metric) {
@@ -1938,13 +2218,14 @@ function dataLegend(snapshot) {
   if (!snapshot || snapshot.min === null || snapshot.max === null) return '';
   const metric = snapshot.metric;
   const bounds = dataBounds(snapshot);
+  const u = fmtUnit(snapshot.unit), withU = (s) => (u ? `${s} ${u}` : s);
   if (metric === 'anomaly') {
     const bound = Math.max(Math.abs(bounds.min), Math.abs(bounds.max), 0.001);
-    return [[-bound, fmtData(-bound)], [0, '0'], [bound, fmtData(bound)]]
+    return [[-bound, `${withU(fmtData(-bound))} · ${F('por debajo de lo normal', 'below normal')}`], [0, F('0 · lo normal', '0 · normal')], [bound, `${withU('+' + fmtData(bound))} · ${F('por encima', 'above')}`]]
       .map(([v, label]) => li(`<span class="hexdot" style="background:#${dataColor(v, bounds.min, bounds.max, metric).getHexString()}" aria-hidden="true"></span>`, label)).join('');
   }
   const mid = (bounds.min + bounds.max) / 2;
-  return [[bounds.min, fmtData(bounds.min)], [mid, fmtData(mid)], [bounds.max, fmtData(bounds.max)]]
+  return [[bounds.min, `${withU(fmtData(bounds.min))} · ${F('bajo', 'low')}`], [mid, withU(fmtData(mid))], [bounds.max, `${withU(fmtData(bounds.max))} · ${F('alto', 'high')}`]]
     .map(([v, label]) => li(`<span class="hexdot" style="background:#${dataColor(v, bounds.min, bounds.max, metric).getHexString()}" aria-hidden="true"></span>`, label)).join('');
 }
 function paintDataSnapshot(snapshot) {
@@ -1976,10 +2257,24 @@ function renderDataTop(snapshot) {
   const key = snapshot.metric === 'anomaly' ? 'anomaly' : 'value';
   const rows = (snapshot.regions || []).filter((row) => row[key] !== null && row[key] !== undefined);
   rows.sort((a, b) => Number(b[key]) - Number(a[key]));
-  $('dataTop').innerHTML = rows.slice(0, 6).map((row) =>
-    `<a href="${APP_BASE}/regions?region=${row.code}&variable=${encodeURIComponent(snapshot.variable)}" target="_top">${String(row.code).padStart(3, '0')} · ${fmtData(row[key])}</a>`
-  ).join('');
+  const unit = fmtUnit(snapshot.unit);
+  const head = $('dataTopH');
+  head.hidden = !rows.length;
+  head.textContent = key === 'anomaly'
+    ? F('Más por encima de lo normal ese día:', 'Furthest above normal that day:')
+    : F('Valores más altos ese día:', 'Highest values that day:');
+  $('dataTop').innerHTML = rows.slice(0, 6).map((row) => {
+    const v = `${key === 'anomaly' && Number(row[key]) > 0 ? '+' : ''}${fmtData(row[key])}${unit ? ' ' + unit : ''}`;
+    const name = `${placeName(row.code)} · ${regionLabel(row.code)}`;
+    return EMBED
+      ? `<button type="button" data-code="${row.code}">${escT(name)} <span class="v">${v}</span></button>`
+      : `<a href="${APP_BASE}/regions?region=${row.code}&variable=${encodeURIComponent(snapshot.variable)}&end=${encodeURIComponent(row.date || snapshot.date)}${placeOf(row.code) ? `&place=${placeOf(row.code)}` : ''}" target="_top">${escT(name)} <span class="v">${v}</span></a>`;
+  }).join('');
 }
+$('dataTop').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-code]'); if (!b) return;
+  const sel = regionSel(+b.dataset.code); if (sel) tell({ type: 'select', sel });
+});
 async function loadData() {
   const variable = $('dataVar').value, date = $('dataDate').value, metric = $('dataMetric').value;
   if (!variable || !date) return;
@@ -2002,11 +2297,21 @@ async function initData() {
   dateEl.value = Q0.get('date') || dateEl.max;
   if (Q0.get('metric') === 'anomaly') metricEl.value = 'anomaly';
   try {
+    // The region centres (for names and flights) come alongside; without them the regions keep their codes.
+    window.ETD_API.regions().then((r) => (r.regions || []).forEach((row) => DATA_REGIONS.set(row.code, [row.lat, row.lon]))).catch(() => {});
     const coverage = await window.ETD_API.coverage();
-    const variables = (coverage.variables || []).slice().sort((a, b) => a.source.localeCompare(b.source) || a.variable.localeCompare(b.variable));
-    varEl.innerHTML = variables.map((row) => `<option value="${row.variable}">${row.variable} · ${row.source}</option>`).join('');
-    const preferred = variables.find((row) => row.variable === Q0.get('variable')) || variables.find((row) => row.variable === 'T2M') || variables[0];
+    const variables = (coverage.variables || []).filter((row) => row && typeof row.variable === 'string');
+    variables.forEach((row) => DATA_VARS.set(row.variable, row));
+    // Grouped by what they are about, each with its name in words; the code stays at the end for those who look for it.
+    const groups = new Map(VAR_GROUPS.map(([id]) => [id, []]));
+    variables.forEach((row) => groups.get(VAR_INFO[row.variable]?.[2] || 'other').push(row));
+    varEl.innerHTML = VAR_GROUPS.filter(([id]) => groups.get(id).length).map(([id, es, en]) =>
+      `<optgroup label="${F(es, en)}">${groups.get(id).sort((a, b) => varLabel(a.variable).localeCompare(varLabel(b.variable))).map((row) =>
+        `<option value="${escT(row.variable)}">${escT(varLabel(row.variable))} · ${escT(row.variable)}</option>`).join('')}</optgroup>`).join('');
+    const asked = pendingVar || Q0.get('variable'); pendingVar = null;
+    const preferred = variables.find((row) => row.variable === asked) || variables.find((row) => row.variable === 'T2M') || variables[0];
     if (preferred) varEl.value = preferred.variable;
+    renderVarList(); syncPickers();
   } catch (error) {
     dataReady = false;
     $('say').textContent = F('No se pudo cargar el catálogo de variables.', 'Could not load the variable catalog.');
@@ -2025,6 +2330,7 @@ function refreshUI() {
   const say = $('say'), key = $('key'), src = $('src');
   $('timeRow').hidden = layer === 'cases' || layer === 'data';
   $('dataRow').hidden = layer !== 'data';
+  $('dataMore').hidden = layer !== 'data';
   $('tNow').hidden = layer !== 'weather';
   $('tRangeBox').classList.toggle('is-off', layer === 'weather' && live);
   $('tWhat').textContent = T(layer === 'weather' ? (live ? 'Mueve la barra para ver un año' : 'Fenómenos registrados en') : 'Eventos reportados en');
@@ -2033,7 +2339,8 @@ function refreshUI() {
   if (layer === 'cases') {
     n = themeF === 'all' ? totalCases : markers.children.filter(o => o.isSprite && o.userData.theme === themeF).length; active = themeF !== 'all';
     say.innerHTML = active ? F(`Se muestran <strong class="num">${n}</strong> de ${totalCases} expedientes: ${THEME_NAME[themeF]}.`, `Showing <strong class="num">${n}</strong> of ${totalCases} case files: ${THEME_NAME[themeF]}.`) : F(`Se muestran los <strong class="num">${totalCases}</strong> expedientes sobre el mundo de NASA.`, `Showing all <strong class="num">${totalCases}</strong> case files on NASA’s world.`);
-    key.innerHTML = li('<span class="tri-up"></span>', T('Sube')) + li('<span class="tri-down"></span>', T('Baja')) + li('<span class="ring"></span>', T('No concluyente')) + li('<span class="diamond"></span>', T('Anomalía'));
+    say.innerHTML += ' ' + F('Toca un faro para abrir su expediente.', 'Tap a beacon to open its case file.');
+    key.innerHTML = li('<span class="pk pk--up" aria-hidden="true">▲</span>', F('Tendencia al alza', 'Rising trend')) + li('<span class="pk pk--down" aria-hidden="true">▼</span>', F('Tendencia a la baja', 'Falling trend')) + li('<span class="pk pk--flat" aria-hidden="true">–</span>', F('Sin tendencia clara', 'No clear trend')) + li('<span class="pk pk--anom" aria-hidden="true">!</span>', F('Anomalía puntual', 'One-off anomaly'));
     src.textContent = T('Biomas: MODIS (NASA) · relieve: ASTER GDEM (NASA/METI) · color y mar: Blue Marble (NASA) · vía NASA GIBS');
   } else if (layer === 'events') {
     n = evCount; active = !!evCat;
@@ -2045,12 +2352,17 @@ function refreshUI() {
       : F(`NASA EONET · instantánea del portal (data/events/${year}.json)`, `NASA EONET · portal snapshot (data/events/${year}.json)`);
   } else if (layer === 'data') {
     n = dataSnapshot ? dataSnapshot.count : 0;
+    const anomaly = $('dataMetric').value === 'anomaly', label = dataSnapshot ? escT(varLabel(dataSnapshot.variable)) : '';
     say.innerHTML = dataSnapshot
-      ? F(`Se muestran <strong class="num">${nf(n)}</strong> regiones con ${dataSnapshot.variable} (${$('dataMetric').value === 'anomaly' ? 'anomalía mensual' : 'valor'}).`, `Showing <strong class="num">${nf(n)}</strong> regions with ${dataSnapshot.variable} (${$('dataMetric').value === 'anomaly' ? 'monthly anomaly' : 'value'}).`)
+      ? (anomaly
+        ? F(`<strong class="num">${nf(n)}</strong> regiones pintadas según cuánto se alejó su mes de lo normal: <strong>${label}</strong>.`, `<strong class="num">${nf(n)}</strong> regions coloured by how far their month strayed from normal: <strong>${label}</strong>.`)
+        : F(`<strong class="num">${nf(n)}</strong> regiones pintadas con lo que midió la NASA ese día: <strong>${label}</strong>.`, `<strong class="num">${nf(n)}</strong> regions coloured by what NASA measured that day: <strong>${label}</strong>.`))
       : T('Cargando datos regionales…');
     key.innerHTML = dataLegend(dataSnapshot);
+    syncPickers();
+    $('dataHelp').innerHTML = dataHelp(dataSnapshot, anomaly);
     src.textContent = dataSnapshot
-      ? F(`${dataSnapshot.source} · ${dataSnapshot.variable} · ${dataSnapshot.date} · datos persistidos · escala p5–p95`, `${dataSnapshot.source} · ${dataSnapshot.variable} · ${dataSnapshot.date} · persisted data · p5–p95 scale`)
+      ? F(`${dataSnapshot.source} · ${dataSnapshot.variable} · ${dataSnapshot.date} · los colores van del 5 % al 95 % de las regiones`, `${dataSnapshot.source} · ${dataSnapshot.variable} · ${dataSnapshot.date} · colours span the 5th to 95th percentile of regions`)
       : '';
   } else {
     n = wxCount; active = !!wxCat;
@@ -2076,8 +2388,8 @@ function renderChips() {
     cur = evCat || 'all'; $('whatD').textContent = F(`Tipos de evento reportados a NASA EONET en ${year}.`, `Kinds of event reported to NASA EONET in ${year}.`);
     items = [['all', T('Todos'), evYearPts.length], ...evTop.map(([c, k]) => [c, CAT_NAME[c], k])];
   } else if (layer === 'data') {
-    cur = $('dataMetric').value; $('whatD').textContent = F('Valor actual o anomalía mensual por región.', 'Current value or monthly anomaly per region.');
-    items = [['value', T('Valor'), dataSnapshot ? dataSnapshot.count : 0], ['anomaly', T('Anomalía mensual'), dataSnapshot ? dataSnapshot.count : 0]];
+    cur = $('dataMetric').value; $('whatD').textContent = F('El valor medido ese día, o cuánto se alejó de lo normal para esa fecha.', 'The value measured that day, or how far it strayed from normal for that date.');
+    items = [['value', T('Cuánto marcó'), dataSnapshot ? dataSnapshot.count : 0], ['anomaly', T('Qué tan raro fue'), dataSnapshot ? dataSnapshot.count : 0]];
   } else {
     cur = wxCat || 'all'; $('whatD').textContent = T('Un tipo de fenómeno a la vez. Cada forma es un evento real de EONET.');
     const k = {}; wxAll.forEach(e => { const g = WX_GROUP[e.cat]; if (g) k[g] = (k[g] || 0) + 1; });
@@ -2098,7 +2410,7 @@ $('setClear').addEventListener('click', () => $('chips').querySelector('[data-v=
 function setLayer(l) {
   const was = layer; layer = l;
   document.querySelectorAll('[data-layer]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layer === l)));
-  markers.visible = l === 'cases';
+  markers.visible = l === 'cases' && !immersive;
   if (evMesh) { if (l === 'events') { evMesh.visible = true; evTarget = 1; } else evTarget = 0; }
   if ((was === 'events') !== (l === 'events')) paint(l === 'events');
   props.visible = $('tProps').checked && l !== 'events' && l !== 'data';
@@ -2109,36 +2421,172 @@ function setLayer(l) {
   if (l === 'data') { if (!dataReady) initData(); else loadData(); }
   else restoreDataColors();
   if (was !== l) dropLift();
+  closePick(false);
   closeCard(false);
   refreshUI();
 }
 document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.layer)));
 $('dataVar').addEventListener('change', loadData);
 $('dataMetric').addEventListener('change', loadData);
-$('dataDate').addEventListener('change', loadData);
+$('dataDate').addEventListener('change', () => { syncPickers(); renderDatePresets(); loadData(); });
+
+/* The data layer as a sentence: "Show [variable] as [how] on [day]". Each part is a button that opens its own list
+   (a listbox run by keyboard: arrows, Home and End, Enter, Esc, or a first letter); the day opens a small dialog
+   with three quick dates and a field for any other. The hidden selects keep the state that loadData, the settings
+   panel and showVariable read, so the sentence only sets them. */
+// What each main variable is for, in a line: [es, en].
+const VAR_HINT = {
+  T2M: ['A 2 m del suelo, donde la sentimos.', 'At 2 m above the ground, where we feel it.'],
+  T2M_MAX: ['La más alta del día; sirve para olas de calor.', 'The day’s highest; for heatwaves.'],
+  T2M_MIN: ['La más baja del día; sirve para heladas.', 'The day’s lowest; for frosts.'],
+  TS: ['La de la superficie misma: suelo, agua o hielo.', 'The surface’s own: ground, water or ice.'],
+  PRECTOTCORR: ['Cuánta lluvia cayó en el día.', 'How much rain fell that day.'],
+  PRECSNO: ['Cuánta nieve cayó en el día.', 'How much snow fell that day.'],
+  SNODP: ['Cuánta nieve hay acumulada en el suelo.', 'How much snow lies on the ground.'],
+  GWETROOT: ['El agua que alcanzan las raíces; anticipa sequías.', 'The water roots can reach; it warns of droughts.'],
+  NDVI: ['Qué tan verde y viva está la vegetación.', 'How green and alive the vegetation is.'],
+  RH2M: ['Cuánta agua lleva el aire frente a lo que podría llevar.', 'How much water the air holds against what it could.'],
+  CLOUD_AMT: ['Qué parte del cielo cubren las nubes.', 'How much of the sky clouds cover.'],
+  WS10M_MAX: ['La racha más fuerte del día, a 10 m del suelo.', 'The day’s strongest wind, 10 m above the ground.'],
+  SLP: ['Baja cuando se acercan las tormentas.', 'It drops as storms come near.'],
+  AOD_55_ADJ: ['Polvo, humo y contaminación que enturbian el aire.', 'Dust, smoke and pollution that cloud the air.'],
+  NO2: ['Un gas de motores y fábricas.', 'A gas from engines and factories.'],
+  ALLSKY_SFC_SW_DWN: ['La energía del Sol que llega al suelo.', 'The Sun’s energy that reaches the ground.'],
+  ALLSKY_SFC_UV_INDEX: ['Qué tan fuerte es el sol para la piel.', 'How strong the sun is for the skin.'],
+  SST: ['La del agua en la superficie del mar.', 'The water’s, at the sea surface.'],
+  SEA_ICE: ['Qué parte del mar está congelada.', 'How much of the sea is frozen.'],
+};
+const METRICS = [
+  ['value', ['cuánto marcó', 'what it measured'], ['El valor que midió la NASA ese día.', 'The value NASA measured that day.']],
+  ['anomaly', ['qué tan raro fue', 'how unusual it was'], ['La diferencia contra lo normal para ese mes en cada región.', 'The difference from normal for that month in each region.']],
+];
+const PICKS = { pickVar: F('Qué ver', 'What to see'), pickMetric: F('Cómo verlo', 'How to see it'), pickDate: F('Día', 'Day') };
+const CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+const fmtDay = (iso) => (iso ? new Date(`${iso}T12:00:00Z`).toLocaleDateString(LANG === 'es' ? 'es-CL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '…');
+const monthsBefore = (iso, n) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() - n); return d.toISOString().slice(0, 10); };
+$('dataPhrase').innerHTML = [F('Mostrar', 'Show'), 'pickVar', F('como', 'as'), 'pickMetric', F('el', 'on'), 'pickDate'].map((w) => (PICKS[w]
+  ? `<button type="button" class="gx-pick" id="${w}" aria-haspopup="${w === 'pickDate' ? 'dialog' : 'listbox'}" aria-expanded="false" aria-controls="${w}Pop"><span>…</span>${CHEV}</button>`
+  : `<span>${w}</span>`)).join('');
+Object.entries(PICKS).forEach(([id, label]) => $(`${id}Pop`).setAttribute('aria-label', label));
+$('pickMetricPop').innerHTML = METRICS.map(([v, n, d]) => `<div role="option" class="gx-pick__opt" tabindex="-1" data-v="${v}" aria-selected="false"><span class="n">${F(...n)}</span><span class="d">${F(...d)}</span></div>`).join('');
+// The variables as the hidden select groups them: name, what it is for, then NASA's code and the unit.
+function renderVarList() {
+  $('pickVarPop').innerHTML = [...$('dataVar').querySelectorAll('optgroup')].map((g, gi) => `<div role="group" aria-labelledby="pvg${gi}"><p class="gx-pick__h" id="pvg${gi}">${escT(g.label)}</p>${[...g.querySelectorAll('option')].map((o) => {
+    const code = o.value, hint = VAR_HINT[code], u = fmtUnit(DATA_VARS.get(code)?.unit);
+    return `<div role="option" class="gx-pick__opt" tabindex="-1" data-v="${escT(code)}" aria-selected="false"><span class="n">${escT(varLabel(code))}</span>${hint ? `<span class="d">${F(...hint)}</span>` : ''}<span class="c">${escT(code)}${u ? ` · ${escT(u)}` : ''}</span></div>`;
+  }).join('')}</div>`).join('');
+}
+function renderDatePresets() {
+  const el = $('dataDate'), max = el.max, cur = el.value;
+  if (!max) return;
+  $('pickDatePresets').innerHTML = [[F('Hoy', 'Today'), max], [F('Hace un mes', 'A month ago'), monthsBefore(max, 1)], [F('Hace un año', 'A year ago'), monthsBefore(max, 12)]]
+    .map(([n, iso]) => `<button type="button" class="gx-pick__opt" data-date="${iso}" aria-pressed="${iso === cur}"><span class="n">${n}</span><span class="d">${fmtDay(iso)}</span></button>`).join('');
+}
+// The sentence says the state of the hidden selects; called whenever the layer redraws.
+function syncPickers() {
+  const v = $('dataVar').value, m = $('dataMetric').value;
+  const say = (id, text) => { const b = $(id); b.firstElementChild.textContent = text; b.setAttribute('aria-label', `${PICKS[id]}: ${text}`); };
+  say('pickVar', v ? varLabel(v) : '…');
+  say('pickMetric', F(...(METRICS.find(([k]) => k === m) || METRICS[0])[1]));
+  say('pickDate', fmtDay($('dataDate').value));
+  for (const [id, cur] of [['pickVarPop', v], ['pickMetricPop', m]]) $(id).querySelectorAll('[role="option"]').forEach((o) => o.setAttribute('aria-selected', String(o.dataset.v === cur)));
+}
+let pickOpen = null;
+const pickItems = (pop) => [...pop.querySelectorAll('[role="option"], button, input')];
+// Keeps a row in view inside its list, clear of the edge fades.
+function keepInView(pop, el) {
+  const FADE = 28;
+  if (el.offsetTop < pop.scrollTop + FADE) pop.scrollTop = el.offsetTop - FADE;
+  else if (el.offsetTop + el.offsetHeight > pop.scrollTop + pop.clientHeight - FADE) pop.scrollTop = el.offsetTop + el.offsetHeight - pop.clientHeight + FADE;
+  fadeEdges(pop);
+}
+function openPick(id) {
+  if (pickOpen && pickOpen !== id) closePick(false);
+  const btn = $(id), pop = $(`${id}Pop`);
+  if (id === 'pickDate') renderDatePresets();
+  clearTimeout(pop.foldT); pop.classList.remove('is-closing');
+  pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); pickOpen = id;
+  // Just above its button, inside the dock.
+  const row = $('dataRow').getBoundingClientRect(), b = btn.getBoundingClientRect();
+  pop.style.left = `${Math.max(0, Math.min(b.left - row.left, row.width - pop.offsetWidth))}px`;
+  const items = pickItems(pop), on = items.find((el) => el.getAttribute('aria-selected') === 'true' || el.getAttribute('aria-pressed') === 'true') || items[0];
+  pop.scrollTop = on ? on.offsetTop - (pop.clientHeight - on.offsetHeight) / 2 : 0;
+  fadeEdges(pop);
+  on?.focus({ preventScroll: true });
+}
+function closePick(refocus) {
+  if (!pickOpen) return;
+  const btn = $(pickOpen), pop = $(`${pickOpen}Pop`);
+  pickOpen = null; btn.setAttribute('aria-expanded', 'false');
+  if (refocus) btn.focus();
+  if (REDUCED) { pop.hidden = true; return; }
+  pop.classList.add('is-closing');
+  pop.foldT = setTimeout(() => { pop.hidden = true; pop.classList.remove('is-closing'); }, 120);
+}
+function choosePick(id, el) {
+  if (id === 'pickVar') $('dataVar').value = el.dataset.v;
+  else if (id === 'pickMetric') $('dataMetric').value = el.dataset.v;
+  else $('dataDate').value = el.dataset.date;
+  closePick(true); syncPickers(); loadData();
+}
+Object.keys(PICKS).forEach((id) => {
+  const btn = $(id), pop = $(`${id}Pop`);
+  btn.addEventListener('click', () => (pickOpen === id ? closePick(true) : openPick(id)));
+  btn.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openPick(id); } });
+  pop.addEventListener('scroll', () => fadeEdges(pop), { passive: true });
+  pop.addEventListener('click', (e) => { const el = e.target.closest('[data-v], [data-date]'); if (el) choosePick(id, el); });
+  pop.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePick(true); return; }
+    if (e.key === 'Tab') { closePick(false); return; }
+    if (e.target.tagName === 'INPUT') { e.stopPropagation(); return; }   // the date field keeps its own keys
+    const items = pickItems(pop).filter((el) => el.tagName !== 'INPUT'), i = items.indexOf(document.activeElement);
+    let to = -1;
+    if (e.key === 'ArrowDown') to = Math.min(items.length - 1, i + 1);
+    else if (e.key === 'ArrowUp') to = Math.max(0, i - 1);
+    else if (e.key === 'Home') to = 0;
+    else if (e.key === 'End') to = items.length - 1;
+    else if ((e.key === 'Enter' || e.key === ' ') && items[i]) { e.preventDefault(); e.stopPropagation(); choosePick(id, items[i]); return; }
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // A letter jumps to the next name that starts with it.
+      const k = fold(e.key), order = [...items.slice(i + 1), ...items.slice(0, i + 1)];
+      const hit = order.find((el) => fold(el.querySelector('.n')?.textContent || '').startsWith(k));
+      if (hit) to = items.indexOf(hit);
+      e.stopPropagation();
+    }
+    if (to >= 0) { e.preventDefault(); e.stopPropagation(); items[to].focus({ preventScroll: true }); keepInView(pop, items[to]); }
+  });
+});
+document.addEventListener('pointerdown', (e) => { if (pickOpen && !e.target.closest('.gx-pick, .gx-pick__pop')) closePick(false); });
 
 /* Settings panel */
 const panel = $('setPanel'), setBtn = $('setBtn');
 function openPanel() { panel.hidden = false; setBtn.setAttribute('aria-expanded', 'true'); (panel.querySelector('[aria-pressed="true"]') || panel.querySelector('button'))?.focus(); }
 function closePanel(restore) { if (panel.hidden) return; const inside = panel.contains(document.activeElement); panel.hidden = true; setBtn.setAttribute('aria-expanded', 'false'); if (restore && inside) setBtn.focus(); }
 setBtn.addEventListener('click', () => (panel.hidden ? openPanel() : closePanel(true)));
-// Phones: fold the dock to its layer tabs and back. Picking a layer opens it again, since its text explains the layer.
+// Fold the dock to its layer tabs and back (any screen). Picking a layer opens it again, since its text explains the layer.
 const dock = document.querySelector('.gx-dock'), foldBtn = $('foldBtn');
+// "Details": what the colours mean, the top regions and the source, closed until asked for.
+const moreBtn = $('moreBtn'), more = $('more');
+moreBtn.addEventListener('click', () => { const open = more.hidden; more.hidden = !open; moreBtn.setAttribute('aria-expanded', String(open)); });
 function setFolded(on) {
   dock.classList.toggle('is-folded', on);
   foldBtn.setAttribute('aria-expanded', String(!on));
   foldBtn.setAttribute('aria-label', T(on ? 'Mostrar panel' : 'Ocultar panel'));
 }
 foldBtn.addEventListener('click', () => setFolded(!dock.classList.contains('is-folded')));
+// On a phone the dock opens folded and stays so when a layer is picked: there the world is the show.
+const PHONE = matchMedia('(max-width: 860px)');
+if (PHONE.matches) setFolded(true);
 document.querySelectorAll('[data-layer]').forEach(b => b.addEventListener('click', () => {
-  setFolded(false);
+  if (!PHONE.matches) setFolded(false);
   b.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // a tab half out of the scrolling row comes into view
 }));
 $('setClose').addEventListener('click', () => closePanel(true));
 $('setDone').addEventListener('click', () => closePanel(true));
 const tSky = $('tSky'), tSpin = $('tSpin'), tProps = $('tProps'), tClouds = $('tClouds');
 if (REDUCED || Q0.has('lat')) tSpin.checked = false;
-tSky.addEventListener('change', () => { skyFx.setVisible(tSky.checked); });
+// The sky's curiosities answer only while it shows, so the hint under the switch goes with it.
+tSky.addEventListener('change', () => { skyFx.setVisible(tSky.checked); $('skyHint').hidden = !tSky.checked; if (!tSky.checked) skyFx.setHover(null); });
 tSpin.addEventListener('change', () => { camCtl.spin = tSpin.checked; });
 tProps.addEventListener('change', () => { props.visible = tProps.checked && layer !== 'events' && layer !== 'data'; });
 tClouds.addEventListener('change', () => { cloudsWanted = tClouds.checked && layer === 'cases'; });
@@ -2166,17 +2614,20 @@ $('tPlay').addEventListener('click', () => {
 
 /* Regions and search */
 const regionCount = {}; [...casesJson.cases, ...filesJson.files].forEach(c => { regionCount[c.region] = (regionCount[c.region] || 0) + 1; });
-$('regions').innerHTML = Object.entries(REGION).map(([id, [name]]) => `<button type="button" data-region="${id}" aria-pressed="false">${name} <span class="num">${regionCount[id] || 0}</span></button>`).join('');
 function lookRegion(id) {
   const [, la, lo] = REGION[id]; closeCard(false);
   flyCam(la, lo, 2.25); tSpin.checked = false; markRegion(id);
 }
-$('regions').addEventListener('click', (e) => { const b = e.target.closest('[data-region]'); if (b) pickRegion(b.dataset.region); });
 const fold = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const q = $('q'), qList = $('qList');
-let hits = [], active = 0;
+let hits = [], active = 0, hereRegion = null, pickedLabel = '';
+const caseCount = (n) => n === 1 ? F('1 expediente', '1 case file') : F(`${nf(n)} expedientes`, `${nf(n)} case files`);
+const regionItem = ([id, [name]]) => ({ g: T('Regiones'), label: name, sub: caseCount(regionCount[id] || 0), region: id, go: () => pickRegion(id) });
+// The empty field's list: every region, the most case files first, so the search is also the way to browse.
+const browseItems = () => Object.entries(REGION).sort(([a], [b]) => (regionCount[b] || 0) - (regionCount[a] || 0)).map(regionItem).map(h => ({ ...h, g: T('Explorar por región') }));
+const ARROW = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>';
 function searchItems() {
-  const items = Object.entries(REGION).map(([id, [name]]) => ({ g: T('Regiones'), label: name, sub: F(`${regionCount[id] || 0} expedientes`, `${regionCount[id] || 0} case files`), go: () => pickRegion(id) }));
+  const items = Object.entries(REGION).map(regionItem);
   markers.children.filter(o => o.isSprite).forEach(o => { const d = document.createElement('div'); d.innerHTML = o.userData.tip; const t = d.querySelector('strong')?.textContent || ''; items.push({ g: T('Expedientes'), label: t, sub: d.innerHTML.replace(/<strong>.*?<\/strong>(<br>)?/, '').replace(/<br>/g, ' · ').replace(/<[^>]+>/g, ''), go: () => { setLayer('cases'); tapOn(o.userData); } }); });
   wxProxies.forEach(p => { const d = document.createElement('div'); d.innerHTML = p.userData.tip; const t = d.querySelector('strong')?.textContent || ''; items.push({ g: T('Clima en pantalla'), label: t, sub: d.innerHTML.replace(/<strong>.*?<\/strong>(<br>)?/, '').replace(/<br>/g, ' · ').replace(/<[^>]+>/g, ''), go: () => tapOn(p.userData) }); });
   return items;
@@ -2184,24 +2635,62 @@ function searchItems() {
 function renderHits() {
   if (!hits.length) { qList.innerHTML = `<p>${T('Sin resultados. Prueba con un país, una región o el nombre de una tormenta.')}</p>`; return; }
   let g = '';
-  qList.innerHTML = hits.map((h, i) => { const head = h.g !== g ? `<p>${(g = h.g)}</p>` : ''; return `${head}<button type="button" role="option" class="gx-opt${i === active ? ' is-active' : ''}" data-i="${i}" aria-selected="${i === active}">${escT(h.label)}<span>${h.sub}</span></button>`; }).join('');
+  qList.innerHTML = hits.map((h, i) => {
+    const head = h.g !== g ? `<p>${(g = h.g)}</p>` : '', here = h.region && h.region === hereRegion;
+    const cls = `gx-opt${h.region ? ' gx-opt--region' : ''}${here ? ' is-here' : ''}${i === active ? ' is-active' : ''}`;
+    return `${head}<button type="button" role="option" tabindex="-1" class="${cls}" data-i="${i}" aria-selected="${i === active}">${escT(h.label)}<span>${here ? `${T('Aquí')} · ` : ''}${h.sub}</span>${h.region ? ARROW : ''}</button>`;
+  }).join('');
+  // The active row stays in view, clear of the edge fades (FADE px).
+  const a = qList.querySelector('.is-active'), FADE = 28;
+  if (active === 0) qList.scrollTop = 0;
+  else if (a && a.offsetTop < qList.scrollTop + FADE) qList.scrollTop = a.offsetTop - FADE;
+  else if (a && a.offsetTop + a.offsetHeight > qList.scrollTop + qList.clientHeight - FADE) qList.scrollTop = a.offsetTop + a.offsetHeight - qList.clientHeight + FADE;
+  listEdges();
 }
-q.addEventListener('input', () => {
-  const s = fold(q.value.trim());
-  if (!s) { qList.hidden = true; q.setAttribute('aria-expanded', 'false'); return; }
-  hits = searchItems().filter(h => fold(h.label).includes(s)).slice(0, 12); active = 0;
+function listEdges() { fadeEdges(qList); }
+// A list without a scrollbar fades out at the edge that has more behind it.
+function fadeEdges(el) {
+  el.classList.toggle('at-top', el.scrollTop < 2);
+  el.classList.toggle('at-end', el.scrollTop + el.clientHeight >= el.scrollHeight - 2);
+}
+qList.addEventListener('scroll', listEdges, { passive: true });
+// Typing filters regions, case files and storms; an empty field (or the name just picked) browses the regions.
+function openHits() {
+  const s = q.value.trim() === pickedLabel ? '' : fold(q.value.trim());
+  hits = s ? searchItems().filter(h => fold(h.label).includes(s)).slice(0, 12) : browseItems();
+  active = s ? 0 : Math.max(0, hits.findIndex(h => h.region === hereRegion));
+  clearTimeout(foldT); qList.classList.remove('is-closing');
   qList.hidden = false; q.setAttribute('aria-expanded', 'true'); renderHits();
-});
+}
+let foldT = 0;
+// Open and not on its way out (it folds for 140 ms before it hides).
+const listOpen = () => !qList.hidden && !qList.classList.contains('is-closing');
+function closeHits() {
+  q.setAttribute('aria-expanded', 'false');
+  if (qList.hidden || qList.classList.contains('is-closing')) return;
+  if (REDUCED) { qList.hidden = true; return; }
+  qList.classList.add('is-closing');
+  foldT = setTimeout(() => { qList.hidden = true; qList.classList.remove('is-closing'); }, 140);
+}
+q.addEventListener('input', () => { pickedLabel = ''; openHits(); });
+// Focus handed back when the portal's drawer closes (refocus) returns to the field without opening the list.
+let refocus = false;
+q.addEventListener('focus', () => { q.select(); if (!refocus) openHits(); });
+q.addEventListener('click', () => { if (!listOpen()) openHits(); });
+// The options keep the focus in the field (a press would otherwise blur it and close the list first); leaving the
+// search closes it.
+qList.addEventListener('pointerdown', (e) => e.preventDefault());
+q.addEventListener('blur', () => { if (!q.closest('.gx-search').contains(document.activeElement)) closeHits(); });
 q.addEventListener('keydown', (e) => {
-  if (qList.hidden) return;
+  if (!listOpen()) { if (e.key === 'ArrowDown') { openHits(); e.preventDefault(); } return; }
   if (e.key === 'ArrowDown') { active = Math.min(hits.length - 1, active + 1); renderHits(); e.preventDefault(); }
   else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); renderHits(); e.preventDefault(); }
   else if (e.key === 'Enter' && hits[active]) { pickHit(active); }
-  else if (e.key === 'Escape') { qList.hidden = true; q.setAttribute('aria-expanded', 'false'); e.stopPropagation(); }
+  else if (e.key === 'Escape') { closeHits(); e.stopPropagation(); }
 });
 qList.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) pickHit(+b.dataset.i); });
 // The field gives up the focus here, so it is noted as the control to come back to when the portal's drawer closes.
-function pickHit(i) { const h = hits[i]; qList.hidden = true; q.setAttribute('aria-expanded', 'false'); q.value = h.label; lastFocus = q; q.blur(); h.go(); }
+function pickHit(i) { const h = hits[i]; closeHits(); q.value = pickedLabel = h.label; lastFocus = q; q.blur(); h.go(); }
 
 /* Card: what was tapped, in the same light drawer as view A */
 const card = $('card');
@@ -2221,19 +2710,33 @@ function openCard(u) {
   card.hidden = false; requestAnimationFrame(() => card.classList.add('is-open'));
   $('cardT').focus({ preventScroll: true });
 }
-// The satellite's card: what it is and what it gives the portal, a link to NASA, and back to the planet without flying.
-function openSatCard(id) {
+// A card for something in the sky (the satellite, the Moon, a constellation): what it is, a few facts, a link to NASA
+// when there is one, and back to the planet without flying. The Moon's adds Apollo 11 once its mark is found.
+function openSkyCard(id) {
   const i = skyFx.info(id); if (!i) return;
   tip.hidden = true;
+  const list = (items) => `<ul class="card__facts">${items.map(l => `<li>${l}</li>`).join('')}</ul>`;
   $('cardKind').textContent = i.kind;
   $('cardT').textContent = i.title;
-  $('cardBody').innerHTML = `<ul class="card__facts">${i.facts.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  $('cardBody').innerHTML = list([...(i.meta || []).map(([k, v]) => `${k}: ${v}`), ...i.facts])
+    + (i.extra ? `<h3 class="card__h">${i.extra.title}</h3>${list(i.extra.facts)}<p class="card__extra"><a href="${i.extra.link.href}" target="_blank" rel="noopener">${i.extra.link.label}</a></p>` : '');
   $('cardSrc').textContent = i.src;
-  $('cardActions').innerHTML = `<a class="btn btn--primary" href="${i.link.href}" target="_blank" rel="noopener">${i.link.label}</a><button type="button" class="btn btn--ghost" id="cardBack">${T('Volver al planeta')}</button>`;
+  $('cardActions').innerHTML = (i.link ? `<a class="btn btn--primary" href="${i.link.href}" target="_blank" rel="noopener">${i.link.label}</a>` : '') + `<button type="button" class="btn btn--ghost" id="cardBack">${T('Volver al planeta')}</button>`;
   $('cardBack').onclick = () => closeCard(false);
   skyFx.select(id);
   card.hidden = false; requestAnimationFrame(() => card.classList.add('is-open'));
   $('cardT').focus({ preventScroll: true });
+}
+// A tap on the Moon or a constellation. Three quick taps on the Moon mark where Apollo 11 landed, once per visit.
+const APOLLO_TAPS = 3, APOLLO_WINDOW = 1600;
+let moonTaps = [];
+function tapSky(id) {
+  if (id === 'moon' && !skyFx.apollo()) {
+    const now = performance.now(); moonTaps = [...moonTaps.filter(t => now - t < APOLLO_WINDOW), now];
+    if (moonTaps.length >= APOLLO_TAPS) { skyFx.setApollo(true); $('announce').textContent = F('Encontraste el lugar del alunizaje del Apolo 11, marcado en dorado en la Luna.', 'You found the Apollo 11 landing site, marked in gold on the Moon.'); }
+  }
+  if (EMBED) { skyFx.select(id); tell({ type: 'select', sel: { type: 'sky', id, apollo: id === 'moon' && skyFx.apollo() } }); }
+  else openSkyCard(id);
 }
 function closeCard(home) {
   skyFx.select(null);
@@ -2245,18 +2748,48 @@ function closeCard(home) {
 }
 $('cardClose').addEventListener('click', () => closeCard(true));
 
-function markRegion(id) { document.querySelectorAll('[data-region]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.region === id))); }
+// The region on screen, marked in the search's list.
+function markRegion(id) { hereRegion = id; if (!qList.hidden) renderHits(); }
 $('zin').addEventListener('click', () => { camCtl.tween = null; camCtl.spin = false; goal.alt = clampAlt(R + (goal.alt - R) * 0.65); });
 $('zout').addEventListener('click', () => { camCtl.tween = null; goal.alt = clampAlt(R + (goal.alt - R) * 1.55); });
 addEventListener('keydown', (e) => {
   if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); return; }
+  if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey && !isTyping(e.target)) { e.preventDefault(); setImmersive(!immersive); return; }
   if (e.key !== 'Escape') return;
+  if (immersive) { setImmersive(false); return; }
   if (!panel.hidden) { closePanel(true); return; }
   if (!card.hidden) { closeCard(true); return; }
   if (EMBED) { dropLift(); tell({ type: 'escape' }); return; }
   if (lift.cell || lift.pending) { dropLift(); return; }
   if (cam.alt < homeAlt - 0.1) flyHome();
 });
+/* Contemplation: only the planet and its sky. The portal hides its own chrome when told. */
+let immersive = false, showIdle = 0;
+const showUi = $('showUi'), spinUi = $('spinUi'), immBar = $('immBar');
+function wakeShow() {
+  immBar.classList.remove('is-idle'); clearTimeout(showIdle);
+  showIdle = setTimeout(() => { if (!immBar.contains(document.activeElement)) immBar.classList.add('is-idle'); }, 2500);
+}
+// While contemplating, the planet can turn slowly on its own; a drag stops it, as anywhere else.
+function syncSpin() { const on = String(camCtl.spin); if (spinUi.getAttribute('aria-pressed') !== on) spinUi.setAttribute('aria-pressed', on); }
+spinUi.addEventListener('click', () => { camCtl.spin = !camCtl.spin; camCtl.tween = null; tSpin.checked = camCtl.spin; syncSpin(); });
+function setImmersive(on, fromParent = false) {
+  on = !!on; if (on === immersive) return; immersive = on;
+  document.body.classList.toggle('is-immersive', on);
+  markers.visible = layer === 'cases' && !on;
+  spinUi.hidden = REDUCED; syncSpin();
+  if (on) { closePanel(false); if (!card.hidden) closeCard(false); tip.hidden = true; wakeShow(); if (!fromParent) showUi.focus({ preventScroll: true }); }
+  else if (!fromParent) $('immBtn').focus({ preventScroll: true });
+  $('announce').textContent = on ? F('Interfaz oculta. Pulsa H o Escape para mostrarla.', 'Interface hidden. Press H or Escape to show it.') : F('Interfaz visible.', 'Interface shown.');
+  if (!fromParent) tell({ type: 'immersive', on });
+}
+$('immBtn').addEventListener('click', () => setImmersive(true));
+showUi.addEventListener('click', () => setImmersive(false));
+immBar.addEventListener('focusout', wakeShow);
+addEventListener('pointermove', () => { if (immersive) wakeShow(); }, { passive: true });
+addEventListener('pointerdown', () => { if (immersive) wakeShow(); }, { passive: true });
+
+
 setLayer(['events', 'weather', 'data'].includes(Q0.get('layer')) ? Q0.get('layer') : 'cases');
 buildEvents(2025);
 queueMicrotask(() => { tell({ type: 'ready' }); tellChrome(); });
@@ -2279,7 +2812,7 @@ function tell(msg) {
 }
 // Milanko: where the controls sit (frame pixels, [left, top, width, height]), so the portal's guided tour can
 // point at each one; the page cannot read this sandboxed DOM. Sent once laid out and whenever they move.
-const CHROME = { search: '.gx-search', regions: '#regions', zoom: '.gx-tools .zoom', layers: '.gx-dock' };
+const CHROME = { search: '.gx-search', zoom: '.gx-tools .zoom', layers: '.gx-dock' };
 let chromeQueued = false;
 function tellChrome() {
   if (!EMBED || chromeQueued) return;
@@ -2315,13 +2848,13 @@ function tapOn(u) {
 }
 function pickRegion(id) { if (EMBED) tell({ type: 'select', sel: { type: 'sector', id } }); else lookRegion(id); }
 // The portal's drawer covers part of this frame: its right side (a side panel) or its bottom (a sheet), px wide
-// or tall. The picture slides so the selection sits in the free space, the zoom, the dock, the regions and the
-// search move out from under a side panel (--cover-r), and the caption keeps to the free space.
+// or tall. The picture slides so the selection sits in the free space, the zoom, the dock and the search move out
+// from under a side panel (--cover-r), and the caption keeps to the free space.
 const cover = { right: 0, bottom: 0, left: 0 };
-// The bottom of the controls along the top (the region strip, or the search when the strip is hidden).
+// The bottom of the controls along the top: the search field (its list drops over the picture and does not count).
 function chromeTop() {
-  const el = [$('regions'), document.querySelector('.gx-search')].find(e => e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height);
-  return el ? el.getBoundingClientRect().bottom + 8 : 8;
+  const el = document.querySelector('.gx-search__field');
+  return el && el.getBoundingClientRect().height ? el.getBoundingClientRect().bottom + 8 : 8;
 }
 function setCover(side, px) {
   cover.right = side === 'right' ? px : 0; cover.bottom = side === 'bottom' ? px : 0;
@@ -2349,25 +2882,37 @@ addEventListener('message', (e) => {
   else if (m.type === 'inset') setCover(m.side, m.px);
   // The portal's side rail floats over the frame's left edge, px wide.
   else if (m.type === 'rail') { cover.left = Math.max(0, Math.min(400, +m.px || 0)); document.documentElement.style.setProperty('--cover-l', `${cover.left}px`); insetGoal.x = (cover.right - cover.left) / 2; }
-  else if (m.type === 'closed') { setCover(null, 0); markRegion(null); dropLift(); }
+  else if (m.type === 'closed') { setCover(null, 0); markRegion(null); dropLift(); skyFx.select(null); }
+  else if (m.type === 'immersive') setImmersive(m.on, true);
   // The portal closed its drawer and hands the focus back: to the control used last here, else the globe.
-  else if (m.type === 'focus') { const to = lastFocus?.isConnected && lastFocus.offsetParent !== null ? lastFocus : renderer.domElement; to.focus({ preventScroll: true }); }
-  else if (m.type === 'layer') { if (m.layer === 'events') { evCat = m.cat || ''; setLayer('events'); if (m.year) setYear(m.year); else buildEvents(year); } else setLayer(m.layer); }
+  else if (m.type === 'focus') { const to = lastFocus?.isConnected && lastFocus.offsetParent !== null ? lastFocus : renderer.domElement; refocus = true; to.focus({ preventScroll: true }); refocus = false; }
+  else if (m.type === 'layer') {
+    if (m.layer === 'events') { evCat = m.cat || ''; setLayer('events'); if (m.year) setYear(m.year); else buildEvents(year); }
+    else if (m.layer === 'data') { if (typeof m.variable === 'string') showVariable(m.variable); else setLayer('data'); }
+    else setLayer(m.layer);
+  }
 });
 let downAt = null;
-renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; closePanel(false); if (!qList.hidden) { qList.hidden = true; q.setAttribute('aria-expanded', 'false'); } });
+renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; closePanel(false); if (!qList.hidden) closeHits(); });
 renderer.domElement.addEventListener('pointerup', (e) => {
   if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
   mouse.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(mouse, camera);
   const sat = skyFx.pick(ray);
-  if (sat) { openSatCard(sat); return; }
-  const pool = layer === 'weather' ? wxProxies : layer === 'cases' ? markers.children.filter(o => o.isSprite && o.visible) : [];
+  // In the portal the card lives in the page's drawer: the satellite is a selection like any other.
+  if (sat) { if (EMBED) { skyFx.select(sat); tell({ type: 'select', sel: { type: 'satellite', id: sat } }); } else openSkyCard(sat); return; }
+  const pin = layer === 'cases' ? pickMarker(e.clientX, e.clientY) : null;
+  if (pin) { skyFx.select(null); tapOn({ ...pin.userData, at: pin.userData.at }); return; }
+  const pool = layer === 'weather' ? wxProxies : [];
   const hit = ray.intersectObjects(pool, false)[0];
-  if (hit) { tapOn({ ...hit.object.userData, at: hit.object.userData.at || toLatLon(hit.object.position) }); return; }
+  if (hit) { skyFx.select(null); tapOn({ ...hit.object.userData, at: hit.object.userData.at || toLatLon(hit.object.position) }); return; }
   // Any other point of the planet: in the portal it opens the point drawer (the live NASA POWER test), as in Dots.
+  // Past the planet, the Moon or a constellation may answer: only now, so the sky never takes a tap meant for the
+  // planet. Any other tap in the sky changes nothing, so a stray one while riding with Terra does not end the ride.
   const g = surfaceHit(ray);
-  if (!g) return;
+  if (!g) { const s = !immersive && !skyFx.following() ? skyFx.pickSky(ray, e.clientX, e.clientY, skySlop(e)) : null; if (s) tapSky(s); return; }
+  skyFx.select(null);
   const la = g.lat, lo = g.lon;
+  if (EMBED && layer === 'data' && dataSnapshot) { const sel = regionSel(regionAt(la, lo)); if (sel) { tell({ type: 'select', sel }); return; } }
   if (EMBED) tell({ type: 'select', sel: { type: 'point', lat: +la.toFixed(3), lon: +lo.toFixed(3) } });
   else { closeCard(false); flyTo(la, lo); requestLift(la, lo, null); }
 });
@@ -2380,6 +2925,7 @@ renderer.domElement.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
   e.preventDefault();
   const c = pickCell(cam.lat, cam.lon); if (!c) return;
+  if (EMBED && layer === 'data' && dataSnapshot) { const sel = regionSel(regionAt(c.lat, c.lon)); if (sel) { tell({ type: 'select', sel }); return; } }
   if (EMBED) tell({ type: 'select', sel: { type: 'point', lat: +c.lat.toFixed(3), lon: +c.lon.toFixed(3) } });
   else { flyTo(c.lat, c.lon); requestLift(c.lat, c.lon, null); }
 });
@@ -2446,15 +2992,37 @@ window.etdHit = (x, y) => {
   return { ...cellInfo(h.cell), px: Math.round(Math.hypot((s.x + 1) / 2 * innerWidth - x, (1 - s.y) / 2 * innerHeight - y)) };
 };
 let hoverQueued = null, lastPointer = null, frameN = 0;
+const PIN_REACH = 24, pinV = new THREE.Vector3();
+function pickMarker(x, y) {
+  if (!markers.visible) return null;
+  let best = null, bestD = PIN_REACH;
+  markers.children.forEach(o => {
+    if (!o.isSprite || !o.visible) return;
+    o.getWorldPosition(pinV).project(camera);
+    const d = Math.hypot((pinV.x + 1) / 2 * innerWidth - x, (1 - pinV.y) / 2 * innerHeight - y);
+    if (d < bestD) { bestD = d; best = o; }
+  });
+  return best;
+}
+let hoverPin = null;
+function setHoverPin(p) {
+  if (p === hoverPin) return;
+  if (hoverPin) hoverPin.scale.setScalar(pinScale(hoverPin.userData.px));
+  hoverPin = p;
+  if (p) p.scale.setScalar(pinScale(p.userData.px * 1.25));
+}
 renderer.domElement.addEventListener('pointermove', (e) => { hoverQueued = e; });
 renderer.domElement.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') hoverQueued = e; });
-renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; lastPointer = null; highlight(null); });
+renderer.domElement.addEventListener('pointerleave', () => { tip.hidden = true; lastPointer = null; highlight(null); setHoverPin(null); skyFx.setHover(null); });
+// How near a constellation's line the pointer must come, in pixels: a finger gets more room than a mouse.
+const skySlop = (e) => (e.pointerType === 'mouse' ? 12 : 22);
 function hover(e) {
   mouse.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1);
   ray.setFromCamera(mouse, camera);
   // The satellite floats above everything, so it answers first: its tooltip, its orbit and swath lit (sky.js).
   const sat = skyFx.pick(ray); skyFx.setHover(sat);
-  renderer.domElement.style.cursor = sat ? 'pointer' : '';
+  const pin = !sat && layer === 'cases' ? pickMarker(e.clientX, e.clientY) : null; setHoverPin(pin);
+  renderer.domElement.style.cursor = sat || pin ? 'pointer' : '';
   if (sat) {
     const i = skyFx.info(sat); highlight(null);
     tip.innerHTML = `<strong>${i.title} · ${i.kind}</strong><br>${i.tip}<br><span style="color:#a9b4c8">${T('Toca para saber más')}</span>`;
@@ -2463,7 +3031,7 @@ function hover(e) {
   }
   const ground = surfaceHit(ray);
   let html = null;
-  if (layer === 'cases') { const hit = ray.intersectObjects(markers.children.filter(o => o.isSprite && o.visible), false)[0]; if (hit) html = hit.object.userData.tip + `<br><span style="color:#a9b4c8">${T('Toca para acercarte')}</span>`; }
+  if (pin) html = pin.userData.tip + `<br><span style="color:#a9b4c8">${F('Toca para abrir el expediente', 'Tap to open the case file')}</span>`;
   if (layer === 'weather' && wxProxies.length) { const hit = ray.intersectObjects(wxProxies, false)[0]; if (hit && (!ground || hit.distance <= ground.distance + 0.05)) html = hit.object.userData.tip + `<br><span style="color:#a9b4c8">${T('Toca para acercarte')}</span>`; }
   let tileHit = false;
   if (!html) {
@@ -2471,6 +3039,10 @@ function hover(e) {
       if (c) html = (c.volcano ? `<strong>${c.volcano.map(v => v.name).join(' · ')}</strong><br>${T('Volcán con actividad en EONET')} ${c.volcano.map(v => v.first === v.last ? v.first : `${v.first}–${v.last}`).join(' · ')}<br>` : '') + `<strong>${BIOME[c.biome].name}</strong><br>${c.water ? T('Agua') : c.elev === null ? T('Sin dato de elevación') : F(`Altura media ${nf(Math.round(c.elev))} m`, `Mean height ${nf(Math.round(c.elev))} m`)}${c.biome === 'ice' && c.elev !== null ? I18N.t('w3.tile.iceNote') : ''}<br><span style="color:#a9b4c8">${c.lat.toFixed(1)}°, ${c.lon.toFixed(1)}°</span>`; }
   }
   if (!tileHit) highlight(null);
+  // Past the planet and anything on it: the Moon or a constellation, its figure drawn while pointed at.
+  const skyId = !html && !ground && !pin && !skyFx.following() ? skyFx.pickSky(ray, e.clientX, e.clientY, skySlop(e)) : null;
+  skyFx.setHover(skyId);
+  if (skyId) { const i = skyFx.info(skyId); html = `<strong>${i.title} · ${i.kind}</strong><br>${i.tip}<br><span style="color:#a9b4c8">${T('Toca para saber más')}</span>`; renderer.domElement.style.cursor = 'pointer'; }
   if (html) { tip.innerHTML = html; tip.style.left = Math.min(e.clientX, innerWidth - 220) + 'px'; tip.style.top = Math.min(e.clientY, innerHeight - 120) + 'px'; tip.hidden = false; } else tip.hidden = true;
 }
 
@@ -2480,6 +3052,7 @@ let loopN = 0;
 function frame() {
   const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
   const now = performance.now();
+  skyFx.advance(dt);
   stepCamera(dt, now); stepInset(dt); updateRegions(); updateLOD(now); stepLift(now, dt, t);
   // With the keyboard on the globe, the tile Enter would pick is outlined.
   if (kbdFocus && (loopN++ % 8 === 0)) highlight(pickCell(cam.lat, cam.lon));
@@ -2497,14 +3070,23 @@ function frame() {
   // A point is on the visible cap when its dot with the camera direction beats R / distance (the horizon).
   // The margin keeps pins off the very edge of the disc; close to the ground it shrinks, or nothing would show.
   cp.copy(camera.position).normalize(); const camR = camera.position.length(), hzM = Math.min(1, (camR - R) / 2), hz = R / camR + 0.06 * hzM;
+  const pinNow = pinFactor();
+  if (Math.abs(pinNow - pinK) > 0.005) { pinK = pinNow; markers.children.forEach(o => { if (o.isSprite) o.scale.setScalar(pinScale(o.userData.px * (o === hoverPin ? 1.25 : 1))); }); }
   if (markers.visible) markers.children.forEach(o => { if (o.isSprite) o.visible = (themeF === 'all' || o.userData.theme === themeF) && wn.copy(o.position).normalize().dot(cp) > hz; });
+  pulses.visible = markers.visible;
+  if (pulses.visible) pulses.children.forEach(r => {
+    const p = r.userData.pin; r.visible = p.visible; if (!r.visible) return;
+    const k = REDUCED ? 0.3 : (t * 0.45 + r.userData.phase) % 1;
+    r.scale.setScalar(pinScale(p.userData.px * (1 + k * 0.9))); r.material.opacity = REDUCED ? 0.45 : 0.8 * (1 - k);
+  });
   caseLabels.forEach(({ el, n, theme }) => { const d = n.dot(cp); el.style.opacity = layer === 'cases' && (themeF === 'all' || theme === themeF) && d > hz + 0.05 * hzM ? Math.min(1, (d - hz - 0.05 * hzM) / (0.15 * hzM + 0.01)) : 0; });
+  if (immersive) syncSpin();
   if (hoverQueued) { hover(hoverQueued); lastPointer = hoverQueued; hoverQueued = null; } else if (lastPointer && !tip.hidden && (frameN++ % 6 === 0)) hover(lastPointer);
   renderer.render(scene, camera); labels.render(scene, camera);
   requestAnimationFrame(frame);
 }
 frame();
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); const wasHome = Math.abs(goal.alt - homeAlt) < 0.05; fitCamera(); if (wasHome) goal.alt = homeAlt; renderer.setSize(innerWidth, innerHeight); labels.setSize(innerWidth, innerHeight); markers.children.forEach(o => { if (o.isSprite) o.scale.setScalar(pinScale(o.userData.px)); }); if (lift.cap) lift.capSide = undefined; });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); const wasHome = Math.abs(goal.alt - homeAlt) < 0.05; fitCamera(); if (wasHome) goal.alt = homeAlt; renderer.setSize(innerWidth, innerHeight); labels.setSize(innerWidth, innerHeight); markers.children.forEach(o => { if (o.isSprite) o.scale.setScalar(pinScale(o.userData.px * (o === hoverPin ? 1.25 : 1))); }); if (lift.cap) lift.capSide = undefined; });
 </script>
 </body>
 </html>

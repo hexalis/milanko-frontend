@@ -5,7 +5,7 @@ import { Icon } from "@/shared/ui/icon";
 import type { ExploreT } from "../domain/explore-copy";
 import { sectorFiles } from "../domain/sector-files";
 import type { SectorId } from "../domain/sectors";
-import { Actions, DIRECTION_TEXT, Facts, PanelHead, PRIMARY_LINK } from "./drawer-parts";
+import { Actions, CaseFileLink, DIRECTION_TEXT, Facts, PanelHead } from "./drawer-parts";
 
 type SectorPanelProps = {
   id: SectorId;
@@ -131,10 +131,7 @@ export function SectorPanel({ id, files, windowDays, t, titleRef, onCase }: Sect
         </section>
       ) : null}
       <Actions>
-        <Link href={`/cases?region=${id}`} className={PRIMARY_LINK}>
-          <Icon name="cases" />
-          {t("exp.sector.archive")}
-        </Link>
+        <CaseFileLink href={`/cases?region=${id}`}>{t("exp.sector.archive")}</CaseFileLink>
       </Actions>
     </div>
   );

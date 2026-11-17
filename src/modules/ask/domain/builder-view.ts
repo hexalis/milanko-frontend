@@ -63,6 +63,7 @@ export const themeIcon = (theme: string) => THEME_ICON[theme] ?? "globe-pin";
 export const verbIcon = (type: QuestionType) => VERB_ICON[type];
 
 export function whereIcon(option: WhereOption): string {
+  if (option.kind === "place") return "globe-pin";
   if (option.kind === "audit") return "layers";
   if (option.subject.type === "anomaly") return "calendar";
   if (option.kind === "compare") return "decide";
@@ -115,6 +116,13 @@ function whereLines(where: WhereOption, sources: PreviewSources): PreviewLine[] 
     return [{ icon: "calendar", key: "ask.prev.anom", values }, REVIEWED];
   }
   if (subject.type === "trend") return trendLines(subject.place, sources);
+  // The reader's own place is read now from NASA and nobody has reviewed it.
+  if (subject.type === "point") {
+    return [
+      { icon: "satellite", text: "NASA POWER · MERRA-2" },
+      { icon: "info", key: "ask.prev.live" },
+    ];
+  }
   return [REVIEWED];
 }
 

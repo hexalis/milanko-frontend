@@ -1,15 +1,17 @@
 import { getCaseCatalog, getEventAudit } from "@/modules/cases";
 import factsData from "../data/facts.json";
+import { isLiveVariable } from "./place";
 import { reviewedFrom } from "./reviewed";
 import { createRules, type Facts, type Rules } from "./rules";
 
 /**
- * The facts as this deployment can serve them. Live computation for a free point (NASA POWER at
- * any coordinate, geocoding) is not ported yet, so Rule 4 is switched off: the builder offers
- * reviewed places only, and comparisons need two reviewed places.
+ * The facts as this deployment can serve them. A free point is read live for a trend only, and only
+ * for the NASA POWER monthly series the API serves at any coordinate (place.ts LIVE_VARIABLES):
+ * dangerous-heat days and the anomaly of a free point are not ported yet, so Rule 4 holds for
+ * fewer questions than in the POC.
  */
 export function servableFacts(facts: Facts): Facts {
-  return { ...facts, live: {} };
+  return { ...facts, live: { trend: (facts.live.trend ?? []).filter(isLiveVariable) } };
 }
 
 let engine: Rules | undefined;

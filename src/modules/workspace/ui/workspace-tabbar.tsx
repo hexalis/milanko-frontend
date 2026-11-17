@@ -10,7 +10,7 @@ type WorkspaceTabbarProps = {
 };
 
 const TAB =
-  "group/item flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1 text-center text-label-xs leading-tight text-text-secondary no-underline transition-colors duration-fast motion-reduce:transition-none hover:bg-bg-hover hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:bg-action-selected-strong aria-[current=page]:text-selected-fg";
+  "group/item flex min-h-13 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 max-[22.5rem]:px-0 py-1 text-center text-label-xs leading-tight text-text-secondary no-underline transition-colors duration-fast motion-reduce:transition-none hover:bg-bg-hover hover:text-text-primary focus-visible:focus-ring focus-visible:outline-focus-ring aria-[current=page]:bg-action-selected-strong aria-[current=page]:text-selected-fg";
 
 /** Phone tabbar (POC .tabbar): five destinations, fixed above the bottom edge. */
 export function WorkspaceTabbar({ label, labels }: WorkspaceTabbarProps) {
@@ -18,14 +18,15 @@ export function WorkspaceTabbar({ label, labels }: WorkspaceTabbarProps) {
     <nav
       aria-label={label}
       data-tour="shell-tabbar"
-      className="border-border-subtle bg-bg-surface shadow-dropdown shell:hidden fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 rounded-[1.75rem] border p-1.5"
+      className="border-border-subtle bg-bg-surface shadow-dropdown shell:hidden fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 rounded-[1.75rem] border p-1.5 max-[22.5rem]:inset-x-1 max-[22.5rem]:p-1"
     >
-      <ul className="grid grid-cols-5 gap-1">
+      <ul className="grid grid-cols-5 gap-1 max-[22.5rem]:gap-0">
         {TABBAR.map((section) => (
           <li key={section.href} className="min-w-0">
             <ShellNavLink href={section.href} className={TAB}>
               <NavIcon icon={section.icon} hasActiveIcon={section.hasActiveIcon} tone="tab" />
-              <span className="max-w-full [overflow-wrap:anywhere]">
+              {/* Under 360px the bar gives its padding to the labels, so "Expedientes" stays whole. */}
+              <span className="max-w-full [overflow-wrap:anywhere] max-[22.5rem]:text-[10px] max-[22.5rem]:tracking-[-0.02em]">
                 {labels[section.labelKey]}
               </span>
             </ShellNavLink>

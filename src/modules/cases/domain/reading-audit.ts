@@ -1,7 +1,9 @@
 import { auditQuestion, auditSentence, breakText } from "./audit-text";
+import { chanceNote, missingNote, pChecks } from "./case-glance";
 import {
   caseFilePath,
   exactRows,
+  SHEET_COUNT,
   type CaseReading,
   type ReadingContext,
   type ReadingTone,
@@ -180,6 +182,51 @@ function data({ category, ctx }: AuditFacts): CaseReading["data"] {
   };
 }
 
+/* An audit is about the catalog, not a place: the whole planet, and its yearly counts for a chart. */
+function glance(facts: AuditFacts, level: CaseReading["sure"]["level"]): CaseReading["glance"] {
+  const { category, ctx, last } = facts;
+  const { translator } = ctx;
+  const { t, locale } = translator;
+  const from = ctx.audit.firstYear;
+  const isArtifact = category.verdict === "artifact";
+  const p = category.trend?.p;
+  const test = {
+    label: t("sheet.test"),
+    value: isArtifact
+      ? t("cf.glance.breaks", { n: category.breaks.length })
+      : p === undefined
+        ? t("verdict.insufficient")
+        : `p ${formatP(p)}`,
+    note: isArtifact
+      ? t("cf.sheet.test.audit.note", {
+          years: category.breaks.map((item) => item.year).join(", "),
+        })
+      : p === undefined
+        ? t("cf.sheet.test.audit.none")
+        : chanceNote(translator, p),
+    ...(isArtifact || p === undefined ? {} : { checks: pChecks(translator, p) }),
+  };
+  const sheets = [
+    {
+      label: t("sheet.series"),
+      value: t("cf.glance.records", { n: category.total.toLocaleString(locale) }),
+      note: t("cf.sheet.series.audit.note", { from, to: last }),
+    },
+    test,
+    { label: t("sheet.source"), value: "NASA EONET", note: t("cf.sheet.source.audit", { from }) },
+  ];
+  return {
+    place: null,
+    globe: { href: `/explore?events=${category.id}`, icon: "explore", label: t("audit.globe") },
+    sheets: sheets.slice(0, SHEET_COUNT[level]),
+    missing: missingNote(translator, level, "audit"),
+    spark: { series: category.years, trend: null, direction: "flat", isLastMarked: false },
+    verdict: level === "strong" ? "confirmed" : "inconclusive",
+    verdictLabel: t(`verdict.${category.verdict}`),
+    impact: t("cf.impact.audit"),
+  };
+}
+
 function use({ category, ctx, last, question, sentence }: AuditFacts): CaseReading["use"] {
   const { t } = ctx.translator;
   const from = ctx.audit.firstYear;
@@ -208,6 +255,7 @@ function use({ category, ctx, last, question, sentence }: AuditFacts): CaseReadi
 export function auditReading(category: AuditCategory, ctx: ReadingContext): CaseReading {
   const { t } = ctx.translator;
   const facts = auditFacts(category, ctx);
+  const certainty = sure(facts);
   const categories = ctx.audit.categories;
   const next = categories[(categories.indexOf(category) + 1) % categories.length] ?? category;
   return {
@@ -224,9 +272,10 @@ export function auditReading(category: AuditCategory, ctx: ReadingContext): Case
       { icon: "calendar", text: t("cf.chip.audit", { from: ctx.audit.firstYear, to: facts.last }) },
       { icon: "satellite", text: "NASA EONET" },
     ],
+    glance: glance(facts, certainty.level),
     answer: answer(facts),
     chart: chart(facts),
-    sure: sure(facts),
+    sure: certainty,
     notSay: [t("cf.audit.not.1"), t("cf.audit.not.2"), t("cf.audit.not.3")],
     why: why(facts),
     data: data(facts),

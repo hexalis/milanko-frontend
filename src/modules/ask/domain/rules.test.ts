@@ -96,17 +96,21 @@ describe("rules engine (POC test_rules.mjs)", () => {
   });
 });
 
-describe("servable facts (no live computation yet)", () => {
+describe("servable facts (a free point, for a trend the API can read live)", () => {
   const served = createRules(servableFacts(facts), reviewed);
 
-  it("turns rule 4 off so the builder offers reviewed places only", () => {
-    expect(served.allowsFreePoint("temperature", "trend")).toBe(false);
+  it("keeps rule 4 for the NASA POWER monthly trends only", () => {
+    expect(served.allowsFreePoint("temperature", "trend")).toBe(true);
+    expect(served.allowsFreePoint("rain", "trend")).toBe(true);
+    // Dangerous-heat days and the anomaly of a free point are not ported yet.
+    expect(served.allowsFreePoint("dangerous_heat", "trend")).toBe(false);
     expect(served.allowsFreePoint("weather", "anomaly")).toBe(false);
   });
 
   it("keeps every reviewed question available", () => {
     expect(served.places("temperature", "trend")).toEqual(["svalbard-warming", "planet"]);
     expect(served.pairs("soil_water")).toEqual([["chile-drying", "sahel-wetting"]]);
-    expect(served.comparable("rain")).toBe(false);
+    // One reviewed place and a free point: the rules allow it; the builder does not offer it yet.
+    expect(served.comparable("rain")).toBe(true);
   });
 });
